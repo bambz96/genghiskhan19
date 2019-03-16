@@ -1,0 +1,51 @@
+classdef XL320
+    %XL320 Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        ADDR_PRO_TORQUE_ENABLE
+        ADDR_PRO_GOAL_POSITION
+        ADDR_PRO_PRESENT_POSITION
+        
+        PROTOCOL_VERSION
+        DXL_ID
+        port_num
+        
+        TORQUE_ENABLE
+        TORQUE_DISABLE
+    end
+    
+    methods
+        function obj = XL320(ID, port_num)
+            %XL320 Construct an instance of this class
+         
+            % Parameter Addresses (Specific to type of motor)
+            obj.ADDR_PRO_TORQUE_ENABLE = 24;
+            obj.ADDR_PRO_GOAL_POSITION = 30;
+            obj.ADDR_PRO_PRESENT_POSITION = 37;
+            
+            obj.port_num = port_num;
+            obj.PROTOCOL_VERSION = 2.0;
+            obj.DXL_ID = ID;
+
+
+            obj.TORQUE_ENABLE = 1;
+            obj.TORQUE_DISABLE = 0;
+            
+        end
+        
+        function [] = torqueEnable(obj)
+            % Enable Motor Torque
+            write1ByteTxRx(port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_TORQUE_ENABLE, obj.TORQUE_ENABLE);
+            checkComms(
+        end
+        
+        function [] = torqueDisable(obj)
+            % Disable  Motor Torque
+            write1ByteTxRx(port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_TORQUE_ENABLE, obj.TORQUE_DISABLE);
+        end
+        
+        
+    end
+end
+
