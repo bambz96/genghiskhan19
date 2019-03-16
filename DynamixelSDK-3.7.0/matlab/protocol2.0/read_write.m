@@ -58,14 +58,14 @@ PROTOCOL_VERSION            = 2.0;          % See which protocol version is used
 
 % Default setting
 DXL_ID                      = 1;            % Dynamixel ID: 1
-BAUDRATE                    = 1000000;
+BAUDRATE                    = 57600;
 DEVICENAME                  = 'COM3';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
 
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
 TORQUE_DISABLE              = 0;            % Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE  = 100;      % Dynamixel will rotate between this value
-DXL_MAXIMUM_POSITION_VALUE  = 1000;       % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+DXL_MAXIMUM_POSITION_VALUE  = 800;       % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
 DXL_MOVING_STATUS_THRESHOLD = 20;           % Dynamixel moving status threshold
 
 ESC_CHARACTER               = 'e';          % Key for escaping loop
@@ -130,7 +130,8 @@ while 1
     end
 
     % Write goal position
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(index)), 'uint32'));
+%     write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(index)), 'uint32'));
+    write2ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, 32, typecast(int16(500), 'uint16'));
     dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
     dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
     if dxl_comm_result ~= COMM_SUCCESS

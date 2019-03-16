@@ -5,7 +5,15 @@ classdef XL320
     properties
         ADDR_PRO_TORQUE_ENABLE      = 24
         ADDR_PRO_GOAL_POSITION      = 30
+        ADDR_PRO_GOAL_SPEED         = 32
+        ADDR_PRO_CONTROL_MODE       = 11
+
         ADDR_PRO_PRESENT_POSITION   = 37
+        ADDR_PRO_PRESENT_SPEED      = 39
+        ADDR_PRO_PRESENT_LOAD       = 41
+        ADDR_PRO_PRESENT_VOLTAGE    = 45
+        ADDR_PRO_PRESENT_TEMP       = 46
+        
         
         PROTOCOL_VERSION            = 2.0
         
@@ -17,6 +25,8 @@ classdef XL320
         DXL_MINIMUM_POSITION_VALUE  = 100;          % Dynamixel will rotate between this value
         DXL_MAXIMUM_POSITION_VALUE  = 1000;         % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
         DXL_MOVING_STATUS_THRESHOLD = 20;           % Dynamixel moving status threshold
+        WHEEL_MODE                  = 1;            % Wheel mode (Speed control)
+        JOINT_MODE                  = 2;            % Joint mode (Position control)
         
         COMM_SUCCESS                = 0;            % Communication Success result value
         COMM_TX_FAIL                = -1001;        % Communication Tx Failed
@@ -47,15 +57,36 @@ classdef XL320
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
+        function [obj] = wheelMode(obj)
+            write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_CONTROL_MODE, obj.WHEEL_MODE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+        
+        function [obj] = jointMode(obj)
+            write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_CONTROL_MODE, obj.JOINT_MODE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+        
         function [dxl_present_position, obj] = getPos(obj)
             dxl_present_position = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
         function [obj] = setPos(obj, goalPos)
-            write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int32(goalPos), 'uint32'));
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int16(goalPos), 'uint16'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
+        
+        function [dxl_present_speed, obj] = getSpeed(obj)
+            dxl_present_speed = read2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_SPEED);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+        
+        function [obj] = setSpeed(obj, goalSpeed)
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_SPEED, typecast(int16(goalSpeed), 'uint16'));
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+        
         
     end
 end
