@@ -3,6 +3,7 @@ classdef forwardKinematics
     
     properties
         %% Calculated
+        %test
         DH                          % DH Table (Matrix)
         
         %% Transformation Matrices
