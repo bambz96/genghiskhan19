@@ -1,0 +1,36 @@
+classdef inverseKinematics
+    %INVERSEKINEMATICS Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        T_0E
+        
+        q1      = sym('q1'); % deg
+        q2      = sym('q2'); % deg  
+        q3      = sym('q3'); % deg  
+        q4      = sym('q4'); % deg  
+        q5      = sym('q5'); % deg  
+        
+        x       = sym('x'); % mm
+        y       = sym('y'); % mm
+        z       = sym('z'); % mm
+        theta   = sym('theta'); % deg
+        
+    end
+    
+    methods
+        function obj = inverseKinematics(T_0E)
+           obj.T_0E = T_0E;
+        end
+        
+        function obj = symSolveQ(obj)
+           degToRad = pi/180;
+           T_0E_cmnd = [cos(theta*degToRad) -sin(theta*degToRad) 0  x;
+                        sin(theta*degToRad) cos(theta*degToRad)  0  y;
+                        0                   0                    1  z;
+                        0                   0                    0  1];
+        end
+    end
+    
+end
+

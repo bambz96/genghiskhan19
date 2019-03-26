@@ -26,6 +26,7 @@ classdef robot
         
         %% 
         forwardKinematics
+        inverseKinematics
         
         %% Mass Properties
 
@@ -36,6 +37,7 @@ classdef robot
     methods
         function obj = robot()
             obj.forwardKinematics = forwardKinematics(obj); % Initialise Forward Kinematics
+            obj.inverseKinematics = inverseKinematics(obj.forwardKinematics.T_0E); % Initialise Inverse Kinematics
         end
         
         function drawRobot = drawPose(obj,q1,q2,q3,q4,q5)
