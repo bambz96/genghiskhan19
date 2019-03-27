@@ -47,7 +47,9 @@ classdef inverseKinematics
            q3_sol = beta - 90; 
            
            %% q2
-           theta_24 = atan2(obj.z-robot.L1,sqrt(obj.x^2+obj.y^2));
+           P_AW_z = obj.z+robot.L4+robot.LE-robot.L1;
+           P_AW_xy = sqrt(obj.x^2+obj.y^2);
+           theta_24 = atan2(P_AW_z,P_AW_xy);
            theta_24 = radToDeg*theta_24;
            q2_sol = -(90-theta_24-alpha);
           
