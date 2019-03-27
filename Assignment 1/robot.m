@@ -5,8 +5,8 @@ classdef robot
     properties      
         %% Link Lengths
         L1      = 200;   % mm        % Origin to joint 1
-        L2      = 250;	 % mm        % Joint 1+2 to Joint 3
-        L3      = 250;	 % mm        % Joint 3 to Joint 4
+        L2      = 200;	 % mm        % Joint 1+2 to Joint 3
+        L3      = 200;	 % mm        % Joint 3 to Joint 4
         L4      = 56;	 % mm        % Joint 4 to Joint 5
         LE      = 82;	 % mm        % Joint 5 to End Effector
    
@@ -20,8 +20,8 @@ classdef robot
         %% Joint limits
         j1_lim = [-90 90];
         j2_lim = [-90 30];
-        j3_lim = [-80 60];
-        j4_lim = [-85 90];
+        j3_lim = [-60 60];
+        j4_lim = [-85 180];
         j5_lim = [-180 180];
         
         %% 
