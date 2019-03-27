@@ -74,6 +74,7 @@ classdef roboDraw
             hold on
             grid on
             daspect([1 1 1])
+            view(0,0)
             obj.plotJoints(obj)
             obj.plotLinks(obj)
             

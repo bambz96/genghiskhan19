@@ -5,7 +5,7 @@ jenghisKhan = robot;
 
 plot = jenghisKhan.drawPose(0,0,0,0,0);
 
-
+view(0,0)
 hold on
 %% Reachable Workspace
 for q2 = jenghisKhan.j2_lim(1):5:jenghisKhan.j2_lim(2)
