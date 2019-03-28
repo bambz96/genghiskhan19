@@ -37,7 +37,7 @@ classdef inverseKinematics
            q1_sol = radToDeg*q1_sol; 
            
            %% q3
-           L_b = sqrt(obj.x^2+obj.y^2+(obj.z+robot.L4+robot.LE-robot.L1)^2);
+           L_b = sqrt(obj.x^2+obj.y^2+(obj.z+robot.L4-robot.L1)^2);
            
            % Cosine rule
            beta = obj.cosineRule(L_b,robot.L2,robot.L3);
@@ -47,7 +47,7 @@ classdef inverseKinematics
            q3_sol = beta - 90; 
            
            %% q2
-           P_AW_z = obj.z+robot.L4+robot.LE-robot.L1;
+           P_AW_z = obj.z+robot.L4-robot.L1;
            P_AW_xy = sqrt(obj.x^2+obj.y^2);
            theta_24 = atan2(P_AW_z,P_AW_xy);
            theta_24 = radToDeg*theta_24;

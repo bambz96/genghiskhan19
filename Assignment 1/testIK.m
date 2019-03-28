@@ -3,7 +3,7 @@ clear all
 
 jenghisKhan = robot;
 
-x = 350;
+x = 500;
 y = 40;
 z = 20;
 theta = 0; 

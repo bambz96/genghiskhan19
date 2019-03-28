@@ -65,10 +65,6 @@ classdef roboDraw
             obj.y_j5 = y(5);
             obj.z_j5 = z(5);
             
-            obj.x_jE = x(6);
-            obj.y_jE = y(6);
-            obj.z_jE = z(6);
-            
 %             figure
             % Plot parameters
             hold on
@@ -93,7 +89,6 @@ classdef roboDraw
             surf(xSphere*sphereRad+obj.x_j3, ySphere*sphereRad+obj.y_j3, zSphere*sphereRad+obj.z_j3);
             surf(xSphere*sphereRad+obj.x_j4, ySphere*sphereRad+obj.y_j4, zSphere*sphereRad+obj.z_j4);
             surf(xSphere*sphereRad+obj.x_j5, ySphere*sphereRad+obj.y_j5, zSphere*sphereRad+obj.z_j5);
-            surf(xSphere*sphereRad+obj.x_jE, ySphere*sphereRad+obj.y_jE, zSphere*sphereRad+obj.z_jE);
         end
         
         function plotLinks(obj)
@@ -111,9 +106,7 @@ classdef roboDraw
             
             % Link 4
            plot3([obj.x_j4 obj.x_j5],[obj.y_j4 obj.y_j5],[obj.z_j4 obj.z_j5],'k','LineWidth',2)
-           
-           % Link 5
-           plot3([obj.x_j5 obj.x_jE],[obj.y_j5 obj.y_jE],[obj.z_j5 obj.z_jE],'k','LineWidth',2)
+
            
            % End Effector
 %            x_jE_a 

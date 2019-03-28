@@ -7,8 +7,7 @@ classdef robot
         L1      = 200;   % mm        % Origin to joint 1
         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
         L3      = 200;	 % mm        % Joint 3 to Joint 4
-        L4      = 56;	 % mm        % Joint 4 to Joint 5
-        LE      = 82;	 % mm        % Joint 5 to End Effector
+        L4      = 138;	 % mm        % Joint 4 to End effector
    
         %% Home Position offset
         q1_O    = 0;    % deg       % q1 offset
