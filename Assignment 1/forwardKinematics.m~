@@ -19,7 +19,7 @@ classdef forwardKinematics
         T_03
         T_04
         T_0E
-        T_0W
+        T_4W
         
         %% Vectors
         r01_0 
@@ -40,8 +40,6 @@ classdef forwardKinematics
         function obj = forwardKinematics(robot)
             % Generate DH Table
             obj.DH = generateDH(obj,robot);
-            
-            obj.Wrist = generateWrist(obj, robot);
             
             % Calculate transforms
             generateTransforms(obj, robot);
@@ -73,7 +71,7 @@ classdef forwardKinematics
             obj.T_03 = simplify(obj.T_03);
             obj.T_04 = simplify(obj.T_04);
             obj.T_0E = simplify(obj.T_0E);
-            obj.T_0W = simplify(obj.T_0W);
+            obj.T_OW = simplify(obj.T_0W);
             
             obj.r01_0 = [0;0;robot.L1];
             obj.r12_1 = [0;0;0];
@@ -92,7 +90,7 @@ classdef forwardKinematics
         end
         
         function Wrist = generateWrist(obj, robot)
-            Wrist = [0 90 0 (obj.q5 + robot.q5_O)];
+            Wrist = [0 90 0 (obj.q5 + robot.q5_0)];
         end
             
         
