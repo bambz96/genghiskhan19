@@ -35,8 +35,12 @@ verticies = [c1, c2, c3, c4, c5, c6, c7, c8];
 %% Make and test robot
 
 Jenghis = robot;
+i = 1;
+Q_sol = zeros(8,5);
 
 for v = verticies
     [q1,q2,q3,q4,q5] = Jenghis.inverseKinematics.findQ(v(1), v(2), v(3), 0);
+    Q_sol(i,:) = [q1,q2,q3,q4,q5];
+    i = i + 1;
     Jenghis.drawPose(q1,q2,q3,q4,q5);
 end
