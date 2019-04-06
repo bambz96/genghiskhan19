@@ -1,4 +1,4 @@
-classdef XL320
+classdef XL320 < handle
     %XL320 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -14,7 +14,6 @@ classdef XL320
         ADDR_PRO_PRESENT_VOLTAGE    = 45
         ADDR_PRO_PRESENT_TEMP       = 46
         
-        
         PROTOCOL_VERSION            = 2.0
         
         DXL_ID
@@ -22,8 +21,8 @@ classdef XL320
         
         TORQUE_ENABLE               = 1;            % Value for enabling the torque
         TORQUE_DISABLE              = 0;            % Value for disabling the torque
-        DXL_MINIMUM_POSITION_VALUE  = 100;          % Dynamixel will rotate between this value
-        DXL_MAXIMUM_POSITION_VALUE  = 1000;         % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+        DXL_MINIMUM_POSITION_VALUE  = 0;            % Dynamixel will rotate between this value
+        DXL_MAXIMUM_POSITION_VALUE  = 1023;         % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
         DXL_MOVING_STATUS_THRESHOLD = 20;           % Dynamixel moving status threshold
         WHEEL_MODE                  = 1;            % Wheel mode (Speed control)
         JOINT_MODE                  = 2;            % Joint mode (Position control)
@@ -34,6 +33,8 @@ classdef XL320
         dxl_error                   = 0;            % Dynamixel error
         dxl_present_position        = 0;            % Present position
         dxl_comm_result             = 0;            % Communication result
+        
+        degreeConversionConstant    = 0.29;        % Degrees
     end
     
     methods
@@ -67,13 +68,16 @@ classdef XL320
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
-        function [dxl_present_position, obj] = getPos(obj)
-            dxl_present_position = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
+        function [pos, obj] = getPos(obj)
+            presentPos = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            pos = presentPos*obj.degreeConversionConstant;
         end
         
-        function [obj] = setPos(obj, goalPos)
-            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int16(goalPos), 'uint16'));
+        function [obj] = setPos(obj, goalPos) % goalPos in degrees
+            obj.jointMode; 
+            goalPosCommand = floor(goalPos/obj.degreeConversionConstant); % Convert to motor command
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int16(goalPosCommand), 'uint16'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
@@ -83,11 +87,11 @@ classdef XL320
         end
         
         function [obj] = setSpeed(obj, goalSpeed)
+            obj.torqueEnable;
             write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_SPEED, typecast(int16(goalSpeed), 'uint16'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
-        
-        
+
     end
 end
 

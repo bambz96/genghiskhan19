@@ -1,4 +1,4 @@
-classdef XL430
+classdef XL430 < handle
     %XL430 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -24,6 +24,7 @@ classdef XL430
         TORQUE_DISABLE              = 0;            % Value for disabling the torque
         DXL_MINIMUM_POSITION_VALUE  = 0;            % Dynamixel will rotate between this value
         DXL_MAXIMUM_POSITION_VALUE  = 4095;         % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+        
         DXL_MOVING_STATUS_THRESHOLD = 20;           % Dynamixel moving status threshold
         VELOCITY_CONTROL            = 1;            % Wheel mode (Speed control)
         POSITION_CONTROL            = 3;            % Joint mode (Position control)
@@ -34,11 +35,14 @@ classdef XL430
         dxl_error                   = 0;            % Dynamixel error
         dxl_present_position        = 0;            % Present position
         dxl_comm_result             = 0;            % Communication result
+        
+        degreeConversionConstant    = 0.088;        % Degrees
+        velocityConversionConstant  = 0.229         % RPM 
     end
     
     methods
-        function obj = XL320(ID, port_num)
-            %XL320 Construct an instance of this class
+        function obj = XL430(ID, port_num)
+            %XL430 Construct an instance of this class
             obj.port_num = port_num;
             obj.DXL_ID = ID;
             obj.dxl_comm_result = obj.COMM_TX_FAIL;
@@ -71,26 +75,31 @@ classdef XL430
             obj.torqueEnable;
         end
         
-        function [dxl_present_position, obj] = getPos(obj)
-            dxl_present_position = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
+        function [pos, obj] = getPos(obj)
+            presentPos = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            pos = presentPos*obj.degreeConversionConstant;
+        end
+        
+        function [obj] = setPos(obj, goalPos) % goalPos in degrees
+            obj.positionMode; 
+            goalPosCommand = floor(goalPos/obj.degreeConversionConstant); % Convert to motor command
+            write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int32(goalPosCommand), 'uint32'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
-        function [obj] = setPos(obj, goalPos)
-            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int16(goalPos), 'uint16'));
+        function [velocity, obj] = getVelocity(obj)
+            presentSpeed = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_VELOCITY);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            velocity = presentSpeed*obj.velocityConversionConstant; 
         end
         
-        function [dxl_present_speed, obj] = getSpeed(obj)
-            dxl_present_speed = read2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_VELOCITY);
+        function [obj] = setVelocity(obj, goalVelocity) % In RPM
+            obj.torqueEnable;
+            goalVelocityCommand = floor(goalVelocity/obj.velocityConversionConstant);
+            write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_VELOCITY, typecast(int32(goalVelocityCommand), 'uint32'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
-        
-        function [obj] = setSpeed(obj, goalSpeed)
-            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_SPEED, typecast(int16(goalSpeed), 'uint16'));
-            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
-        end
-        
         
     end
 end

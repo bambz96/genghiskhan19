@@ -1,6 +1,7 @@
 classdef jengaMain
-    %STACKJENGA Summary of this class goes here
-    %   Detailed explanation goes here
+    %   JENGAMAIN Main Class for stacking a jenga tower
+    %   Robot and tower objects are instantiated here. This class also
+    %   controls user input to change tower location
     
     properties
         robot
@@ -14,16 +15,25 @@ classdef jengaMain
     methods
         function obj = jengaMain()
             %STACKJENGA Construct an instance of this class
-            %   Detailed explanation goes here
             obj.robot = robot();
             obj.tower = jengaTower();
         end
         
-        function outputArg = stackTower(x,y,theta)
-            %METHOD1 Stac
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+        function stackTower(x,y,theta)
+            %METHOD1 Stack tower at a particular location and orientation
+            obj.jengaX = x;
+            obj.jengaY = y; 
+            obj.jengaTheta = theta; 
         end
+        
+        function testBot(obj)
+            obj.robot.setRobot(180,180,180,180,180)
+            pause(2); 
+            obj.robot.setRobot(225,225,225,225,45);
+            pause(2);
+            obj.robot.setRobot(0,90,0,90,0);
+            pause(2);
+            obj.robot.setRobot(-45,0,0,90,0);
     end
 end
 

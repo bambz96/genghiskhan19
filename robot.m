@@ -39,11 +39,16 @@ classdef robot
         function obj = robot()
             obj.forwardKinematics = forwardKinematics(obj); % Initialise Forward Kinematics
             obj.inverseKinematics = inverseKinematics(obj.forwardKinematics.T_0E, obj); % Initialise Inverse Kinematics
+            obj.motorControl = motorControl();
         end
         
         function drawRobot = drawPose(obj,q1,q2,q3,q4,q5)
             [x,y,z] = obj.forwardKinematics.findCoordinates(q1,q2,q3,q4,q5);
             drawRobot = roboDraw(x,y,z);
+        end
+        
+        function setRobot(obj,q1,q2,q3,q4,q5)
+            obj.motorControl.setAngles(q1,q2,q3,q4,q5);
         end
     end
    

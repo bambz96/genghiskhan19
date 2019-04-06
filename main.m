@@ -3,7 +3,7 @@ clc, clear all, close all
 initLib; % Load Libraries
 
 %% Open Port and set Baud Rate
-BAUDRATE = 57600;
+BAUDRATE = 1000000;
 DEVICENAME = 'COM3';
 
 initPort;
@@ -15,12 +15,12 @@ packetHandler();
 %% Motor Initialisation
 motor1_ID = 1; 
 
-motor1 = XL320(motor1_ID, port_num); 
+motor1 = XL430(motor1_ID, port_num); 
 motor1.torqueEnable;
 
 %% Routine
 
-speed1 = 800;
+speed1 = 30;
 speed2 = 500;
 speed3 = 1523;
 
@@ -28,11 +28,32 @@ targetSpeed = [];
 measuredSpeed = [];
 time = [];
 
-motor1.torqueDisable;
-motor1.wheelMode;
-motor1.torqueEnable;
+motor1.positionMode; 
+motor1.setPos(180);
+pause(2);
+motor1.getPos
+motor1.setPos(135);
+pause(2);
+motor1.getPos
+motor1.setPos(90);
+pause(2); 
+motor1.getPos
+motor1.setPos(180);
+pause(2); 
+motor1.getPos
 
-motor1.setSpeed(speed1);
+% motor1.torqueDisable;
+% motor1.velocityMode;
+% motor1.torqueEnable;
+% 
+% motor1.setVelocity(speed1);
+% motor1.getVelocity
+% pause(3)
+% motor1.getVelocity
+% pause(3)
+% motor1.getVelocity
+% pause(10)
+% motor1.getVelocity
 % tic
 % while toc < 15
 %     targetSpeed = [targetSpeed speed1];
