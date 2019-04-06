@@ -1,0 +1,77 @@
+classdef motorControl
+    %MOTORCONTROL Handles motor control
+    %   Initialisation of motors, and sending and receiving commands
+    
+    properties
+        BAUDRATE
+        DEVICENAME
+        lib_name
+   
+        motor1_430
+        motor2_430
+        motor3_430
+        motor4_320
+        motor5_320
+        motorE_320
+    end
+    
+    methods
+        function obj = motorControl()
+            %MOTORCONTROL Construct an instance of this class
+            %   Detailed explanation goes here
+            startConnection();
+            
+            
+        end
+        
+        function startConnection(obj)
+            obj.lib_name = '';
+            
+            if strcmp(computer, 'PCWIN')
+                obj.lib_name = 'dxl_x86_c';
+            elseif strcmp(computer, 'PCWIN64')
+                obj.lib_name = 'dxl_x64_c';
+            elseif strcmp(computer, 'GLNX86')
+                obj.lib_name = 'libdxl_x86_c';
+            elseif strcmp(computer, 'GLNXA64')
+                obj.lib_name = 'libdxl_x64_c';
+            elseif strcmp(computer, 'MACI64')
+                obj.lib_name = 'libdxl_mac_c';
+            end
+            
+            % Load Libraries
+            if ~libisloaded(lib_name)
+                [notfound, warnings] = loadlibrary(lib_name, 'dynamixel_sdk.h', 'addheader', 'port_handler.h', 'addheader', 'packet_handler.h');
+            end
+            obj.lib_name = lib_name;
+
+            %% Open Port and set Baud Rate
+            obj.BAUDRATE = 1000000;
+            obj.DEVICENAME = 'COM3';
+            
+            initPort;
+            initBAUD;
+            
+            % Initialize PacketHandler Structs
+            packetHandler();
+        end
+    end
+    
+    methods(Static)
+        
+        
+        
+        function endConnection(port_num)
+            motor1.torqueDisable;
+            
+            % Close port
+            closePort(port_num);
+            
+            % Unload Library
+            unloadlibrary(lib_name);
+        
+        function 
+            
+        
+end
+
