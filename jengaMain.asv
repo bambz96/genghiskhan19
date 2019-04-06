@@ -1,0 +1,29 @@
+classdef jengaMain
+    %STACKJENGA Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        robot
+        tower
+        
+        jengaX
+        jengaY
+        jengaTheta
+    end
+    
+    methods
+        function obj = jengaMain()
+            %STACKJENGA Construct an instance of this class
+            %   Detailed explanation goes here
+            obj.robot = robot();
+            obj.tower = jengaTower();
+        end
+        
+        function outputArg = stackTower(x,y,theta)
+            %METHOD1 Stac
+            %   Detailed explanation goes here
+            outputArg = obj.Property1 + inputArg;
+        end
+    end
+end
+

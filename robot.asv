@@ -31,7 +31,7 @@ classdef robot
         %% Mass Properties
 
         %% Motor Properties
-        motorControl
+        
 
     end
     
