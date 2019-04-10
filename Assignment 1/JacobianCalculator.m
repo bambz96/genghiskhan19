@@ -6,7 +6,9 @@ Calculation of Robot Jacobian.
 %}
 
 %Unit vector z in reference frame
-z0 = [0;0;1];
+z_hat = [0;0;1];
+
+z0_1 = 
 
 
 
