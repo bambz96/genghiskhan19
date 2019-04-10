@@ -5,7 +5,6 @@ classdef forwardKinematics
         %% Calculated
         %test
         DH                          % DH Table (Matrix)
-        Wrist
         
         %% Transformation Matrices
         T_01
@@ -83,12 +82,10 @@ classdef forwardKinematics
                 0           90          0           (obj.q2+robot.q2_O);
                 robot.L2    0           0           (obj.q3+robot.q3_O);
                 robot.L3    0           0           (obj.q4+robot.q4_O);
-                0           90          robot.L4    (obj.q5+robot.q5_O)];
+                0           90          robot.L4    (obj.q5+robot.q5_O);
+                0           90          0           (obj.q5+robot.q5_O)];
         end
         
-        function Wrist = generateWrist(obj, robot)
-            Wrist = [0 90 0 (obj.q5 + robot.q5_O)];
-        end
             
         
         function [x,y,z] = findCoordinates(obj,q1,q2,q3,q4,q5)
