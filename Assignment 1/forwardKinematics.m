@@ -40,7 +40,6 @@ classdef forwardKinematics
             % Generate DH Table
             obj.DH = generateDH(obj,robot);
             
-            obj.Wrist = generateWrist(obj, robot);
             
             % Calculate transforms
             % Yes it looks a little filthy... but matlab is weird
@@ -50,7 +49,7 @@ classdef forwardKinematics
             obj.T_34 = obj.calculateTransform(obj.DH(4,:));
             obj.T_4E = obj.calculateTransform(obj.DH(5,:));
             %Wrist Frame
-            obj.T_4W = obj.calculateTransform(obj.Wrist);
+            obj.T_4W = obj.calculateTransform(obj.DH(6,:));
             
             obj.T_02 = obj.T_01*obj.T_12;
             obj.T_03 = obj.T_02*obj.T_23;
@@ -77,6 +76,7 @@ classdef forwardKinematics
         end
         
         % Use to initialise DH and modify if necessary
+        % Augmented DH table containing Wrist Frame in last row
         function DH = generateDH(obj,robot)
           DH = [0           0           robot.L1    (obj.q1+robot.q1_O);
                 0           90          0           (obj.q2+robot.q2_O);
@@ -127,20 +127,38 @@ classdef forwardKinematics
             
         end
         
-        function T = getTransform(obj, frameExpressed, frameFrom)
+        function T = getTransform(obj, frameExpressed, frameOf)
             %note this transform is only valid for forward transformations
             T = eye(4);
-            for frame = (frameExpressed + 1):frameFrom
+            for frame = (frameExpressed + 1):frameOf
                 T = T*(obj.calculateTransform(obj.DH(frame,:)));
             end
         end
         
-        function R = getRotation(obj, frameExpressed, frameFrom)
+        function R = getRotation(obj, frameExpressed, frameOf)
             %only valid for forward rotations
-            T = obj.getTransform(frameExpressed, frameFrom);
+            T = obj.getTransform(frameExpressed, frameOf);
             R = T(1:3, 1:3);
         end
         
+        function P = getPosition(obj, frameExpressed, frameOf)
+            %only valid for forward transformations
+            T = obj.getTransform(frameExpressed, frameOf);
+            P = T(1:3,4);
+        end
+        
+        
+        % maybe use this later... legit just here to add robustness...
+        % /add a little bit of readability...
+        function frame = handleFrames(frameName)
+            if frameName == W
+                frame = 6;
+            elseif frameName == E
+                frame = 5;
+            else 
+                frame = frameName;
+            end 
+        end
         
     end
     
