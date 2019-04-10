@@ -44,13 +44,7 @@ classdef forwardKinematics
             obj.Wrist = generateWrist(obj, robot);
             
             % Calculate transforms
-            generateTransforms(obj, robot);
-            
-            
-
-        end
-        
-        function generateTransforms(obj, robot)
+            % Yes it looks a little filthy... but matlab is weird
             obj.T_01 = obj.calculateTransform(obj.DH(1,:));
             obj.T_12 = obj.calculateTransform(obj.DH(2,:));
             obj.T_23 = obj.calculateTransform(obj.DH(3,:));
@@ -80,6 +74,7 @@ classdef forwardKinematics
             obj.r23_2 = [robot.L2;0;0];
             obj.r34_3 = [robot.L3;0;0];
             obj.r4E_4 = [0;-robot.L4;0];
+            
         end
         
         % Use to initialise DH and modify if necessary
@@ -134,6 +129,22 @@ classdef forwardKinematics
             z(5) = coordE(3);
             
         end
+        
+        function T = getTransform(obj, frameExpressed, frameFrom)
+            %note this transform is only valid for forward transformations
+            T = eye(4);
+            for frame = (frameExpressed + 1):frameFrom
+                T = T*(obj.calculateTransform(obj.DH(frame,:)));
+            end
+        end
+        
+        function R = getRotation(obj, frameExpressed, frameFrom)
+            %only valid for forward rotations
+            T = obj.getTransform(frameExpressed, frameFrom);
+            R = T(1:3, 1:3);
+        end
+        
+        
     end
     
     methods(Static)
