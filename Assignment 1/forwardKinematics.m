@@ -5,6 +5,7 @@ classdef forwardKinematics
         %% Calculated
         %test
         DH                          % DH Table (Matrix)
+        Wrist
         
         %% Transformation Matrices
         T_01
@@ -40,6 +41,7 @@ classdef forwardKinematics
             % Generate DH Table
             obj.DH = generateDH(obj,robot);
             
+            obj.Wrist = generateWrist(obj, robot);
             
             % Calculate transforms
             % Yes it looks a little filthy... but matlab is weird
@@ -49,7 +51,7 @@ classdef forwardKinematics
             obj.T_34 = obj.calculateTransform(obj.DH(4,:));
             obj.T_4E = obj.calculateTransform(obj.DH(5,:));
             %Wrist Frame
-            obj.T_4W = obj.calculateTransform(obj.DH(6,:));
+            obj.T_4W = obj.calculateTransform(obj.Wrist);
             
             obj.T_02 = obj.T_01*obj.T_12;
             obj.T_03 = obj.T_02*obj.T_23;
@@ -76,14 +78,16 @@ classdef forwardKinematics
         end
         
         % Use to initialise DH and modify if necessary
-        % Augmented DH table containing Wrist Frame in last row
-        function DH = generateDH(obj,robot)
+        function DH = generateDH(obj, robot)
           DH = [0           0           robot.L1    (obj.q1+robot.q1_O);
                 0           90          0           (obj.q2+robot.q2_O);
                 robot.L2    0           0           (obj.q3+robot.q3_O);
                 robot.L3    0           0           (obj.q4+robot.q4_O);
-                0           90          robot.L4    (obj.q5+robot.q5_O);
-                0           90          0           (obj.q5+robot.q5_O)];
+                0           90          robot.L4    (obj.q5+robot.q5_O)];
+        end
+        
+        function Wrist = generateWrist(obj, robot)
+            Wrist = [0  90  0   (obj.q5+robot.q5_O)];
         end
         
             
@@ -129,9 +133,19 @@ classdef forwardKinematics
         
         function T = getTransform(obj, frameExpressed, frameOf)
             %note this transform is only valid for forward transformations
-            T = eye(4);
-            for frame = (frameExpressed + 1):frameOf
-                T = T*(obj.calculateTransform(obj.DH(frame,:)));
+            if frameOf == 'E' %Handle input of E
+                frameOf = 5;
+            elseif frameOf == 'W' 
+                %Handle Wrist Frame, ignoring End effector frame
+                T = getTransform(obj, frameExpressed, 4);
+                T = T*obj.calculateTransform(obj.Wrist);
+                return;
+            else
+                % regular iterative calculation
+                T = eye(4);
+                for frame = (frameExpressed + 1):frameOf
+                    T = T*(obj.calculateTransform(obj.DH(frame,:)));
+                end
             end
         end
         
@@ -148,17 +162,18 @@ classdef forwardKinematics
         end
         
         
-        % maybe use this later... legit just here to add robustness...
-        % /add a little bit of readability...
-        function frame = handleFrames(frameName)
-            if frameName == W
-                frame = 6;
-            elseif frameName == E
-                frame = 5;
-            else 
-                frame = frameName;
-            end 
-        end
+%         maybe use this later... legit just here to add robustness...
+%         /add a little bit of readability...
+%         Nah... there's a better way to do this
+%         function frame = handleFrames(frameName)
+%             if frameName == W
+%                 frame = 6;
+%             elseif frameName == E
+%                 frame = 5;
+%             else 
+%                 frame = frameName;
+%             end 
+%         end
         
     end
     

@@ -2,7 +2,7 @@
 Author: Assignment Group 20
 William Ellett 586703
 
-Calculation of Robot Jacobian. 
+Assignment2...
 %}
 jenghis = robot;
 
@@ -24,7 +24,6 @@ for joint = 1:DoF
     P = R*Position(jenghis, joint, Wrist);
 
     Jacobian = [Jacobian, jacobianRevolute(z, P)];
-    Jacobian = Simplify(Jacobian)
 end
 
 
@@ -45,4 +44,3 @@ function Ji = jacobianRevolute(zi, Pi)
   Ji = cross(zi, Pi);
   Ji= [Ji;zi];
 end
-
