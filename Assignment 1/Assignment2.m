@@ -15,8 +15,8 @@ DoF = 5;
 z_hat = [0;0;1];
 
 %% Actual Calculation
-% Calculates each rowof the Jacobian and places it in array
-joint = 1;
+% Calculates each row of the Jacobian and places it in array
+joint = 5;
 
 R = Rotation(jenghis, 0, joint);
 z = R*z_hat

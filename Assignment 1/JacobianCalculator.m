@@ -15,16 +15,15 @@ z_hat = [0;0;1];
 %Initialze Jacobian
 Jacobian = [];
 
-Wrist = 6;
 
 % Calculates each rowof the Jacobian and places it in array
 for joint = 1:DoF
     R = Rotation(jenghis, 0, joint);
     z = R*z_hat;
-    P = R*Position(jenghis, joint, Wrist);
+    P = R*Position(jenghis, joint, 'W');
 
     Jacobian = [Jacobian, jacobianRevolute(z, P)];
-    Jacobian = Simplify(Jacobian)
+    Jacobian = simplify(Jacobian);
 end
 
 
