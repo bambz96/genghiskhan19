@@ -162,19 +162,6 @@ classdef forwardKinematics
         end
         
         
-%         maybe use this later... legit just here to add robustness...
-%         /add a little bit of readability...
-%         Nah... there's a better way to do this
-%         function frame = handleFrames(frameName)
-%             if frameName == W
-%                 frame = 6;
-%             elseif frameName == E
-%                 frame = 5;
-%             else 
-%                 frame = frameName;
-%             end 
-%         end
-        
     end
     
     methods(Static)
