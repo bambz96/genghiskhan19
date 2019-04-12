@@ -28,7 +28,7 @@ for joint = 1:DoF
 
 end
 %Final Result
-Jacobian = simplify(Jacobian)
+Jacobian = simplify(Jacobian);
 
 
 %% Helper/Wrapper functions

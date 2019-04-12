@@ -131,6 +131,10 @@ classdef forwardKinematics
             
         end
         
+        
+        % Accessor function to find the transform of one frame epressed in
+        % another. Only valid for FORWARD transfroms
+        % Also handles use of frames E and W for end effector and wrist
         function T = getTransform(obj, frameExpressed, frameOf)
             %note this transform is only valid for forward transformations
             if frameOf == 'E' %Handle input of E
@@ -149,12 +153,16 @@ classdef forwardKinematics
             end
         end
         
+        % Accesor for forward rotations between frames, 
+        % Frame handling is built into getTransform
         function R = getRotation(obj, frameExpressed, frameOf)
             %only valid for forward rotations
             T = obj.getTransform(frameExpressed, frameOf);
             R = T(1:3, 1:3);
         end
         
+        % Accesor for position vectors between frames, 
+        % Frame handling is built into getTransform
         function P = getPosition(obj, frameExpressed, frameOf)
             %only valid for forward transformations
             T = obj.getTransform(frameExpressed, frameOf);

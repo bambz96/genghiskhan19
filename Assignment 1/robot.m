@@ -2,7 +2,10 @@ classdef robot
     %ROBOT Functions and properties of the robot 
     %   Detailed explanation goes here
     
-    properties      
+    properties    
+        DoF = 5; %Degrees of Freedom
+        
+        
         %% Link Lengths
 %         L1      = 200;   % mm        % Origin to joint 1
 %         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
@@ -31,6 +34,7 @@ classdef robot
         %% 
         forwardKinematics
         inverseKinematics
+        differentialKinematics
         
         %% Mass Properties
 
@@ -42,6 +46,7 @@ classdef robot
         function obj = robot()
             obj.forwardKinematics = forwardKinematics(obj); % Initialise Forward Kinematics
             obj.inverseKinematics = inverseKinematics(obj.forwardKinematics.T_0E, obj); % Initialise Inverse Kinematics
+            obj.differentialKinematics = differentialKinematics(obj);
         end
         
         function drawRobot = drawPose(obj,q1,q2,q3,q4,q5)
