@@ -1,4 +1,4 @@
-classdef robot
+classdef robot < handle
     %ROBOT Functions and properties of the robot 
     %   Detailed explanation goes here
     

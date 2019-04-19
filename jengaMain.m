@@ -1,4 +1,4 @@
-classdef jengaMain
+classdef jengaMain < handle
     %   JENGAMAIN Main Class for stacking a jenga tower
     %   Robot and tower objects are instantiated here. This class also
     %   controls user input to change tower location
