@@ -2,29 +2,33 @@
 Author: Assignment Group 20
 William Ellett 586703
 
-Assignment2...
+Assignment2:
+This script exists entirely to facilitate printing components of the 
+Jacobian, for the purpose of documentation 
+
+Usage: 
 %}
 %% Set up
 jenghis = robot;
-
-DoF = 5;
-
 
 
 %Unit vector z in reference frame
 z_hat = [0;0;1];
 
 %% Actual Calculation
-% Calculates each rowof the Jacobian and places it in array
-joint = 1;
+% Calculates each row of the Jacobian individually
+joint = 5;
 
 R = Rotation(jenghis, 0, joint);
-z = R*z_hat
-P = R*Position(jenghis, joint, 'W');
-P = simplify(P)
+
+z = R*z_hat;        %Unit vector
+z = simplify(z);
+
+P = R*Position(jenghis, joint, 'W');    %Position vector
+P = simplify(P);
 
 Jacobian_i = jacobianRevolute(z, P);
-Jacobian_i = simplify(Jacobian_i)  
+Jacobian_i = simplify(Jacobian_i);  
 
 %% Wrappper/Helper functions.
 

@@ -1,0 +1,5 @@
+
+sin(Q_1)sin(Q_5) + cos(Q_5)(cos(Q_1 + Q_2 + Q_3 + Q_4))/2 + cos(Q_2 - Q_1 + Q_3 + Q_4))/2) & cos(Q_5)sin(Q_1) - sin(Q_5)(cos(Q_1 + Q_2 + Q_3 + Q_4))/2 + cos(Q_2 - Q_1 + Q_3 + Q_4))/2)&sin(Q_1 + Q_2 + Q_3 + Q_4))/2 + sin(Q_2 - Q_1 + Q_3 + Q_4))/2&2cos(Q_1)(100cos(Q_2 + Q_3)) - 100sin(Q_2) + 69sin(Q_2 + Q_3 + Q_4)))\\
+cos(Q_5)(sin(Q_1 + Q_2 + Q_3 + Q_4))/2 - sin(Q_2 - Q_1 + Q_3 + Q_4))/2) - cos(Q_1)sin(Q_5)&- cos(Q_1)cos(Q_5) - sin(Q_5)(sin(Q_1 + Q_2 + Q_3 + Q_4))/2 - sin(Q_2 - Q_1 + Q_3 + Q_4))/2)&cos(Q_2 - Q_1 + Q_3 + Q_4))/2 - cos(Q_1 + Q_2 + Q_3 + Q_4))/2&2sin(Q_1)(100cos(Q_2 + Q_3)) - 100sin(Q_2) + 69sin(Q_2 + Q_3 + Q_4)))\\
+cos(Q_5)sin(Q_2 + Q_3 + Q_4))&-sin(Q_5)sin(Q_2 + Q_3 + Q_4))&-cos(Q_2 + Q_3 + Q_4))&200sin(Q_2 + Q_3)) + 200cos(Q_2) - 138cos(Q_2 + Q_3 + Q_4)) + 200\\
+0 & 0 & 0 & 1
