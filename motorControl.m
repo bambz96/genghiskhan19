@@ -29,8 +29,8 @@ classdef motorControl < handle
         function obj = motorControl()
             %MOTORCONTROL Construct an instance of this class
             %   Detailed explanation goes here
-            obj.startConnection();
-            obj.startMotors();
+%             obj.startConnection();
+%             obj.startMotors();
         end
         
         function startConnection(obj)
@@ -91,21 +91,30 @@ classdef motorControl < handle
         end
         
         function startMotors(obj)
-            obj.motor1 = XL430(obj.motor1_ID,obj.port_num);
-            obj.motor2 = XL430(obj.motor2_ID,obj.port_num);
-            %obj.motor3 = XL430(obj.motor3_ID,obj.port_num);
-            obj.motor4 = XL320(obj.motor4_ID,obj.port_num);
-            obj.motor5 = XL320(obj.motor5_ID,obj.port_num);
-            %obj.motorE = XL320(obj.motorE_ID,obj.port_num);
+            obj.motor1 = XL430(obj.motor1_ID,obj.port_num, 0, 360);
+            obj.motor2 = XL430(obj.motor2_ID,obj.port_num, 0, 360);
+            obj.motor3 = XL430(obj.motor3_ID,obj.port_num, 0, 360);
+            obj.motor4 = XL320(obj.motor4_ID,obj.port_num, 0, 300);
+            obj.motor5 = XL320(obj.motor5_ID,obj.port_num, 0, 300);
+            obj.motorE = XL320(obj.motorE_ID,obj.port_num, 0, 300);
+        end
+        
+        function enableTorque(obj)
+            obj.motor1.torqueEnable;
+            obj.motor2.torqueEnable;
+            obj.motor3.torqueEnable;
+            obj.motor4.torqueEnable;
+            obj.motor5.torqueEnable;
+            obj.motorE.torqueEnable;
         end
         
         function endConnection(obj)
             obj.motor1.torqueDisable;
             obj.motor2.torqueDisable;
-%            obj.motor3.torqueDisable;
+            obj.motor3.torqueDisable;
             obj.motor4.torqueDisable;
             obj.motor5.torqueDisable;
-%            obj.motorE.torqueDisable;
+            obj.motorE.torqueDisable;
             
             % Close port
             calllib(obj.lib_name, 'closePort', obj.port_num);
@@ -117,7 +126,7 @@ classdef motorControl < handle
         function setAngles(obj,q1,q2,q3,q4,q5)
             obj.motor1.setPos(q1);
             obj.motor2.setPos(q2);
-            %obj.motor3.setPos(q3);
+            obj.motor3.setPos(q3);
             obj.motor4.setPos(q4);
             obj.motor5.setPos(q5);
         end

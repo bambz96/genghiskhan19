@@ -14,6 +14,9 @@ classdef XL430 < handle
         ADDR_PRO_PRESENT_VOLTAGE    = 144
         ADDR_PRO_PRESENT_TEMP       = 146
         
+        ADDR_PRO_SET_MIN_POS        = 52
+        ADDR_PRO_SET_MAX_POS        = 48
+        
         
         PROTOCOL_VERSION            = 2.0
         
@@ -41,12 +44,15 @@ classdef XL430 < handle
     end
     
     methods
-        function obj = XL430(ID, port_num)
-            %XL430 Construct an instance of this class
+        function obj = XL430(ID, port_num, min_angle, max_angle)
+            % XL430 Construct an instance of this class
+            % min_angle and max_angle in degrees
             obj.port_num = port_num;
             obj.DXL_ID = ID;
             obj.dxl_comm_result = obj.COMM_TX_FAIL;
-            
+            obj.DXL_MINIMUM_POSITION_VALUE = floor(min_angle/obj.degreeConversionConstant);
+            obj.DXL_MAXIMUM_POSITION_VALUE = floor(max_angle/obj.degreeConversionConstant);
+            obj.positionMode();
         end
         
         function [obj] = torqueEnable(obj)
@@ -69,10 +75,18 @@ classdef XL430 < handle
         end
         
         function [obj] = positionMode(obj)
+            % requires torque disabled, do not enable after
             obj.torqueDisable;
+            % set position control
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_OPERATING_MODE, obj.POSITION_CONTROL);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
-            obj.torqueEnable;
+            % set min position limit
+            write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_SET_MIN_POS, obj.DXL_MINIMUM_POSITION_VALUE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            % set max position limit
+            write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_SET_MAX_POS, obj.DXL_MAXIMUM_POSITION_VALUE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            % obj.torqueEnable;
         end
         
         function [pos, obj] = getPos(obj)
@@ -82,7 +96,7 @@ classdef XL430 < handle
         end
         
         function [obj] = setPos(obj, goalPos) % goalPos in degrees
-            obj.positionMode; 
+%             obj.positionMode; % don't disable/enable torque every command
             goalPosCommand = floor(goalPos/obj.degreeConversionConstant); % Convert to motor command
             write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_POSITION, typecast(int32(goalPosCommand), 'uint32'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
