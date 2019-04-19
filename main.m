@@ -13,9 +13,9 @@ initBAUD;
 packetHandler();
 
 %% Motor Initialisation
-motor1_ID = 1; 
+motor2_ID = 2; 
 
-motor1 = XL430(motor1_ID, port_num); 
+motor1 = XL430(motor2_ID, port_num); 
 motor1.torqueEnable;
 
 %% Routine

@@ -48,8 +48,10 @@ classdef robot < handle
         end
         
         function setRobot(obj,q1,q2,q3,q4,q5)
+            % absolute angles
             obj.motorControl.setAngles(q1,q2,q3,q4,q5);
         end
+        
     end
    
 end
