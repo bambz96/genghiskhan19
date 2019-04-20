@@ -141,15 +141,12 @@ classdef motorControl < handle
             unloadlibrary(obj.lib_name);
         end
 
-        function setAngles(obj,q1,q2,q3,q4,q5,speed)
-            % Inputs: q_n - the desired motor angles, degrees
-            %         speed - the speed at which each joint will move, RPM
-        
-            obj.motor1.setPos(obj.motor1_axis*q1+obj.motor1_offset,speed);
-            obj.motor2.setPos(obj.motor2_axis*q2+obj.motor2_offset,speed);
-            obj.motor3.setPos(obj.motor3_axis*q3+obj.motor3_offset,speed);
-%             obj.motor4.setPos(obj.motor4_axis*q4+obj.motor4_offset,speed);
-%             obj.motor5.setPos(obj.motor5_axis*q5+obj.motor5_offset,speed);
+        function setAngles(obj,q1,q2,q3,q4,q5)
+            obj.motor1.setPos(q1+);
+            obj.motor2.setPos(q2);
+            obj.motor3.setPos(q3);
+%             obj.motor4.setPos(q4);
+%             obj.motor5.setPos(q5);
         end
     end
 

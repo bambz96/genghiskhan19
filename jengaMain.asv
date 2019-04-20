@@ -18,22 +18,7 @@ classdef jengaMain < handle
             obj.robot = robot();
             %obj.tower = jengaTower();
             
-            %% Routine
-            obj.robot.enableMotorTorques;
-            obj.robot.homePosition();
-%             pause(2);
-%             obj.robot.setRobotPose(200,0,150,0);
-%             pause(2);
-%             obj.robot.homePosition();
-%             pause(2); 
-%             obj.robot.setRobotPose(250,0,400-138,0);
-%             pause(2);
-%             obj.robot.homePosition();
-%             obj.robot.setRobotPose(150,100,400-138,0);
-            
-            %% End
-            pause(5);
-            obj.robot.motorControl.endConnection;
+            obj.testBot();
         end
         
         function stackTower(x,y,theta)
@@ -43,6 +28,18 @@ classdef jengaMain < handle
 %             obj.jengaTheta = theta; 
         end
         
+        function testBot(obj)
+            
+            obj.robot.setRobotJoints(0,0,0,0,0)
+%             pause(2); 
+%             obj.robot.setRobot(225,225,225,225,225);
+%             pause(2);
+%             obj.robot.setRobot(135,135,135,135,135);
+%             pause(2);
+%             obj.robot.setRobot(180,180,180,180,180);
+            pause(5);
+            obj.robot.motorControl.endConnection;
+        end
     end
 end
 

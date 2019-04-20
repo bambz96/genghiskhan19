@@ -23,10 +23,17 @@ classdef robot < handle
         j4_lim = [-85 180];
         j5_lim = [-180 180];
         
+        %% Joint Speeds
+        j1_speed = 5; % RPM
+        j2_speed = 5; % RPM
+        j3_speed = 5; % RPM
+        j4_speed = 5; % RPM
+        j5_speed = 5; % RPM
+
         %% Maths
         forwardKinematics
         inverseKinematics
-        
+        differentialKinematics
         
         %% Mass Properties
 
@@ -51,9 +58,18 @@ classdef robot < handle
             obj.motorControl.enableTorque;
         end
         
-        function setRobot(obj,q1,q2,q3,q4,q5)
+        function setRobotJoints(obj,q1,q2,q3,q4,q5)
             % absolute angles
-            obj.motorControl.setAngles(q1,q2,q3,q4,q5);
+            obj.motorControl.setAngles(q1,q2,q3,q4,q5,obj.j1_speed);
+        end
+        
+        function setRobotPose(obj,x,y,z,theta)
+            [q1,q2,q3,q4,q5] = obj.inverseKinematics.findQ(x,y,z,theta);
+            obj.motorControl.setAngles(q1,q2,q3,q4,q5,obj.j1_speed);
+        end
+        
+        function homePosition(obj)
+            obj.setRobotJoints(0,0,0,0,0);
         end
         
     end
