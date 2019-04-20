@@ -1,4 +1,4 @@
-classdef inverseKinematics
+classdef inverseKinematics < handle
     %INVERSEKINEMATICS Calculates Inverse Kinematics Stuff
     %   Detailed explanation goes here
     
