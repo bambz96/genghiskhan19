@@ -60,7 +60,7 @@ classdef inverseKinematics
            q5_sol = obj.theta-q1_sol; 
         end
         
-        function [q1, q2, q3, q4, q5] = findQ(obj, x,y,z,theta)
+        function [q1, q2, q3, q4, q5] = findQ(obj,x,y,z,theta)
             q1 = double(subs(obj.q1_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
             q2 = double(subs(obj.q2_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
             q3 = double(subs(obj.q3_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
@@ -68,6 +68,37 @@ classdef inverseKinematics
             q5 = double(subs(obj.q5_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
         end
         
+        function T_2 = findQ2torque(obj,robot,x,y,z,theta_in)
+            L_PL = 100;
+            g = 9.81;
+            m_PL_top = 0.075;
+            m_counter = 0.1;
+            m_PL_bot = 0.085+m_counter;
+            m_3 = 0.054;
+            m_EE_reduct = 0.04+0.02+0.008+0.005;
+            m_4 = 0;%0.063+0.206-m_EE_reduct;
+            
+            [q1_calc, q2_calc, q3_calc, q4_calc, q5_calc] = findQ(obj,x,y,z,theta_in);
+            [x_calc,y_calc,z_calc] = robot.forwardKinematics.findCoordinates(q1_calc,q2_calc,q3_calc,q4_calc,q5_calc);
+            
+            deltaX = x_calc(4) - x_calc(3);
+            deltaY = y_calc(4) - y_calc(3);
+            deltaZ = z_calc(4) - z_calc(3);
+            
+            mag = sqrt(deltaX^2+deltaY^2+deltaZ^2);
+            
+            P_34_u = [deltaX/mag deltaY/mag deltaZ/mag];
+            P_PL_top = [x_calc(3) y_calc(3) z_calc(3)] - L_PL*P_34_u;
+            P_PL_bot = [x_calc(1) y_calc(1) z_calc(1)] - L_PL*P_34_u;
+            
+            T_PL_top = sign(P_PL_top(1))*g*sqrt(P_PL_top(1)^2+P_PL_top(2)^2)*m_PL_top;
+            T_PL_bot = sign(P_PL_bot(1))*g*sqrt(P_PL_bot(1)^2+P_PL_bot(2)^2)*m_PL_bot;
+            T_3 = g*sqrt(x_calc(3)^2+y_calc(3)^2)*m_3;
+            T_E = g*sqrt(x_calc(4)^2+y_calc(4)^2)*m_4;
+            
+            T_2 = -(T_PL_top+T_PL_bot+T_3+T_E)/1000; 
+        end
+            
     end
     
     methods(Static) 
