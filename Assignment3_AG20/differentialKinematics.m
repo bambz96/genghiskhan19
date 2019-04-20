@@ -63,8 +63,5 @@ classdef differentialKinematics
         end
         
     end
-    
 
-    
-   
 end   

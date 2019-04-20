@@ -7,15 +7,15 @@ classdef robot
         
         
         %% Link Lengths
-%         L1      = 200;   % mm        % Origin to joint 1
-%         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
-%         L3      = 200;	 % mm        % Joint 3 to Joint 4
-%         L4      = 100;	 % mm        % Joint 4 to End effector
+        L1      = 200;   % mm        % Origin to joint 1
+        L2      = 200;	 % mm        % Joint 1+2 to Joint 3
+        L3      = 200;	 % mm        % Joint 3 to Joint 4
+        L4      = 100;	 % mm        % Joint 4 to End effector
 
-        L1 = sym('L1');
-        L2 = sym('L2');
-        L3 = sym('L3');
-        L4 = sym('L4');
+%         L1 = sym('L1');
+%         L2 = sym('L2');
+%         L3 = sym('L3');
+%         L4 = sym('L4');
 
         %% Home Position offset
         q1_O    = 0;    % deg       % q1 offset

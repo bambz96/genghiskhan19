@@ -75,8 +75,12 @@ classdef inverseKinematics
             m_counter = 0.1;
             m_PL_bot = 0.085+m_counter;
             m_3 = 0.054;
-            m_EE_reduct = 0.04+0.02+0.008+0.005;
-            m_4 = 0;%0.063+0.206-m_EE_reduct;
+            m_EE_reduct = 0;%0.04+0.02+0.008+0.005;
+            m_4 = 0.063+0.206-m_EE_reduct;
+            
+            K_torsionSpring = 12; % Nmm/deg;
+            Nmm_to_Nm = 1/1000;
+            torsionSpringOffset = 0;
             
             [q1_calc, q2_calc, q3_calc, q4_calc, q5_calc] = findQ(obj,x,y,z,theta_in);
             [x_calc,y_calc,z_calc] = robot.forwardKinematics.findCoordinates(q1_calc,q2_calc,q3_calc,q4_calc,q5_calc);
@@ -96,7 +100,9 @@ classdef inverseKinematics
             T_3 = g*sqrt(x_calc(3)^2+y_calc(3)^2)*m_3;
             T_E = g*sqrt(x_calc(4)^2+y_calc(4)^2)*m_4;
             
-            T_2 = -(T_PL_top+T_PL_bot+T_3+T_E)/1000; 
+            T_torsion = (K_torsionSpring)*(-q2_calc-torsionSpringOffset);
+            
+            T_2 = -(T_PL_top+T_PL_bot+T_3+T_E-T_torsion)*Nmm_to_Nm; 
         end
         
     end
