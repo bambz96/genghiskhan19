@@ -56,7 +56,7 @@ classdef motorControl < handle
        
 
             %% Open Port and set Baud Rate
-            obj.BAUDRATE = 1000000;
+            obj.BAUDRATE = 57600; % 1000000
             obj.DEVICENAME = 'COM3';
             
             % Initialize PortHandler Structs
@@ -92,8 +92,8 @@ classdef motorControl < handle
         
         function startMotors(obj)
             obj.motor1 = XL430(obj.motor1_ID,obj.port_num, 0, 360);
-%             obj.motor2 = XL430(obj.motor2_ID,obj.port_num, 0, 360);
-%             obj.motor3 = XL430(obj.motor3_ID,obj.port_num, 0, 360);
+            obj.motor2 = XL430(obj.motor2_ID,obj.port_num, 0, 360);
+            obj.motor3 = XL430(obj.motor3_ID,obj.port_num, 0, 360);
 %             obj.motor4 = XL320(obj.motor4_ID,obj.port_num, 0, 300);
 %             obj.motor5 = XL320(obj.motor5_ID,obj.port_num, 0, 300);
 %             obj.motorE = XL320(obj.motorE_ID,obj.port_num, 0, 300);
@@ -110,8 +110,8 @@ classdef motorControl < handle
         
         function endConnection(obj)
             obj.motor1.torqueDisable;
-%             obj.motor2.torqueDisable;
-%             obj.motor3.torqueDisable;
+            obj.motor2.torqueDisable;
+            obj.motor3.torqueDisable;
 %             obj.motor4.torqueDisable;
 %             obj.motor5.torqueDisable;
 %             obj.motorE.torqueDisable;
