@@ -47,6 +47,10 @@ classdef robot < handle
             drawRobot = roboDraw(x,y,z);
         end
         
+        function enableMotorTorques(obj)
+            obj.motorControl.enableTorque;
+        end
+        
         function setRobot(obj,q1,q2,q3,q4,q5)
             % absolute angles
             obj.motorControl.setAngles(q1,q2,q3,q4,q5);

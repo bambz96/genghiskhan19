@@ -14,6 +14,9 @@ classdef XL320 < handle
         ADDR_PRO_PRESENT_VOLTAGE    = 45
         ADDR_PRO_PRESENT_TEMP       = 46
         
+        ADDR_PRO_CW_LIMIT           = 6
+        ADDR_PRO_CCW_LIMIT          = 8
+        
         PROTOCOL_VERSION            = 2.0
         
         DXL_ID
@@ -38,12 +41,14 @@ classdef XL320 < handle
     end
     
     methods
-        function obj = XL320(ID, port_num)
+        function obj = XL320(ID, port_num, min_angle, max_angle)
             %XL320 Construct an instance of this class
             obj.port_num = port_num;
             obj.DXL_ID = ID;
             obj.dxl_comm_result = obj.COMM_TX_FAIL;
-            
+            obj.DXL_MINIMUM_POSITION_VALUE = floor(min_angle/obj.degreeConversionConstant);
+            obj.DXL_MAXIMUM_POSITION_VALUE = floor(max_angle/obj.degreeConversionConstant);
+            obj.jointMode();
         end
         
         function [obj] = torqueEnable(obj)
@@ -65,6 +70,12 @@ classdef XL320 < handle
         
         function [obj] = jointMode(obj)
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_CONTROL_MODE, obj.JOINT_MODE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            % min angle (CW)
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_CW_LIMIT, obj.DXL_MINIMUM_POSITION_VALUE);
+            [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
+            % max angle (CCW)
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_CCW_LIMIT, obj.DXL_MAXIMUM_POSITION_VALUE);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
