@@ -62,12 +62,12 @@ classdef forwardKinematics
             
             
             % Simplify expressions
-            obj.T_01 = simplify(obj.T_01);
-            obj.T_02 = simplify(obj.T_02);
-            obj.T_03 = simplify(obj.T_03);
-            obj.T_04 = simplify(obj.T_04);
-            obj.T_0E = simplify(obj.T_0E);
-            obj.T_0W = simplify(obj.T_0W);
+%             obj.T_01 = simplify(obj.T_01);
+%             obj.T_02 = simplify(obj.T_02);
+%             obj.T_03 = simplify(obj.T_03);
+%             obj.T_04 = simplify(obj.T_04);
+%             obj.T_0E = simplify(obj.T_0E); % Slow afffffff
+%             obj.T_0W = simplify(obj.T_0W);
             
             obj.r01_0 = [0;0;robot.L1];
             obj.r12_1 = [0;0;0];
@@ -202,7 +202,7 @@ classdef forwardKinematics
                      0              0           0       1];
             
             T = Dx*Rx*Dz*Rz;
-            T = simplify(T);
+%             T = simplify(T);
         end
         
 

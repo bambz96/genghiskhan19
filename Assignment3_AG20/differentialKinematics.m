@@ -12,20 +12,29 @@ classdef differentialKinematics
     
    %%  Properties
     properties 
-        Jacobian 
+        Jacobian
+        invJacobian
         Frame = 'W';
+        robot
         
         z_hat = [0;0;1];
+        
+        %% Symbolic Joint States
+        q1      = sym('q1'); % deg
+        q2      = sym('q2'); % deg  
+        q3      = sym('q3'); % deg  
+        q4      = sym('q4'); % deg  
+        q5      = sym('q5'); % deg  
     end
     
     %% Methods
     methods
         %Constructor
         function obj = differentialKinematics(robot)
-
             obj.Jacobian = jacobianCalculator(obj, robot);
+            obj.robot = robot; 
+%            obj.invJacobian = invJacobianCalculator(obj.Jacobian);
         end
-        
         
         %Jacobian calculator (most important function)
         function Jacobian = jacobianCalculator(obj, robot)
@@ -41,6 +50,52 @@ classdef differentialKinematics
             %Final Result
             Jacobian = simplify(Jacobian);
         end 
+        
+        % Find numerical Jacobian (Also works with inverse Jacobian)
+        function JacobianN = evalJacobian(obj,Jacobian,q1,q2,q3,q4,q5)
+            % Replace symbols with values
+            JacobianN = subs(Jacobian,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+            % Convert to numeric value
+            JacobianN = double(JacobianN);
+        end
+        
+        % Calculate Task Space Velocities
+        function [x_dot_i] = findTaskSpaceVelocities(obj,q_i,q_dot_i)
+            % x_dot_i: 6x1 matrix of end effector velocities in frame 0
+            % q_dot: 1x5 matrix of joint positions
+            % q_dot_i: 5x1 matrix of joint velocities
+            JacobianEval = evalJacobian(obj,obj.Jacobian,q_i(1), q_i(2), q_i(3), q_i(4), q_i(5));
+            x_dot_i = JacobianEval*q_dot_i;
+        end
+        
+        
+        % Calculate joint velocities based on task space velocities
+        function [q_dot_i] = findJointSpaceVelocities(obj,q_i,x_dot_0_i)
+            % q_dot_i: 5x1 matrix of joint velocities
+            % x_dot_0_i: 6x1 matrix of end effector velocities in frame 0
+            % q_dot: 5x1 matrix of joint positions
+            
+            % Method 2 taught in lecture 19
+            % Express everything in Frame 1
+            J_N = evalJacobian(obj,obj.Jacobian,q_i(1),q_i(2),q_i(3),q_i(4),q_i(5));
+            R_01 = double(subs(Rotation(obj,obj.robot,1,0),obj.q1,q_i(1)));
+            
+            
+            x_dot_1_i = [R_01 zeros(3,3);
+                        zeros(3,3) R_01]*x_dot_0_i;
+            J_1 = [R_01 zeros(3,3);
+                    zeros(3,3) R_01]*J_N;
+                
+            % Remove 4th column, as there can't be a rotation about X_1
+            x_dot_1_i(4) = [];
+            J_1(4,:) = [];
+            
+            % Invert Jacobian
+%             J_1_Inv = inv(J_1N); 
+            
+            % Calculate q_dot_i by inverting J_1 
+            q_dot_i = J_1\x_dot_1_i;
+        end
         
         
         %Helper function for calculating jacobian for a single revolute
