@@ -76,10 +76,6 @@ classdef robot < handle
             obj.motorControl.enableTorque;
         end
         
-        function disableMotorTorques(obj)
-            obj.motorControl.disableTorque;
-        end
-        
         function setRobotJoints(obj,q1,q2,q3,q4,q5)
             % absolute angles
             obj.motorControl.setAngles(q1,q2,q3,q4,q5,obj.j1_speed);
@@ -92,7 +88,7 @@ classdef robot < handle
         
         function [x,y,z,theta] = getRobotPose(obj)
             [q1,q2,q3,q4,q5] = obj.motorControl.getAngles();
-            [x,y,z,theta] = obj.forwardKinematics.getPose(q1,q2,q3,q4,q5);
+            
         end
         
         function homePosition(obj)

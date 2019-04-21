@@ -1,4 +1,4 @@
-classdef forwardKinematics <handle
+classdef forwardKinematics
     % Formulates Transformation matrices, and calculates robot pose based on joint angles
     
     properties
@@ -6,11 +6,6 @@ classdef forwardKinematics <handle
         %test
         DH                          % DH Table (Matrix)
         Wrist
-        
-        coord1_func
-        coord2_func
-        coord3_func
-        coord4_func
         coordE_func
         
         %% Transformation Matrices
@@ -81,18 +76,6 @@ classdef forwardKinematics <handle
             obj.r34_3 = [robot.L3;0;0];
             obj.r4E_4 = [0;-robot.L4;0];
             
-            coord1 = [obj.r01_0];
-            coord2 = obj.T_01*[obj.r12_1;1];
-            coord3 = obj.T_02*[obj.r23_2;1];
-            coord4 = obj.T_03*[obj.r34_3;1];
-            coordE = obj.T_04*[obj.r4E_4;1];
-            
-%             obj.coord1_func = matlabFunction(coord1);
-            obj.coord2_func = matlabFunction(coord2);
-            obj.coord3_func = matlabFunction(coord3);
-            obj.coord4_func = matlabFunction(coord4);
-            obj.coordE_func = matlabFunction(coordE);
-            
         end
         
         % Use to initialise DH and modify if necessary
@@ -108,11 +91,8 @@ classdef forwardKinematics <handle
             Wrist = [0  90  0   (obj.q5+robot.q5_O)];
         end
         
-        function [x,y,z,theta] = getPose(obj,q1,q2,q3,q4,q5)
-            coords = obj.coordE_func(q1,q2,q3,q4);
-            x = coords(1);
-            y = coords(2); 
-            z = coords(3);
+        function [x,y,z,theta] = getPose(q1,q2,q3,q4,q5)
+            [x,y,z] = obj.coordE_func(q1,q2,q3,q4);
             theta = q5+q1;
         end
         
@@ -121,11 +101,19 @@ classdef forwardKinematics <handle
             y = zeros(5,1);
             z = zeros(5,1);
             
-            coord1 = obj.r01_0;
-            coord2 = obj.coord2_func();
-            coord3 = obj.coord3_func(q1,q2); 
-            coord4 = obj.coord4_func(q1,q2,q3);
-            coordE = obj.coordE_func(q1,q2,q3,q4);
+            coord1 = [obj.r01_0];
+            coord2 = obj.T_01*[obj.r12_1;1];
+            coord3 = obj.T_02*[obj.r23_2;1];
+            coord4 = obj.T_03*[obj.r34_3;1];
+            coordE = obj.T_04*[obj.r4E_4;1];
+            
+            obj.coordE_func = matlabFunction(coordE);
+            
+            coord1 = subs(coord1,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+            coord2 = subs(coord2,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+            coord3 = subs(coord3,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+            coord4 = subs(coord4,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+            coordE = subs(coordE,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
             
             x(1) = coord1(1);
             y(1) = coord1(2);

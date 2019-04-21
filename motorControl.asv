@@ -125,15 +125,6 @@ classdef motorControl < handle
 %             obj.motor5.torqueEnable;
 %             obj.motorE.torqueEnable;
         end
-        
-        function disableTorque(obj)
-            obj.motor1.torqueDisable;
-            obj.motor2.torqueDisable;
-            obj.motor3.torqueDisable;
-%             obj.motor4.torqueDisable;
-%             obj.motor5.torqueDisable;
-%             obj.motorE.torqueDisable;
-        end
 
         function endConnection(obj)
             obj.motor1.torqueDisable;
@@ -163,12 +154,10 @@ classdef motorControl < handle
         
         function [q1,q2,q3,q4,q5] = getAngles(obj)
             q1 = (obj.motor1.getPos()-obj.motor1_offset)/obj.motor1_axis;
-            q2 = (obj.motor2.getPos()-obj.motor2_offset)/obj.motor2_axis;
-            q3 = (obj.motor3.getPos()-obj.motor3_offset)/obj.motor3_axis;
-%             q4 = (obj.motor4.getPos()-obj.motor4_offset)/obj.motor4_axis;
-%             q5 = (obj.motor5.getPos()-obj.motor5_offset)/obj.motor5_axis;
-            q4 = -(q2+q3); % TEMPORARY - REPLACE WHEN MOTORS CONNECTED
-            q5 = 0; % TEMPORARY - REPLACE WHEN MOTORS CONNECTED
+            q2 = (obj.motor1.getPos()-obj.motor2_offset)/obj.motor2_axis;
+            q3 = (obj.motor1.getPos()-obj.motor3_offset)/obj.motor3_axis;
+            q4 = (obj.motor1.getPos()-obj.motor4_offset)/obj.motor4_axis;
+            q5 = (obj.motor1.getPos()-obj.motor5_offset)/obj.motor5_axis;
         end
     end
 

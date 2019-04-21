@@ -20,7 +20,11 @@ classdef jengaMain < handle
             
             %% Routine
             obj.robot.enableMotorTorques;
+            [x,y,z,theta] = obj.robot.getRobotPose;
+            pause(2)
             obj.robot.homePosition();
+            
+            
 %             pause(2);
 %             obj.robot.setRobotPose(200,0,150,0);
 %             pause(2);
