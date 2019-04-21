@@ -3,11 +3,13 @@ classdef robot < handle
     %   Detailed explanation goes here
     
     properties      
+        DoF = 5; %Degrees of Freedom
+
         %% Link Lengths
         L1      = 200;   % mm        % Origin to joint 1
         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
         L3      = 200;	 % mm        % Joint 3 to Joint 4
-        L4      = 138;	 % mm        % Joint 4 to End effector
+        L4      = 100;	 % mm        % Joint 4 to End effector
         L_PL    = 100;   % mm        % Shorter side length of Parallelogram
    
         %% Home Position offset
@@ -37,6 +39,7 @@ classdef robot < handle
         differentialKinematics  % Jacobian, inv Jacobian and velocity calcs
         motorControl            % Motor instantiation and functionality
         torque                  % Motor torque calculations
+        trajectoryPlanning      % Plan and generate trajectories
         
         %% Mass Properties
         g           = 9.81;         % m/s^2 % Gravity
@@ -60,6 +63,8 @@ classdef robot < handle
             obj.inverseKinematics = inverseKinematics(obj.forwardKinematics.T_0E, obj); % Initialise Inverse Kinematics
             obj.motorControl = motorControl();
             obj.torque = torque(obj); 
+            obj.differentialKinematics = differentialKinematics(obj);
+            obj.trajectoryPlanning = trajectoryPlanning(obj.inverseKinematics, obj.differentialKinematics);
         end
         
         function drawRobot = drawPose(obj,q1,q2,q3,q4,q5)

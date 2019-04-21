@@ -5,6 +5,7 @@ classdef forwardKinematics
         %% Calculated
         %test
         DH                          % DH Table (Matrix)
+        Wrist
         
         %% Transformation Matrices
         T_01
@@ -12,11 +13,13 @@ classdef forwardKinematics
         T_23
         T_34
         T_4E
+        T_4W
         
         T_02
         T_03
         T_04
         T_0E
+        T_0W
         
         %% Vectors
         r01_0 
@@ -38,40 +41,56 @@ classdef forwardKinematics
             % Generate DH Table
             obj.DH = generateDH(obj,robot);
             
+            obj.Wrist = generateWrist(obj, robot);
+            
             % Calculate transforms
+            % Yes it looks a little filthy... but matlab is weird
             obj.T_01 = obj.calculateTransform(obj.DH(1,:));
             obj.T_12 = obj.calculateTransform(obj.DH(2,:));
             obj.T_23 = obj.calculateTransform(obj.DH(3,:));
             obj.T_34 = obj.calculateTransform(obj.DH(4,:));
             obj.T_4E = obj.calculateTransform(obj.DH(5,:));
+            %Wrist Frame
+            obj.T_4W = obj.calculateTransform(obj.Wrist);
             
             obj.T_02 = obj.T_01*obj.T_12;
             obj.T_03 = obj.T_02*obj.T_23;
             obj.T_04 = obj.T_03*obj.T_34;
             obj.T_0E = obj.T_04*obj.T_4E;
+            %Wrist Transform 
+            obj.T_0W = obj.T_04*obj.T_4W;
+            
             
             % Simplify expressions
-            obj.T_01 = simplify(obj.T_01);
-            obj.T_02 = simplify(obj.T_02);
-            obj.T_03 = simplify(obj.T_03);
-            obj.T_04 = simplify(obj.T_04);
-            obj.T_0E = simplify(obj.T_0E);
+%             obj.T_01 = simplify(obj.T_01);
+%             obj.T_02 = simplify(obj.T_02);
+%             obj.T_03 = simplify(obj.T_03);
+%             obj.T_04 = simplify(obj.T_04);
+%             obj.T_0E = simplify(obj.T_0E); % Slow afffffff
+%             obj.T_0W = simplify(obj.T_0W);
             
             obj.r01_0 = [0;0;robot.L1];
             obj.r12_1 = [0;0;0];
             obj.r23_2 = [robot.L2;0;0];
             obj.r34_3 = [robot.L3;0;0];
             obj.r4E_4 = [0;-robot.L4;0];
+            
         end
         
         % Use to initialise DH and modify if necessary
-        function DH = generateDH(obj,robot)
+        function DH = generateDH(obj, robot)
           DH = [0           0           robot.L1    (obj.q1+robot.q1_O);
                 0           90          0           (obj.q2+robot.q2_O);
                 robot.L2    0           0           (obj.q3+robot.q3_O);
                 robot.L3    0           0           (obj.q4+robot.q4_O);
                 0           90          robot.L4    (obj.q5+robot.q5_O)];
         end
+        
+        function Wrist = generateWrist(obj, robot)
+            Wrist = [0  90  0   (obj.q5+robot.q5_O)];
+        end
+        
+            
         
         function [x,y,z] = findCoordinates(obj,q1,q2,q3,q4,q5)
             x = zeros(5,1);
@@ -111,6 +130,79 @@ classdef forwardKinematics
             z(5) = coordE(3);
             
         end
+        
+        
+        % Accessor function to find the transform of one frame epressed in
+        % another. Only valid for FORWARD transfroms
+        % Also handles use of frames E and W for end effector and wrist
+        function T = getTransform(obj, frameExpressed, frameOf)
+            %note this transform is only valid for forward transformations
+            if frameOf == 'E' %Handle input of E
+                frameOf = 5;
+            elseif frameOf == 'W' 
+                %Handle Wrist Frame, ignoring End effector frame
+                T = getTransform(obj, frameExpressed, 4);
+                T = T*obj.calculateTransform(obj.Wrist);
+                return;
+            else
+                % regular iterative calculation
+                T = eye(4);
+                for frame = (frameExpressed + 1):frameOf
+                    T = T*(obj.calculateTransform(obj.DH(frame,:)));
+                end
+            end
+        end
+        
+        % Accesor for forward rotations between frames, 
+        % Frame handling is built into getTransform
+        function R = getRotation(obj, frameExpressed, frameOf)
+            %only valid for forward rotations
+            T = obj.getTransform(frameExpressed, frameOf);
+            R = T(1:3, 1:3);
+        end
+        
+        % Filthy Affff, but fast
+        function R = getRotationFast(obj, frameExpressed, frameOf)
+            %only valid for forward rotations
+            if frameOf == 0
+                if frameExpressed == 1
+                    T = obj.T_01;
+                elseif frameExpressed == 2
+                    T = obj.T_02; 
+                elseif frameExpressed == 3
+                    T = obj.T_03;
+                elseif frameExpressed == 4
+                    T = obj.T_04; 
+                elseif frameExpressed == 'E'
+                    T = obj.T_0E;
+                elseif frameExpressed == 'W'
+                    T = obj.T_0W;
+                end
+            elseif frameOf == 1
+                if frameExpressed == 2
+                    T = obj.T_12; 
+                elseif frameExpressed == 3
+                    T = obj.T_12*obj.T_23;
+                elseif frameExpressed == 4
+                    T = obj.T_12*obj.T_23*obj.T_34; 
+                elseif frameExpressed == 'E'
+                    T = obj.T_12*obj.T_23*obj.T_34*obj.T_4E;
+                elseif frameExpressed == 'W'
+                    T = obj.T_12*obj.T_23*obj.T_34*obj.T_4W;
+                end
+            else
+                error('Ambar too lazy too code the rest of these')
+            end
+            R = T(1:3, 1:3);
+        end
+
+        % Accesor for position vectors between frames, 
+        % Frame handling is built into getTransform
+        function P = getPosition(obj, frameExpressed, frameOf)
+            %only valid for forward transformations
+            T = obj.getTransform(frameExpressed, frameOf);
+            P = T(1:3,4);
+        end
     end
     
     methods(Static)
@@ -143,7 +235,7 @@ classdef forwardKinematics
                      0              0           0       1];
             
             T = Dx*Rx*Dz*Rz;
-            T = simplify(T);
+%             T = simplify(T);
         end
         
 

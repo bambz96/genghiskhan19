@@ -1,4 +1,4 @@
-classdef inverseKinematics < handle
+classdef inverseKinematics <handle
     %INVERSEKINEMATICS Calculates Inverse Kinematics Stuff
     %   Detailed explanation goes here
     
@@ -17,6 +17,12 @@ classdef inverseKinematics < handle
         q4_sol
         q5_sol
         
+        q1_f
+        q2_f
+        q3_f
+        q4_f
+        q5_f
+        
         x       = sym('x'); % mm
         y       = sym('y'); % mm
         z       = sym('z'); % mm
@@ -28,6 +34,11 @@ classdef inverseKinematics < handle
         function obj = inverseKinematics(T_0E, robot)
            obj.T_0E = T_0E;
            [obj.q1_sol, obj.q2_sol, obj.q3_sol, obj.q4_sol, obj.q5_sol] = symFindQ(obj,robot);
+           obj.q1_f = matlabFunction(obj.q1_sol);
+           obj.q2_f = matlabFunction(obj.q2_sol);
+           obj.q3_f = matlabFunction(obj.q3_sol);
+           obj.q4_f = matlabFunction(obj.q4_sol);
+           obj.q5_f = matlabFunction(obj.q5_sol);
         end
         
         function [q1_sol, q2_sol, q3_sol, q4_sol, q5_sol] = symFindQ(obj, robot)
@@ -60,14 +71,23 @@ classdef inverseKinematics < handle
            q5_sol = obj.theta-q1_sol; 
         end
         
-        function [q1, q2, q3, q4, q5] = findQ(obj, x,y,z,theta)
-            q1 = double(subs(obj.q1_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
-            q2 = double(subs(obj.q2_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
-            q3 = double(subs(obj.q3_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
-            q4 = double(subs(obj.q4_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
-            q5 = double(subs(obj.q5_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
-        end
+%         function [q1, q2, q3, q4, q5] = findQ(obj, x,y,z,theta)
+%             q1 = double(subs(obj.q1_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
+%             q2 = double(subs(obj.q2_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
+%             q3 = double(subs(obj.q3_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
+%             q4 = double(subs(obj.q4_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
+%             q5 = double(subs(obj.q5_sol,[obj.x,obj.y,obj.z,obj.theta],[x,y,z,theta]));
+%         end
         
+        % Solve for joint angles based on robot pose (Note: using
+        % matlabFunction is faster than subs)
+        function [q1, q2, q3, q4, q5] = findQ(obj, x,y,z,theta)
+            q1 = obj.q1_f(x,y);
+            q2 = obj.q2_f(x,y,z);
+            q3 = obj.q3_f(x,y,z);
+            q4 = obj.q4_f(x,y,z);
+            q5 = obj.q5_f(theta,x,y);
+        end
     end
     
     methods(Static) 
