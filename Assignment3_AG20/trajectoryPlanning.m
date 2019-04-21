@@ -16,7 +16,39 @@ classdef trajectoryPlanning < handle
             % Generate trajectory to go home from current position
         end
         
-        function [t, q, q_dot] = generateJointTrajectory(obj, x0,x_dot_0,xf,x_dot_f, tf, dt)
+        function [t,q,q_dot,x,x_dot,x_double_dot] = generateTrajectoryWithViaPoints(xi,t_between,dt)
+            % Generate Trajectory following a set of via points
+            % Outputs:
+            %   t: time array of size S (seconds)
+            %   q: Sx5 matrix of joint angles (q1...q5) at each time
+            %   interval (degrees)
+            %   q_dot: Sx5 matrix of joint velocities at each time interval
+            %   (degrees/s)
+            %   x: Sx4 matrix of robot pose (x,y,z,theta) at each time
+            %   interval (x,y,z in mm, theta in degrees)
+            %   x_dot: Sx4 matrix of end effector velocities (mm/s and
+            %   degrees/s)
+            %   x_double_dot: Sx4 matrix of end effector accelerations
+            %   (mm/s^2 and degrees/s^2)
+            % Inputs:
+            %   xi: Nx4 matrix of via point descriptions, where N is the
+            %   number of points along the trajectory (including start and
+            %   finish). The first row should describe the start point, the
+            %   last row should describe the end point. Rows in between are
+            %   the via points
+            %   t_between: Time taken between each via point specified as
+            %   an (N-1)x1 vector 
+            %   dt: Time steps between command points
+            
+            % TO DO:
+            
+            % Calculate desired velocities at Via points somehow
+            % Calculate trajectories between each via point
+            % Concatenate trajectories
+                
+        end
+        
+        function [t, q, q_dot] = generateJointTrajectory(x0,x_dot_0,xf,x_dot_f, tf, dt)
             % Generate trajectory in Joint space q: q1,q2,q3,q4,q5 +q_dots
             % x0:       start position 1x4 (x,y,z,theta)
             % x_dot_0:  start velocities 1x4 (x_dot,y_dot,z_dot,theta_dot)
