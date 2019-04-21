@@ -35,6 +35,7 @@ classdef robot
         forwardKinematics
         inverseKinematics
         differentialKinematics
+        trajectoryPlanning
         
         %% Mass Properties
 
@@ -47,6 +48,7 @@ classdef robot
             obj.forwardKinematics = forwardKinematics(obj); % Initialise Forward Kinematics
             obj.inverseKinematics = inverseKinematics(obj.forwardKinematics.T_0E, obj); % Initialise Inverse Kinematics
             obj.differentialKinematics = differentialKinematics(obj);
+            obj.trajectoryPlanning = trajectoryPlanning(obj.inverseKinematics, obj.differentialKinematics);
         end
         
         function drawRobot = drawPose(obj,q1,q2,q3,q4,q5)

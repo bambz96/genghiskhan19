@@ -161,6 +161,41 @@ classdef forwardKinematics
             R = T(1:3, 1:3);
         end
         
+        % Filthy Affff, but fast
+        function R = getRotationFast(obj, frameExpressed, frameOf)
+            %only valid for forward rotations
+            if frameOf == 0
+                if frameExpressed == 1
+                    T = obj.T_01;
+                elseif frameExpressed == 2
+                    T = obj.T_02; 
+                elseif frameExpressed == 3
+                    T = obj.T_03;
+                elseif frameExpressed == 4
+                    T = obj.T_04; 
+                elseif frameExpressed == 'E'
+                    T = obj.T_0E;
+                elseif frameExpressed == 'W'
+                    T = obj.T_0W;
+                end
+            elseif frameOf == 1
+                if frameExpressed == 2
+                    T = obj.T_12; 
+                elseif frameExpressed == 3
+                    T = obj.T_12*obj.T_23;
+                elseif frameExpressed == 4
+                    T = obj.T_12*obj.T_23*obj.T_34; 
+                elseif frameExpressed == 'E'
+                    T = obj.T_12*obj.T_23*obj.T_34*obj.T_4E;
+                elseif frameExpressed == 'W'
+                    T = obj.T_12*obj.T_23*obj.T_34*obj.T_4W;
+                end
+            else
+                error('Ambar too lazy too code the rest of these')
+            end
+            R = T(1:3, 1:3);
+        end
+
         % Accesor for position vectors between frames, 
         % Frame handling is built into getTransform
         function P = getPosition(obj, frameExpressed, frameOf)
@@ -168,8 +203,6 @@ classdef forwardKinematics
             T = obj.getTransform(frameExpressed, frameOf);
             P = T(1:3,4);
         end
-        
-        
     end
     
     methods(Static)

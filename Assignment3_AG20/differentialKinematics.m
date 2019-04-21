@@ -1,4 +1,4 @@
-classdef differentialKinematics
+classdef differentialKinematics <handle
 
 %     Differential Kinematics for robot class, calculates robot jacobian 
 %     
@@ -13,6 +13,7 @@ classdef differentialKinematics
    %%  Properties
     properties 
         Jacobian
+        Jacobian_func
         invJacobian
         Frame = 'W';
         robot
@@ -48,15 +49,17 @@ classdef differentialKinematics
                 
             end
             %Final Result
-            Jacobian = simplify(Jacobian);
+%             Jacobian = simplify(Jacobian);
+            obj.Jacobian_func = matlabFunction(Jacobian);
         end 
         
-        % Find numerical Jacobian (Also works with inverse Jacobian)
-        function JacobianN = evalJacobian(obj,Jacobian,q1,q2,q3,q4,q5)
-            % Replace symbols with values
-            JacobianN = subs(Jacobian,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
-            % Convert to numeric value
-            JacobianN = double(JacobianN);
+        % Find numerical Jacobian
+        function JacobianN = evalJacobian(obj,q1,q2,q3,q4,~)
+            JacobianN = obj.Jacobian_func(q1,q2,q3,q4);
+%             % Replace symbols with values
+%             JacobianN = subs(obj.Jacobian,[obj.q1,obj.q2,obj.q3,obj.q4,obj.q5],[q1,q2,q3,q4,q5]);
+%             % Convert to numeric value
+%             JacobianN = double(JacobianN);
         end
         
         % Calculate Task Space Velocities
@@ -64,7 +67,7 @@ classdef differentialKinematics
             % x_dot_i: 6x1 matrix of end effector velocities in frame 0
             % q_dot: 1x5 matrix of joint positions
             % q_dot_i: 5x1 matrix of joint velocities
-            JacobianEval = evalJacobian(obj,obj.Jacobian,q_i(1), q_i(2), q_i(3), q_i(4), q_i(5));
+            JacobianEval = evalJacobian(obj,q_i(1), q_i(2), q_i(3), q_i(4), q_i(5));
             x_dot_i = JacobianEval*q_dot_i;
         end
         
@@ -73,12 +76,16 @@ classdef differentialKinematics
         function [q_dot_i] = findJointSpaceVelocities(obj,q_i,x_dot_0_i)
             % q_dot_i: 5x1 matrix of joint velocities
             % x_dot_0_i: 6x1 matrix of end effector velocities in frame 0
-            % q_dot: 5x1 matrix of joint positions
+            % q_i: 5x1 matrix of joint positions
             
             % Method 2 taught in lecture 19
             % Express everything in Frame 1
-            J_N = evalJacobian(obj,obj.Jacobian,q_i(1),q_i(2),q_i(3),q_i(4),q_i(5));
-            R_01 = double(subs(Rotation(obj,obj.robot,1,0),obj.q1,q_i(1)));
+            J_N = evalJacobian(obj,q_i(1),q_i(2),q_i(3),q_i(4),q_i(5));
+            
+%             R_01_f = matlabFunction(RotationFast(obj,obj.robot,1,0));
+%             R_01 = R_01_f(q_i(1));
+            
+            R_01 = double(subs(RotationFast(obj,obj.robot,1,0),obj.q1,q_i(1)));
             
             
             x_dot_1_i = [R_01 zeros(3,3);
@@ -110,6 +117,11 @@ classdef differentialKinematics
         %Wrapper function for a method called on robot.forwardKinematics
         function R = Rotation(obj, robot, frameExpressed, frameOf)
             R = robot.forwardKinematics.getRotation(frameExpressed, frameOf);
+        end
+        
+        %Wrapper function for a method called on robot.forwardKinematics
+        function R = RotationFast(obj, robot, frameExpressed, frameOf)
+            R = robot.forwardKinematics.getRotationFast(frameExpressed, frameOf);
         end
         
         %Wrapper function for a method called on robot.forwardKinematics

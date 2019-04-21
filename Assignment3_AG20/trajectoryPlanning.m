@@ -16,6 +16,18 @@ classdef trajectoryPlanning < handle
             % Generate trajectory to go home from current position
         end
         
+        function [t, q, q_dot] = generateJointTrajectory(obj, x0,x_dot_0,xf,x_dot_f, tf, dt)
+            % Generate trajectory in Joint space q: q1,q2,q3,q4,q5 +q_dots
+            % x0:       start position 1x4 (x,y,z,theta)
+            % x_dot_0:  start velocities 1x4 (x_dot,y_dot,z_dot,theta_dot)
+            % xf:       end position 1x4 (x,y,z,theta)
+            % x_dot_f:  end velocities 1x4 (x_dot,y_dot,z_dot,theta_dot)
+            % tf:       time taken to complete trajectory
+            % dt:       time step (resolution of discretisation) 
+            [t_in, x, x_dot, ~] = generateTaskTrajectory(obj, x0,x_dot_0,xf,x_dot_f, tf, dt);
+            [t, q, q_dot] = taskToJointTrajectory(obj, t_in, x, x_dot);
+        end
+        
         function [t, x, x_dot, x_double_dot] = generateTaskTrajectory(obj, x0,x_dot_0,xf,x_dot_f, tf, dt)
             % Generates trajectory in task space x: x,y,z,theta in frame 0
             % x0:       start position 1x4 (x,y,z,theta)
@@ -70,7 +82,7 @@ classdef trajectoryPlanning < handle
             end
         end
         
-        function [t, q, q_dot] = generateJointTrajectory(obj, t_in, x, x_dot)
+        function [t, q, q_dot] = taskToJointTrajectory(obj, t_in, x, x_dot)
             t = t_in; 
             s = length(t);
             n = 5; % Number of generalised coordinates
@@ -95,6 +107,11 @@ classdef trajectoryPlanning < handle
                              x_dot(i,4)];
                 q_dot_i = obj.differentialKinematics.findJointSpaceVelocities(q_i,x_dot_0_i);
                 
+                for j = 1:n
+                    if isnan(q_dot_i(j)) || isinf(q_dot_i(j))
+                        q_dot_i(j) = 0;
+                    end
+                end
                 q(i,:) = q_i';
                 q_dot(i,:) = q_dot_i';
                 %q_double_dot = ... % Future implementation
