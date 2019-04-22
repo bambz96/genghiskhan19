@@ -2,36 +2,35 @@
 Author: Assignment Group 20
 William Ellett 586703
 
-Calculation of Robot Jacobian. 
+Assignment2:
+This script exists entirely to facilitate printing components of the 
+Jacobian, for the purpose of documentation 
+
+Usage: 
 %}
 %% Set up
 jenghis = robot;
 
-DoF = 5;
-
-
 
 %Unit vector z in reference frame
 z_hat = [0;0;1];
-%Initialze Jacobian
-Jacobian = [];
 
+%% Actual Calculation
+% Calculates each row of the Jacobian individually
+joint = 5;
 
-%%  Iteratively Calculates each row of the Jacobian
+R = Rotation(jenghis, 0, joint);
 
-for joint = 1:DoF
-    R = Rotation(jenghis, 0, joint);
-    z = R*z_hat;
-    P = R*Position(jenghis, joint, 'W');
+z = R*z_hat;        %Unit vector
+z = simplify(z);
 
-    Jacobian = [Jacobian, jacobianRevolute(z, P)];   
+P = R*Position(jenghis, joint, 'W');    %Position vector
+P = simplify(P);
 
-end
-%Final Result
-Jacobian = simplify(Jacobian);
+Jacobian_i = jacobianRevolute(z, P);
+Jacobian_i = simplify(Jacobian_i);  
 
-
-%% Helper/Wrapper functions
+%% Wrappper/Helper functions.
 
 %Wrapper function for a method called on robot.forwardKinematics
 function R = Rotation(robot, frameExpressed, frameOf)
@@ -49,4 +48,3 @@ function Ji = jacobianRevolute(zi, Pi)
   Ji = cross(zi, Pi);
   Ji= [Ji;zi];
 end
-
