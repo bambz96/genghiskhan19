@@ -19,12 +19,32 @@ classdef jengaMain < handle
             %obj.tower = jengaTower();
             
             %% Routine
+            obj.robot.disableMotorTorques;
+            obj.robot.motorControl.velocityMode; 
             obj.robot.enableMotorTorques;
-            [x,y,z,theta] = obj.robot.getRobotPose;
             pause(2)
-            obj.robot.homePosition();
+            
+            % Test Velocity control
+            obj.robot.motorControl.setVelocities(15,15,15,0,0)
+            pause(1)
+            [v1,v2,v3,v4,v5] = obj.robot.motorControl.getVelocities
+            pause(2)
+            obj.robot.motorControl.setVelocities(-15,-15,-15,0,0)
+            pause(1)
+            [v1,v2,v3,v4,v5] = obj.robot.motorControl.getVelocities
+            pause(2)
+            obj.robot.motorControl.setVelocities(0,0,0,0,0)
+            % Test Velocity Readings
+%             go = 1; 
+%             while go
+%                 [v1,v2,v3,v4,v5] = obj.robot.motorControl.getVelocities 
+%                 pause(0.5); 
+%             end
             
             
+            % Test Position Control
+%             [x,y,z,theta] = obj.robot.getRobotPose;
+%             obj.robot.homePosition();
 %             pause(2);
 %             obj.robot.setRobotPose(200,0,150,0);
 %             pause(2);

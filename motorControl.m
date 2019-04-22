@@ -134,6 +134,24 @@ classdef motorControl < handle
 %             obj.motor5.torqueDisable;
 %             obj.motorE.torqueDisable;
         end
+        
+        function positionMode(obj)
+            obj.motor1.positionMode; 
+            obj.motor2.positionMode;
+            obj.motor3.positionMode;
+%             obj.motor4.positionMode;
+%             obj.motor5.positionMode;
+%             obj.motorE.positionMode;
+        end
+        
+        function velocityMode(obj)
+            obj.motor1.velocityMode; 
+            obj.motor2.velocityMode; 
+            obj.motor3.velocityMode; 
+%             obj.motor4.velocityMode; 
+%             obj.motor5.velocityMode; 
+%             obj.motorE.velocityMode; 
+        end
 
         function endConnection(obj)
             obj.motor1.torqueDisable;
@@ -169,6 +187,26 @@ classdef motorControl < handle
 %             q5 = (obj.motor5.getPos()-obj.motor5_offset)/obj.motor5_axis;
             q4 = -(q2+q3); % TEMPORARY - REPLACE WHEN MOTORS CONNECTED
             q5 = 0; % TEMPORARY - REPLACE WHEN MOTORS CONNECTED
+        end
+        
+        function setVelocities(obj,q1_dot,q2_dot,q3_dot,q4_dot,q5_dot)
+            degreesPerS_to_RPM = 1/6; 
+            obj.motor1.setVelocity(q1_dot*obj.motor1_axis*degreesPerS_to_RPM);
+            obj.motor2.setVelocity(q2_dot*obj.motor2_axis*degreesPerS_to_RPM);
+            obj.motor3.setVelocity(q3_dot*obj.motor3_axis*degreesPerS_to_RPM);
+%             obj.motor4.setVelocity(q4_dot*obj.motor4_axis*degreesPerS_to_RPM);
+%             obj.motor5.setVelocity(q5_dot*obj.motor5_axis*degreesPerS_to_RPM);
+        end
+        
+        function [q1_dot,q2_dot,q3_dot,q4_dot,q5_dot] = getVelocities(obj)
+            RPM_to_degreesPerS = 6;
+            q1_dot = obj.motor1.getVelocity()*obj.motor1_axis*RPM_to_degreesPerS;
+            q2_dot = obj.motor2.getVelocity()*obj.motor2_axis*RPM_to_degreesPerS;
+            q3_dot = obj.motor3.getVelocity()*obj.motor3_axis*RPM_to_degreesPerS;
+%             q4_dot = obj.motor4.getVelocity()*RPM_to_degreesPerS;
+%             q5_dot = obj.motor5.getVelocity()*RPM_to_degreesPerS;
+            q4_dot = 0; 
+            q5_dot = 0; 
         end
     end
 

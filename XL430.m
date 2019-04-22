@@ -71,14 +71,11 @@ classdef XL430 < handle
         end
         
         function [obj] = velocityMode(obj)
-            obj.torqueDisable;
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_OPERATING_MODE, obj.VELOCITY_CONTROL);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
         function [obj] = positionMode(obj)
-            % requires torque disabled, do not enable after
-            obj.torqueDisable;
             % set position control
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_OPERATING_MODE, obj.POSITION_CONTROL);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
@@ -90,7 +87,7 @@ classdef XL430 < handle
 %             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
-        function [pos, obj] = getPos(obj)
+        function [pos] = getPos(obj)
             presentPos = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_POSITION);
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
             pos = presentPos*obj.degreeConversionConstant;
@@ -104,14 +101,14 @@ classdef XL430 < handle
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
         end
         
-        function [velocity, obj] = getVelocity(obj)
+        function [velocity] = getVelocity(obj)
             presentSpeed = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_PRESENT_VELOCITY);
+            presentSpeed = typecast(uint32(presentSpeed),'int32');
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
             velocity = presentSpeed*obj.velocityConversionConstant; 
         end
         
         function [obj] = setVelocity(obj, goalVelocity) % In RPM
-            obj.torqueEnable;
             goalVelocityCommand = floor(goalVelocity/obj.velocityConversionConstant);
             write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, obj.DXL_ID, obj.ADDR_PRO_GOAL_VELOCITY, typecast(int32(goalVelocityCommand), 'uint32'));
             [obj.dxl_comm_result, obj.dxl_error] = checkComms(obj.port_num, obj.PROTOCOL_VERSION);
