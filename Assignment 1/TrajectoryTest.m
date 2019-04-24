@@ -17,12 +17,16 @@ ts = 0.1; %sample time in seconds
 v0 = 0; %initial velocity
 vf = 0; %final velocity;
 
-x = [x0 xf];
+x = [x0 -1 xf];
 
-t = [t0 tf];
+t = [t0 2 tf];
 
 tt = t0:ts:tf; %vector of sampling times
 
-xx = spline(t, [v0 x vf], tt); %cubic spline interpolation
+S = spline(t, [v0 x vf]); %cubic spline interpolation
 
-plot(tt, xx);
+plot(tt, ppval(S, tt)); % Plot the full piecewise spline
+
+hold on; 
+
+plot(tt, polyval(S.coefs(1, :), tt), 'r');
