@@ -11,7 +11,7 @@ classdef trajectory
         N = 4; %number of coefficients to describe one piece 
     end
     
-    properties (Access = private)
+    properties %(Access = private)
         ts      % sampling time
         dof     % Degrees of Freedom in the trajectory
         x       % positions specified including start, end, and vias
@@ -51,13 +51,13 @@ classdef trajectory
         obj.Coefs = obj.calculateCoefficients;
         
         % generate the position trajectory vector
-        obj.X = obj.calculateTrajectory(obj.Coefs);
+        obj.X = obj.allTrajectories;
         
         % generate the velocity, accel, jerk profiles
-        obj.V = obj.calcDerivTrajectory(1);
-        obj.Acc = obj.calcDerivTrajectory(2);
-        obj.Jerk = obj.calcDerivTrajectory(3);
-        
+%         obj.V = obj.calcDerivTrajectory(1);
+%         obj.Acc = obj.calcDerivTrajectory(2);
+%         obj.Jerk = obj.calcDerivTrajectory(3);
+%         
         
         end
         
@@ -91,10 +91,22 @@ classdef trajectory
     end
     
     
-    % Some private helper methods
+    % Calculation methods
     methods (Access = private)
         
-        % Calculates the entire trajectory in discretised form
+        % Calculate trajectories for all degrees of freedom
+        function T = allTrajectories(obj)
+            T = [];
+            
+            % Calculate trajectory for each degree of freedom
+            for deg = 1:obj.dof
+                Traj = calculateTrajectory(obj, obj.Coefs(:,:,deg));
+                T = [T;Traj];
+            end
+        end
+            
+        
+        % Calculates a trajectory for one variable
         % corresponding to the time series
         % Generalised for use with derivatives
         % input, CoEffiecients of trajectory
@@ -107,11 +119,27 @@ classdef trajectory
             end
         end
         
-        
-        % Sets up and solves the system of linear equations
+        % Sets up systems of linear equations for each coordinate
         function C = calculateCoefficients(obj)
-            A = obj.findLHS();
-            B = obj.findRHS();
+            % note: since, the time valuse of every via are the same, 
+            % the LHS is the same for each set of equations
+            LHS = obj.findLHS();
+            
+            C = [];
+            
+            for deg = 1:(obj.dof)
+                % Set up RHS
+                RHS = obj.findRHS(obj.x(deg,:));
+                Cnew = obj.solveTrajectory(LHS, RHS);
+                C = cat(3, C, Cnew);
+            end
+        end
+        
+        
+        
+        % Solves the system of linear equations for one trajectory
+        function C = solveTrajectory(obj, A, B)
+
             Sol = linsolve(A, B); %solution to system of linear equations
             
             C = []; %inititalize empty array
@@ -184,9 +212,10 @@ classdef trajectory
         
         
         
-        % Constructs the RHS of constraints
-        % I feel like this function could be better...
-        function X = findRHS(obj)
+        % Constructs the RHS of constraint equations
+        % Used once for each coordiante
+        % xVal gives the via locations of the coordinate 
+        function X = findRHS(obj, xVal)
             knot = 1; 
             after = 1;
             %initialize to zero
@@ -194,7 +223,7 @@ classdef trajectory
                 
             for constr = 1:(obj.nCons)
                 if (mod(constr, 2) ~= 0) % Every seccond constraint = 0
-                    X(constr) = obj.x(knot); %Every other = position 
+                    X(constr) = xVal(knot); %Every other = position 
                     if after
                         knot = knot + 1;
                         after = 0;
