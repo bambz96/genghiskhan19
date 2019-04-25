@@ -3,7 +3,11 @@ classdef trajectory
         Assignment Gropup 20
         Trajecotry class: stores a timeseries and trajectory 
     
-        Going to completely rework this class to do things manually...
+        Trajectory is calculated on initialisation, from inputs to the
+        class constructor
+        
+        Trajectory propperties shoudl be accessed using accessor methods 
+        supplied.
     
     %}
     
@@ -34,7 +38,13 @@ classdef trajectory
     
     %% Methods (Constructor)
     methods 
-        %constructor
+        % inputs: 
+        % x: array containting values for start and end points, and all
+        % vias for the trajectory, if dof > 1, x should have one row for
+        % each dimension
+        % t: time vector correspondig to the x values given
+        % ts: sample time
+        % dof: degrees of freedom 
         function obj = trajectory(x, t, ts, dof)
         obj.x = x;
         obj.t = t; 
@@ -89,9 +99,27 @@ classdef trajectory
             C = obj.Coefs;
         end
         
-        %% Accessors for individual degrees
+        %% Accessors for individual variable trajectories etc.
         
-        function getOnePosition
+        function x = getOnePosition(obj, degree)
+            x = obj.X(degree,:);
+        end
+        
+        function v = getOneVelocity(obj, degree)
+            v = obj.V(degree, :);
+        end
+        
+        function a = getOneAcceleration(obj, degree)
+            a = obj.A(degree, :);
+        end
+        
+        function j = getOneJerk(obj, degree)
+            j = obj.J(degree, :);
+        end
+        
+        function c = getOneCoefs(obj, degree)
+            c = obj.Coefs(:, :, degree);
+        end
         
         
     end
@@ -109,7 +137,7 @@ classdef trajectory
             
             % Calculate trajectory for each degree of freedom
             for deg = 1:obj.dof
-                Traj = calculateTrajectory(obj, obj.Coefs(:,:,deg));
+                Traj = calculateTrajectory(obj, obj.getOneCoefs(deg));
                 T = [T;Traj];
             end
         end
