@@ -7,7 +7,8 @@ classdef trajectory
     
     %}
     properties (Constant)
-       order = 3;                       % order of polynomials, ie: cubic 
+        order = 3;   % order of polynomials, ie: cubic 
+        N = 4; %number of coefficients to describe one piece 
     end
     
     properties (Access = private)
@@ -22,6 +23,8 @@ classdef trajectory
         Coefs   % Stores trajectory coefficients 
         X       % Stores the trajectory
         V       % Stores the associated velocity profile
+        Acc     % Acceleration Profile
+        Jerk    % Jerk Profile   
         time    % Timeseries associated with trajectory 
 
         
@@ -47,8 +50,14 @@ classdef trajectory
         % calculates the trajectory as a piecwise polynomial
         obj.Coefs = obj.calculateCoefficients;
         
-        % generates the position trajectory vector
-        obj.X = obj.calculateTrajectory;
+        % generate the position trajectory vector
+        obj.X = obj.calculateTrajectory(obj.Coefs);
+        
+        % generate the velocity, accel, jerk profiles
+        obj.V = obj.calcDerivTrajectory(1);
+        obj.Acc = obj.calcDerivTrajectory(2);
+        obj.Jerk = obj.calcDerivTrajectory(3);
+        
         
         end
         
@@ -62,9 +71,16 @@ classdef trajectory
             X = obj.X;
         end
         
-%         This bit is still buggy
         function V = getVelocity(obj)
             V = obj.V;
+        end
+        
+        function A = getAcceleration(obj)
+            A = obj.Acc;
+        end
+        
+        function J = getJerk(obj)
+            J = obj.Jerk;
         end
         
         function C = getCoefficients(obj)
@@ -78,32 +94,39 @@ classdef trajectory
     % Some private helper methods
     methods (Access = private)
         
-        function Traj = calculateTrajectory(obj)
-            Traj = obj.x(1); 
+        % Calculates the entire trajectory in discretised form
+        % corresponding to the time series
+        % Generalised for use with derivatives
+        % input, CoEffiecients of trajectory
+        function Traj = calculateTrajectory(obj, Co)
+            Traj = polyval(Co(1,:), obj.t(1)); %initial value
             for p = 1:obj.pieces
+                % Sequentially calculate each piece
                 tt = (obj.t(p) + obj.ts):obj.ts:obj.t(p + 1); %time series 
-                Traj = [Traj, polyval(obj.Coefs(p,:), tt)];
+                Traj = [Traj, polyval(Co(p,:), tt)];
             end
         end
         
+        
+        % Sets up and solves the system of linear equations
         function C = calculateCoefficients(obj)
-            A = obj.findA();
-            B = obj.findX();
+            A = obj.findLHS();
+            B = obj.findRHS();
             Sol = linsolve(A, B); %solution to system of linear equations
             
             C = []; %inititalize empty array
             
             % arrange coefficients by pieces
             for piece = 1:(obj.pieces)
-                C = [C; (Sol(4*piece:-1:4*(piece-1)+1))'];
+                C = [C; (Sol(obj.N*piece:-1:obj.N*(piece-1)+1))'];
             end
                 
         end
         
-        % probably come up with a better name than this...
-        function A = findA(obj)
-            % initialize A
-            A = zeros(obj.nCons);
+        % Determines the LHS of the constraint equation
+        function A = findLHS(obj)
+            % initialize A to zero
+            A = zeros(obj.nCons); 
             
             % initial endpoint constraints
             A(1:2, 1:4) = [obj.constraint(obj.t(1), 0);  %position 
@@ -113,9 +136,10 @@ classdef trajectory
             A(end-1:end, end - 3:end) = ...
                 [obj.constraint(obj.t(end), 0);     %position
                  obj.constraint(obj.t(end), 1)];    %velocity
-             
+            
+            n = obj.N; % reassigned for readability
             for knot = 1:(obj.pieces - 1)
-                A(knot*4 - 1: knot*4 + 2, (knot-1)*4 + 1: (knot+1)*4) = ...
+                A(knot*n - 1:knot*n + 2, (knot-1)*n + 1:(knot+1)*n) = ...
                     obj.knotConstraints(obj.t(knot + 1));
             end
              
@@ -131,18 +155,23 @@ classdef trajectory
             posC = obj.constraint(tk, 0);   % position constraint
             velC = obj.constraint(tk, 1);   % velocity constraint
             accC = obj.constraint(tk, 2);   % acceleration constraint
-            zero = zeros(1, obj.order + 1); % zeros
+            zero = zeros(1, obj.N); % zeros
             
-            KC = [posC, zero;
+            KC = [posC,  zero;
                   velC, -velC;
-                  zero  posC;
+                  zero,  posC;
                   accC, -accC];
         end
             
         
-        
+        % Can construct parts of each constraint, 
+        % All constraints are a function of position, velocity or
+        % acceleration
+        % deriv: refers to the degree of differentiation ie: position => 0,
+        % velocity => 1 etc. 
         function C = constraint(obj, t, deriv)
             % Polynomial Differentiation operator
+            % This operator is specific to the form shown below
             D = diag(1:obj.order, 1);
             
             % position constraint
@@ -157,15 +186,15 @@ classdef trajectory
         
         % Constructs the RHS of constraints
         % I feel like this function could be better...
-        function X = findX(obj)
+        function X = findRHS(obj)
             knot = 1; 
             after = 1;
             %initialize to zero
             X = zeros(obj.nCons, 1);
                 
             for constr = 1:(obj.nCons)
-                if (mod(constr, 2) ~= 0)
-                    X(constr) = obj.x(knot);
+                if (mod(constr, 2) ~= 0) % Every seccond constraint = 0
+                    X(constr) = obj.x(knot); %Every other = position 
                     if after
                         knot = knot + 1;
                         after = 0;
@@ -176,18 +205,22 @@ classdef trajectory
             end
         end
         
-        function V = velocityCalc(obj)
-            % Create Polynomial Differentiation operator
-            D = diag((obj.PPoly.order -1):-1:1, 1);
-            % Differentiate Polynomial Coefficients
-            VCoeffs = obj.getCoefficients*D;
+        % Calculate the velocity, acceleration, jerk profiles
+        % deriv: refers to the degree of differentiation
+        function V = calcDerivTrajectory(obj, deriv)
+            VCoeffs = (obj.getCoefficients);
             
-            % Make a piecewise polynomial of Velocity profile
-            VPP = mkpp(obj.PPoly.breaks, VCoeffs);
+            % Create Polynomial Differentiation operator
+            % This operator fits the form of the stored trajectory
+            D = diag((obj.order):-1:1, 1);
+            
+            % Differentiate Polynomial Coefficients    
+            for diff = 1:deriv
+                VCoeffs = VCoeffs*D;
+            end
             % Create velocity profile
-            V = ppval(VPP, obj.time);
+            V = obj.calculateTrajectory(VCoeffs);
         end
-        
         
     end
     
