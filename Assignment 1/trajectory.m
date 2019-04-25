@@ -6,12 +6,14 @@ classdef trajectory
         Going to completely rework this class to do things manually...
     
     %}
+    
+    %% Propperties
     properties (Constant)
         order = 3;   % order of polynomials, ie: cubic 
         N = 4; %number of coefficients to describe one piece 
     end
     
-    properties %(Access = private)
+    properties (Access = private)
         ts      % sampling time
         dof     % Degrees of Freedom in the trajectory
         x       % positions specified including start, end, and vias
@@ -30,6 +32,7 @@ classdef trajectory
         
     end 
     
+    %% Methods (Constructor)
     methods 
         %constructor
         function obj = trajectory(x, t, ts, dof)
@@ -54,15 +57,14 @@ classdef trajectory
         obj.X = obj.allTrajectories;
         
         % generate the velocity, accel, jerk profiles
-%         obj.V = obj.calcDerivTrajectory(1);
-%         obj.Acc = obj.calcDerivTrajectory(2);
-%         obj.Jerk = obj.calcDerivTrajectory(3);
-%         
+        obj.V = obj.allDerivTrajectories(1);
+        obj.Acc = obj.allDerivTrajectories(2);
+        obj.Jerk = obj.allDerivTrajectories(3);   
         
         end
         
         
-        %some accessors
+        %% Accessors for all dof
         function T = getTimeseries(obj)
             T = obj.time;
         end
@@ -87,12 +89,19 @@ classdef trajectory
             C = obj.Coefs;
         end
         
+        %% Accessors for individual degrees
+        
+        function getOnePosition
+        
         
     end
     
     
     % Calculation methods
     methods (Access = private)
+        
+        %% High level functions (For all Trajectories)
+        % Would be really nice if matlab allowed higher order functions...
         
         % Calculate trajectories for all degrees of freedom
         function T = allTrajectories(obj)
@@ -104,20 +113,7 @@ classdef trajectory
                 T = [T;Traj];
             end
         end
-            
         
-        % Calculates a trajectory for one variable
-        % corresponding to the time series
-        % Generalised for use with derivatives
-        % input, CoEffiecients of trajectory
-        function Traj = calculateTrajectory(obj, Co)
-            Traj = polyval(Co(1,:), obj.t(1)); %initial value
-            for p = 1:obj.pieces
-                % Sequentially calculate each piece
-                tt = (obj.t(p) + obj.ts):obj.ts:obj.t(p + 1); %time series 
-                Traj = [Traj, polyval(Co(p,:), tt)];
-            end
-        end
         
         % Sets up systems of linear equations for each coordinate
         function C = calculateCoefficients(obj)
@@ -133,8 +129,33 @@ classdef trajectory
                 Cnew = obj.solveTrajectory(LHS, RHS);
                 C = cat(3, C, Cnew);
             end
-        end
+        end            
         
+        function V = allDerivTrajectories(obj, deriv)
+            V = [];
+            
+            % Calculate deriv trajectory for each degree of freedom
+            for deg = 1:obj.dof
+                Vel = calcDerivTrajectory(obj, deriv, obj.Coefs(:,:,deg));
+                V = [V;Vel];
+            end
+        end
+            
+        
+        %% Calculation methods for one variable
+        
+        % Calculates a trajectory for one variable
+        % corresponding to the time series
+        % Generalised for use with derivatives
+        % input, CoEffiecients of trajectory
+        function Traj = calculateTrajectory(obj, Co)
+            Traj = polyval(Co(1,:), obj.t(1)); %initial value
+            for p = 1:obj.pieces
+                % Sequentially calculate each piece
+                tt = (obj.t(p) + obj.ts):obj.ts:obj.t(p + 1); %time series 
+                Traj = [Traj, polyval(Co(p,:), tt)];
+            end
+        end
         
         
         % Solves the system of linear equations for one trajectory
@@ -234,21 +255,21 @@ classdef trajectory
             end
         end
         
+
         % Calculate the velocity, acceleration, jerk profiles
         % deriv: refers to the degree of differentiation
-        function V = calcDerivTrajectory(obj, deriv)
-            VCoeffs = (obj.getCoefficients);
-            
+        % Pass in Coefficients
+        function V = calcDerivTrajectory(obj, deriv, Coeffs)
             % Create Polynomial Differentiation operator
             % This operator fits the form of the stored trajectory
             D = diag((obj.order):-1:1, 1);
             
             % Differentiate Polynomial Coefficients    
             for diff = 1:deriv
-                VCoeffs = VCoeffs*D;
+                Coeffs = Coeffs*D;
             end
             % Create velocity profile
-            V = obj.calculateTrajectory(VCoeffs);
+            V = obj.calculateTrajectory(Coeffs);
         end
         
     end
