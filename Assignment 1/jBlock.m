@@ -3,7 +3,9 @@ classdef jBlock
         Assignment Group 20
         Block class: represents an individual jenga block as part of the
         jTower class
-    
+        
+        Coordinate datum of brick is recognised as the middle of the brick 
+        on the lower surface. 
     %}
     properties (Constant)
         Material = "alder";
@@ -20,9 +22,10 @@ classdef jBlock
         theta       % orientation of brick
     end
     
-    methods 
     
     %% Constructor
+    methods 
+       
         function obj = jBlock(x, y, z, theta)
             obj.placed = false;
             obj.x = x;
@@ -46,12 +49,10 @@ classdef jBlock
         end
         
         %% Mutators
-        function placeBrick(obj)
+        function obj = placeBrick(obj)
             obj.placed = true;
         end
         
     end
-    
-        
     
 end
