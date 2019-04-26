@@ -23,19 +23,34 @@ classdef jTower
     end
     
     
-    %% Methods  
+    %% Public Methods  
     methods
+        % Constructor
         function obj = jTower(x, y, theta)
             obj.x_loc = x;
             obj.y_loc = y;
             obj.theta = theta;
             
-            towerBlocks = obj.constructTowerBlocks;
-            complete = false; %tower not yet built
+            obj.towerBlocks = obj.constructTowerBlocks;
+            obj.complete = false; %tower not yet built
+        end
+        
+        function C = isComplete(obj)
+            C = obj.complete;
+        end
+        
+        function B = nextBlock(obj)
+            block = 1;
+            while obj.towerBlocks(block).isPlaced;
+                block = block + 1;
+            end
+            B = obj.towerBlocks(block);
         end
     
     end
     
+  
+    %% Private Methods
     methods(Access = private)
         
         % Adds all blocks to the tower
@@ -43,8 +58,8 @@ classdef jTower
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    [x, y, z, theta] = obj.blockPosition(layer,pos);
-                    tower = [tower, jBlock(x, y, z, theta)];
+                    [x, y, z, bTheta] = obj.blockPosition(layer,pos); 
+                    tower = [tower, jBlock(x, y, z, bTheta)]; 
                 end
             end
         end
