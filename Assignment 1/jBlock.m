@@ -1,4 +1,4 @@
-classdef jBlock
+classdef jBlock < handle
     %{
         Assignment Group 20
         Block class: represents an individual jenga block as part of the
@@ -36,11 +36,8 @@ classdef jBlock
         
         %% Accessors
         % Returns coordinates of block in 0 frame
-        function [x, y, z, theta] = getLocation(obj)
-            x = obj.x;
-            y = obj.y;
-            z = obj.z;
-            theta = obj.theta;
+        function P = getPosition(obj)
+            P = [obj.x, obj.y, obj.z, obj.theta];
         end
         
         % Check if brick has been placed
@@ -49,7 +46,7 @@ classdef jBlock
         end
         
         %% Mutators
-        function obj = placeBrick(obj)
+        function placeBlock(obj)
             obj.placed = true;
         end
         

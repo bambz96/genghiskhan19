@@ -83,8 +83,9 @@ classdef jTower
             z = (layer - 1)*jBlock.Height;
 
             %Compensate for tower position
-            x = obj.zRotation(obj.theta)*x + obj.x_loc;
-            y = obj.zRotation(obj.theta)*y + obj.y_loc;
+            P = obj.zRotation(obj.theta)*[x; y; z];
+            x = P(1) + obj.x_loc;
+            y = P(2) + obj.y_loc;
             theta = theta + obj.theta;
 
         end
