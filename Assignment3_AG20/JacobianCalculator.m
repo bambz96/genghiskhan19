@@ -2,7 +2,7 @@
 Author: Assignment Group 20
 William Ellett 586703
 
-Calculation of Robot Jacobian. 
+Calculation of Robot Jacobian.
 %}
 %% Set up
 jenghis = robot;
@@ -24,7 +24,7 @@ for joint = 1:DoF
     z = R*z_hat;
     P = R*Position(jenghis, joint, 'W');
 
-    Jacobian = [Jacobian, jacobianRevolute(z, P)];   
+    Jacobian = [Jacobian, jacobianRevolute(z, P)];
 
 end
 %Final Result
@@ -49,4 +49,3 @@ function Ji = jacobianRevolute(zi, Pi)
   Ji = cross(zi, Pi);
   Ji= [Ji;zi];
 end
-
