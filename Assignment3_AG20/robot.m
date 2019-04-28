@@ -32,11 +32,13 @@ classdef robot
         j5_lim = [-112 112]
         
         %% Base Limits
-        % Keep out zone definitions for cuboid
-        % LFR, LFL, LRL, LRR, UFR, UFL, URL, URR
-        baseX = [78 78  -78 -78 78  78  -78 -78]
-        baseY = [78 -78 -78 78  78  -78 -78 78]
-        baseZ = [0  0   0   0   300 300 300 300]
+        % Keep out zone definitions for base
+        baseWidth = 155
+        baseLength = 155
+        baseHeight = 300
+        baseOrientation = 0
+        baseX = 0
+        baseY = 0
         %% End Effector Dimensions
         length = 120    %mm
         width = 66      %mm
