@@ -1,4 +1,4 @@
-classdef trajectory
+classdef taskTrajectory
     %{
         Assignment Gropup 20
         Trajecotry class: stores a timeseries and trajectory 
@@ -45,7 +45,7 @@ classdef trajectory
         % t: time vector correspondig to the x values given
         % ts: sample time
         % dof: degrees of freedom 
-        function obj = trajectory(x, t, ts, dof)
+        function obj = taskTrajectory(x, t, ts, dof)
         obj.x = x;
         obj.t = t; 
         obj.ts = ts;

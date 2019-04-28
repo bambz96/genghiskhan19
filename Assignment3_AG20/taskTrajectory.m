@@ -99,6 +99,14 @@ classdef taskTrajectory
             C = obj.Coefs;
         end
         
+        % Returns the time values, and sample time
+        function [t, ts] = getTime(obj)
+            t = obj.t;
+            ts = obj.ts;
+        end
+        
+        
+        
         %% Accessors for individual variable trajectories etc.
         
         function x = getOnePosition(obj, degree)
