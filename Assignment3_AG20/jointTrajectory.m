@@ -31,25 +31,40 @@ classdef jointTrajectory
    
     methods
         % Note, jointTrajectory must be initialised from a taskTrajectory
-        function obj = jointTrajectory(taskT, dof)
-            % input propperties
+        function obj = jointTrajectory(taskT, dof, IK, DK)
+            % Input propperties
             obj.dof = dof;
             
-            % propperties taken directly from taskTrajectory
+            % Propperties taken directly from taskTrajectory
             [obj.t, obj.ts] = taskT.getTime;
             obj.time = taskT.getTimeseries;
             
             obj.pieces = length(obj.t) - 1;
             
-            %Propperties calculated based on taskTrajectory
-            
+            % Propperties calculated based on taskTrajectory
+            obj.
             
         
         
         end
         
-        
+    end
+    
+    methods(Access = private)
+        % Finds joint trajectories from task trajectories
+        function Q = findJointTrajectories(X)
+            
+        end
+
+        function Q_dot = findJointVelocities(X)
+
+        end
         
     end
     
-end
+ end
+
+    
+    
+    
+    
