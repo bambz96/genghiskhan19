@@ -2,13 +2,17 @@
     Assignemnt Group 20
     Assignment 3, testing code. 
 
-%}
+    This Script creates an example trajectory using the loading bay
+    location, and fill this out later...
 
+%}
+%% Set up robot
 jenghis = robot;
 
 IK = jenghis.inverseKinematics;
+DK = jenghis.differentialKinematics;
 
-% Sample trajectory
+%% Sample trajectory
 % [x, y, z, theta]
 LoadingBay = [37.5; 187.5; -3; 90];
 
@@ -27,15 +31,23 @@ v3 = EndPoint + [-10; 0; 5; 0];
 % Future iterations will allow for adjustment of this via point
 v2 = (v1 + v3)/2;
 
+
+%% Make trajectory
 x = [LoadingBay, v1, v2, v3, EndPoint];
 t = [0, 0.5, 2.5, 4.5, 5];
 ts = 0.1;
 
 Terry = taskTrajectory(x, t, ts, 4);
 
-Joe = jointTrajectory(Terry, jenghis.DoF, IK);
+Joe = jointTrajectory(Terry, jenghis.DoF, IK, DK);
 
+%% Plot
 plot(Joe.getTimeseries, Joe.getQ);
+
+legend('q1', 'q2', 'q3', 'q4', 'q5');
+
+figure(2) 
+plot(Joe.getTimeseries, Joe.getQ_dot);
 
 legend('q1', 'q2', 'q3', 'q4', 'q5');
 

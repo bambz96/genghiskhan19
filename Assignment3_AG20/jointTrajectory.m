@@ -31,7 +31,7 @@ classdef jointTrajectory
    
     methods
         % Note, jointTrajectory must be initialised from a taskTrajectory
-        function obj = jointTrajectory(taskT, dof, IK) % probs DK too
+        function obj = jointTrajectory(taskT, dof, IK, DK) % probs DK too
             % Input propperties
             obj.dof = dof;
             
@@ -43,6 +43,7 @@ classdef jointTrajectory
             
             % Propperties calculated based on taskTrajectory
             obj.Q = obj.findJointTrajectories(taskT.getPosition, IK);
+            obj.Q_dot = obj.findJointVelocities(taskT.getPosition, DK);
             
         end
     
@@ -55,11 +56,20 @@ classdef jointTrajectory
             T = obj.time;
         end
         
+        function Qd = getQ_dot(obj)
+            Qd = obj.Q_dot;
+        end
+        
+        function Qdd = getQ_ddot(obj)
+            Qdd = obj.Q_ddot;
+        end
+    
     end
     
     %% Private Methods
     
     methods(Access = private)
+        
         % Finds joint trajectories from task trajectories
         function Q = findJointTrajectories(obj, X, IK)
             n = length(obj.time);
@@ -73,12 +83,19 @@ classdef jointTrajectory
         end
         
 
-        
-%         function Q_dot = findJointVelocities(obj, X)
-% 
-%         end
-        
+        % Finds joint velocities from joint trajectories, and task
+        % velocities
+        function Qd = findJointVelocities(obj, X, DK)
+            n = length(obj.time);
+            Qd = zeros(obj.dof, n);
+            for i = 1:n
+                % length 6 vector for differential kinemantics
+                x6 = [X(1:3, i); 0; 0; X(4, i)]; 
+                Qd(:,i) = DK.findJointSpaceVelocities(obj.Q(:,i), x6);
+            end
+        end
     end
+    
     
  end
 
