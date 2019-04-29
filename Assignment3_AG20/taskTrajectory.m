@@ -118,11 +118,11 @@ classdef taskTrajectory
         end
         
         function a = getOneAcceleration(obj, degree)
-            a = obj.A(degree, :);
+            a = obj.Acc(degree, :);
         end
         
         function j = getOneJerk(obj, degree)
-            j = obj.J(degree, :);
+            j = obj.Jerk(degree, :);
         end
         
         function c = getOneCoefs(obj, degree)
