@@ -7,10 +7,11 @@ classdef robot
 
 
         %% Link Lengths
-        L1      = 200;   % mm        % Origin to joint 1
+        L1      = 206.25;   % mm        % Origin to joint 1
         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
         L3      = 200;	 % mm        % Joint 3 to Joint 4
         L4      = 100;	 % mm        % Joint 4 to End effector
+        L_PL    = 100;   % mm        % Shorter side length of Parallelogram
 
 %         L1 = sym('L1');
 %         L2 = sym('L2');
@@ -40,8 +41,8 @@ classdef robot
         baseX = 0
         baseY = 0
         %% End Effector Dimensions
-        length = 120    %mm
-        width = 66      %mm
+        EE_length = 120    %mm
+        EE_width = 66      %mm
 
         %%
         forwardKinematics
@@ -49,8 +50,22 @@ classdef robot
         differentialKinematics
 
         %% Mass Properties
+        g           = 9.81;         % m/s^2 % Gravity
+        m_total     = 0.764;        % kg    % Mass of all moving parts % MEASURE AT SOME POINT
+        m_PL_bot    = 0.085;        % kg    % Mass of lower parallelogram joint
+        m_PL_top    = 0.075;        % kg    % Mass of upper parallelogram joint
+        m_counter   = 0;            % kg    % Mass of counterweight
+        m_3         = 0.054;        % kg    % Mass of joint 3
+        m_4         = 0.063;        % kg    % Mass of joint 4 (before EE)
+        m_E         = 0.116;        % kg    % Mass of End Effector
+        
+        %% Other Properties
+        tSpring_K   = 7.25;           % Nmm/deg % Stiffness of torsion spring
+        tSpring_0   = 0;            % deg     % Zero position of torsion spring
 
         %% Motor Properties
+        XL430_T_Max = 0.84;     %Nm
+        XL320_T_Max = 0.22;     %Nm
 
     end
 
