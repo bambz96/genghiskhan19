@@ -17,7 +17,7 @@ classdef taskTrajectory
         N = 4; %number of coefficients to describe one piece 
     end
     
-    properties (Access = private)
+    properties %(Access = private)
         ts      % sampling time
         dof     % Degrees of Freedom in the trajectory
         x       % positions specified including start, end, and vias
@@ -52,7 +52,7 @@ classdef taskTrajectory
         obj.dof = dof;
         
         % number of pieces in the plynomial
-        obj.pieces = length(x) - 1;
+        obj.pieces = length(x(1,:)) - 1;
         % number of constraints required 
         obj.nCons = (obj.order + 1)*obj.pieces;
         

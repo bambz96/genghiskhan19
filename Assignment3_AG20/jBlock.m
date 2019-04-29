@@ -37,7 +37,7 @@ classdef jBlock < handle
         %% Accessors
         % Returns coordinates of block in 0 frame
         function P = getPosition(obj)
-            P = [obj.x, obj.y, obj.z, obj.theta];
+            P = [obj.x; obj.y; obj.z; obj.theta];
         end
         
         % Check if brick has been placed

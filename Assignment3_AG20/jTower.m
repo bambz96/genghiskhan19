@@ -58,15 +58,15 @@ classdef jTower
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    [x, y, z, bTheta] = obj.blockPosition(layer,pos); 
-                    tower = [tower, jBlock(x, y, z, bTheta)]; 
+                    P = obj.blockPosition(layer,pos); 
+                    tower = [tower, jBlock(P(1), P(2), P(3), P(4))]; 
                 end
             end
         end
 
         % calculates coordiantes of a block from it's place in the tower
         % output matches jBlock constructor
-        function [x, y, z, theta] = blockPosition(obj, layer, layerPos)
+        function P = blockPosition(obj, layer, layerPos)
             if mod(layer, 2) % odd layer
                 % datum is in centre of brick
                 x = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
@@ -82,11 +82,13 @@ classdef jTower
             % z dayum is on lower surface
             z = (layer - 1)*jBlock.Height;
 
-            %Compensate for tower position
+            % Compensate for tower position
             P = obj.zRotation(obj.theta)*[x; y; z];
-            x = P(1) + obj.x_loc;
-            y = P(2) + obj.y_loc;
+            P = P + [obj.x_loc; obj.y_loc; 0];
             theta = theta + obj.theta;
+            
+            % return column vector
+            P = [P; theta];
 
         end
     end
