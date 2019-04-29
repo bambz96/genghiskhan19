@@ -1,3 +1,4 @@
+
 classdef differentialKinematics <handle
 
 %     Differential Kinematics for robot class, calculates robot jacobian
@@ -5,8 +6,6 @@ classdef differentialKinematics <handle
 %     Usage: class should be initialised in the constructor of the robot to
 %     which these differentaial kinematics are assigned.
 %
-%     Currently just calculates jacobian, additional functionality to be
-%     added in future release.
 
 
 

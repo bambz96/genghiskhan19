@@ -1,4 +1,4 @@
-classdef trajectory
+classdef taskTrajectory
     %{
         Assignment Gropup 20
         Trajecotry class: stores a timeseries and trajectory 
@@ -17,7 +17,7 @@ classdef trajectory
         N = 4; %number of coefficients to describe one piece 
     end
     
-    properties (Access = private)
+    properties %(Access = private)
         ts      % sampling time
         dof     % Degrees of Freedom in the trajectory
         x       % positions specified including start, end, and vias
@@ -45,14 +45,14 @@ classdef trajectory
         % t: time vector correspondig to the x values given
         % ts: sample time
         % dof: degrees of freedom 
-        function obj = trajectory(x, t, ts, dof)
+        function obj = taskTrajectory(x, t, ts, dof)
         obj.x = x;
         obj.t = t; 
         obj.ts = ts;
         obj.dof = dof;
         
         % number of pieces in the plynomial
-        obj.pieces = length(x) - 1;
+        obj.pieces = length(x(1,:)) - 1;
         % number of constraints required 
         obj.nCons = (obj.order + 1)*obj.pieces;
         
@@ -98,6 +98,14 @@ classdef trajectory
         function C = getCoefficients(obj)
             C = obj.Coefs;
         end
+        
+        % Returns the time values, and sample time
+        function [t, ts] = getTime(obj)
+            t = obj.t;
+            ts = obj.ts;
+        end
+        
+        
         
         %% Accessors for individual variable trajectories etc.
         
