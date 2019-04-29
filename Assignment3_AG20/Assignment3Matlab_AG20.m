@@ -42,9 +42,11 @@ Terry = taskTrajectory(x, t, ts, 4);
 Joe = jointTrajectory(Terry, jenghis.DoF, IK, DK);
 
 %% Plot
-plot(Joe.getTimeseries, Joe.getQ);
+% plot(Joe.getTimeseries, Joe.getQ);
+% 
+% legend('q1', 'q2', 'q3', 'q4', 'q5');
 
-legend('q1', 'q2', 'q3', 'q4', 'q5');
+plot(Terry.getTimeseries, Terry.getPosition); 
 
 figure(2) 
 plot(Joe.getTimeseries, Joe.getQ_dot);
