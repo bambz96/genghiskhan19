@@ -68,7 +68,7 @@ classdef inverseKinematics <handle
            q4_sol = -(q2_sol+q3_sol);
            
            %% q5
-           q5_sol = obj.theta-q1_sol; 
+           q5_sol = -(obj.theta-q1_sol); 
         end
         
 %         function [q1, q2, q3, q4, q5] = findQ(obj, x,y,z,theta)

@@ -65,18 +65,25 @@ classdef differentialKinematics <handle
         % Calculate Task Space Velocities
         function [x_dot_i] = findTaskSpaceVelocities(obj,q_i,q_dot_i)
             % x_dot_i: 6x1 matrix of end effector velocities in frame 0
-            % q_dot: 1x5 matrix of joint positions
-            % q_dot_i: 5x1 matrix of joint velocities
+            %          First three elements are in mm/s (x_dot,y_dot,z_dot)
+            %          elements 4,5,6 are in deg/s
+            % q_dot: 1x5 matrix of joint positions in degrees
+            % q_dot_i: 5x1 matrix of joint velocities in degrees/s
+            degreesToRads = pi/180; 
             JacobianEval = evalJacobian(obj,q_i(1), q_i(2), q_i(3), q_i(4), q_i(5));
             x_dot_i = JacobianEval*q_dot_i;
+            for i = 1:3
+                x_dot_i(i) = x_dot_i(i)*degreesToRads;
+            end
         end
-        
         
         % Calculate joint velocities based on task space velocities
         function [q_dot_i] = findJointSpaceVelocities(obj,q_i,x_dot_0_i)
-            % q_dot_i: 5x1 matrix of joint velocities
+            % q_dot_i: 5x1 matrix of joint velocities in deg/s
             % x_dot_0_i: 6x1 matrix of end effector velocities in frame 0
-            % q_i: 5x1 matrix of joint positions
+            % in mm/s (linear velocities) and deg/s (angular velocities)
+            % q_i: 5x1 matrix of joint positions in degrees
+            radsToDegrees = 180/pi;
             
             % Method 2 taught in lecture 19
             % Express everything in Frame 1
@@ -96,6 +103,12 @@ classdef differentialKinematics <handle
             % Remove 4th column, as there can't be a rotation about X_1
             x_dot_1_i(4) = [];
             J_1(4,:) = [];
+            
+            % Multiply in conversion constant to first three elements of
+            % x_dot so that when q_dots are calculated, output is in deg/s
+            for i = 1:3
+                x_dot_1_i(i) = x_dot_1_i(i)*radsToDegrees;
+            end
             
             % Invert Jacobian
 %             J_1_Inv = inv(J_1N); 

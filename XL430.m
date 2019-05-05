@@ -20,6 +20,11 @@ classdef XL430 < handle
         ADDR_PRO_SET_MIN_POS        = 52
         ADDR_PRO_SET_MAX_POS        = 48
         
+        ADDR_PRO_REALTIME_TICK      = 120
+        
+        LEN_PRO_GOAL_VELOCITY       = 4
+        LEN_PRO_PRESENT_POSITION    = 4
+        
         
         PROTOCOL_VERSION            = 2.0
         
@@ -30,6 +35,8 @@ classdef XL430 < handle
         TORQUE_DISABLE              = 0;            % Value for disabling the torque
         DXL_MINIMUM_POSITION_VALUE  = 0;            % Dynamixel will rotate between this value
         DXL_MAXIMUM_POSITION_VALUE  = 4095;         % and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+        
+        DXL_MAXIMUM_TICK            = 32767;
         
         DXL_MOVING_STATUS_THRESHOLD = 20;           % Dynamixel moving status threshold
         VELOCITY_CONTROL            = 1;            % Wheel mode (Speed control)
@@ -42,20 +49,27 @@ classdef XL430 < handle
         dxl_present_position        = 0;            % Present position
         dxl_comm_result             = 0;            % Communication result
         
+        angleOffset                                 % Difference in motor 0 and desired 0
+        axis                                        % 1 if z-axis correct, -1 if opposite
         degreeConversionConstant    = 0.088;        % Degrees
         velocityConversionConstant  = 0.229         % RPM 
     end
     
     methods
-        function obj = XL430(ID, port_num, min_angle, max_angle)
+        function obj = XL430(ID, port_num, min_angle, max_angle, angleOffset, axis)
             % XL430 Construct an instance of this class
             % min_angle and max_angle in degrees
+            % angle_offset defines the difference between robot 0 position
+            % and motor 0 position in degrees
+            % axis: 1 if the z-axis of the motor aligns with the robot
+            % axis, -1 if it's opposite
             obj.port_num = port_num;
             obj.DXL_ID = ID;
             obj.dxl_comm_result = obj.COMM_TX_FAIL;
             obj.DXL_MINIMUM_POSITION_VALUE = floor(min_angle/obj.degreeConversionConstant);
             obj.DXL_MAXIMUM_POSITION_VALUE = floor(max_angle/obj.degreeConversionConstant);
-            obj.positionMode();
+            obj.angleOffset = angleOffset;
+            obj.axis = axis; 
         end
         
         function [obj] = torqueEnable(obj)

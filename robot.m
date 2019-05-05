@@ -6,7 +6,7 @@ classdef robot < handle
         DoF = 5; %Degrees of Freedom
 
         %% Link Lengths
-        L1      = 200;   % mm        % Origin to joint 1
+        L1      = 206.25;   % mm        % Origin to joint 1
         L2      = 200;	 % mm        % Joint 1+2 to Joint 3
         L3      = 200;	 % mm        % Joint 3 to Joint 4
         L4      = 100;	 % mm        % Joint 4 to End effector
@@ -49,7 +49,7 @@ classdef robot < handle
         m_counter   = 0;            % kg    % Mass of counterweight
         m_3         = 0.054;        % kg    % Mass of joint 3
         m_4         = 0.063;        % kg    % Mass of joint 4 (before EE)
-        m_E         = 0.206;        % kg    % Mass of End Effector
+        m_E         = 0.116;        % kg    % Mass of End Effector
         
         %% Other Properties
         tSpring_K   = 10;           % Nmm/deg % Stiffness of torsion spring

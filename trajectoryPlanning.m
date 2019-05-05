@@ -48,7 +48,7 @@ classdef trajectoryPlanning < handle
                 
         end
         
-        function [t, q, q_dot] = generateJointTrajectory(x0,x_dot_0,xf,x_dot_f, tf, dt)
+        function [t, q, q_dot] = generateJointTrajectory(obj,x0,x_dot_0,xf,x_dot_f, tf, dt)
             % Generate trajectory in Joint space q: q1,q2,q3,q4,q5 +q_dots
             % x0:       start position 1x4 (x,y,z,theta)
             % x_dot_0:  start velocities 1x4 (x_dot,y_dot,z_dot,theta_dot)
