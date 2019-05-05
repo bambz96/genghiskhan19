@@ -72,6 +72,7 @@ plot(Joe.getTimeseries, Joe.getQ);
 title("Joint Space Trajectory");
 legend('q1', 'q2', 'q3', 'q4', 'q5');
 
+
 figure(3) 
 plot(Joe.getTimeseries, Joe.getQ_dot);
 title("Joint Space Velocity");

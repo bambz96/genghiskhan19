@@ -121,9 +121,9 @@ classdef trajectoryChecker
                 q2_ddot_Check = convertToDegS*T2/staticTorque.getI2>Q_ddot2(i);
                 T3 = robot.XL430_T_Max-staticTorque.getT3;
                 q3_ddot_Check = convertToDegS*T3/staticTorque.getI3>Q_ddot3(i);
-                T4 = robot.XL430_T_Max-staticTorque.getT4;
+                T4 = robot.XL320_T_Max-staticTorque.getT4;
                 q4_ddot_Check = convertToDegS*T4/staticTorque.getI4>Q_ddot4(i);
-                T5 = robot.XL430_T_Max-staticTorque.getT5;
+                T5 = robot.XL320_T_Max-staticTorque.getT5;
                 q5_ddot_Check = convertToDegS*T5/staticTorque.getI5>Q_ddot5(i);
                 torqueCheck = torqueCheck&&q1_ddot_Check&&q2_ddot_Check&&q3_ddot_Check&&q4_ddot_Check&&q5_ddot_Check;
             end

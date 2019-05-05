@@ -90,7 +90,12 @@ classdef jointTrajectory
             Qd = zeros(obj.dof, n);
             for i = 1:n
                 % length 6 vector for differential kinemantics
-                x6 = [X(1:3, i); 0; 0; X(4, i)]; 
+                x6 = [X(1, i);
+                    X(2,i);
+                    X(3,i);
+                    0; 
+                    0; 
+                    X(4, i)]; 
                 Qd(:,i) = DK.findJointSpaceVelocities(obj.Q(:,i), x6);
             end
         end
