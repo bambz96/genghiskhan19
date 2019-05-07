@@ -8,17 +8,19 @@ classdef pause_trj < taskTrajectory
    
     So simple, it's mostly just exists for the name
     %}
-    
-    
+    properties(Constant)
+        DOF = 5;
+    end
     properties(Access = private)
         pauseLength 
     end
     
     methods 
-        function obj = pause_trj(x, t, ts, dof, length)
+        function obj = pause_trj(x, t, ts, length)
             tPause = [t, t + length];
             xPause = [x, x];
-            obj = obj@taskTrajectory(xPause, tPause, ts, dof);
+            
+            obj = obj@taskTrajectory(xPause, tPause, ts, pause_trj.DOF);
             obj.pauseLength = length;
             
         end

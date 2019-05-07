@@ -11,6 +11,8 @@ classdef jTower
         NumBlocks = 54;     % Total blocks in tower
         BPerLayer = 3;      % Blocks Per Layer
         Layers    = 18;     
+        Width     = 75;
+        Height    = 270;  
     end
     
     properties (Access = private)
