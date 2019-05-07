@@ -8,7 +8,7 @@ classdef jBlock < handle
         on the lower surface. 
     %}
     properties (Constant)
-        Material = "alder";
+        Material = 'alder';
         Length = 75;    % mm
         Width = 25;     % mm
         Height = 15;    % mm

@@ -43,7 +43,7 @@ classdef jointTrajectory
             
             % Propperties calculated based on taskTrajectory
             obj.Q = obj.findJointTrajectories(taskT.getPosition, IK);
-            obj.Q_dot = obj.findJointVelocities(taskT.getPosition, DK);
+            obj.Q_dot = obj.findJointVelocities(taskT.getVelocity, DK);
             
         end
     
@@ -85,18 +85,18 @@ classdef jointTrajectory
 
         % Finds joint velocities from joint trajectories, and task
         % velocities
-        function Qd = findJointVelocities(obj, X, DK)
+        function Qd = findJointVelocities(obj, X_dot, DK)
             n = length(obj.time);
             Qd = zeros(obj.dof, n);
             for i = 1:n
                 % length 6 vector for differential kinemantics
-                x6 = [X(1, i);
-                    X(2,i);
-                    X(3,i);
+                x_dot6 = [X_dot(1, i);
+                    X_dot(2,i);
+                    X_dot(3,i);
                     0; 
                     0; 
-                    X(4, i)]; 
-                Qd(:,i) = DK.findJointSpaceVelocities(obj.Q(:,i), x6);
+                    X_dot(4, i)]; 
+                Qd(:,i) = DK.findJointSpaceVelocities(obj.Q(:,i), x_dot6);
             end
         end
     end
