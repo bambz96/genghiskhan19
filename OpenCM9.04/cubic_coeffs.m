@@ -7,8 +7,17 @@ function [a3, a2, a1, a0] = cubic_coeffs(x0, x0d, xf, xfd, tf)
 
     b = inv(A)*[x0; x0d; xf; xfd];
 
-    a3 = b(4);
-    a2 = b(3);
-    a1 = b(2);
-    a0 = b(1);
+    a3 = myShrink(b(4));
+    a2 = myShrink(b(3));
+    a1 = myShrink(b(2));
+    a0 = myShrink(b(1));
+
+end
+
+function val = myShrink(x)
+    if abs(x) < 1e-5
+        val = 0;
+    else
+        val = x;
+    end
 end

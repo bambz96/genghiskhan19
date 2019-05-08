@@ -7,6 +7,7 @@
 #define RECEIVING_TH 4
 #define PLOTTING 5 // send all paths (t, x, y, z) back to Matlab
 #define SIMULATION 6 // simulate measurement/control
+#define POSITION_CONTROL 7
 
 int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
@@ -77,7 +78,7 @@ void loop() {
     readData(thpoly);
     if (count >= value) {
       count = value; // should assert count == value
-      state = PLOTTING;
+      state = POSITION_CONTROL;
     }
   } else if (state == PLOTTING) {
     // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
@@ -90,6 +91,23 @@ void loop() {
     count = 0;
     // clear polys arrays?
     state = WAITING;
+  } else if (state == POSITION_CONTROL) {
+    unsigned int t0 = millis();
+    unsigned int dt = 0;
+    unsigned int tf = 3;
+    while (dt < tf) {
+      // get task space coord
+      float x = evaluate(&xpoly[0], dt/1000.0);
+      float y = evaluate(&ypoly[0], dt/1000.0);
+      float z = evaluate(&zpoly[0], dt/1000.0);
+
+      // get joint space with IK
+
+
+      // write joint space to servos
+
+      dt = millis() - t0;
+    }
   }
 }
 
@@ -150,4 +168,12 @@ void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
   Serial.print(t+t0, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
+}
+
+float evaluate(struct Cubic *cubic, float t) {
+   float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
+    float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
+    float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
+    float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
+    return poly(t, a0, a1, a2, a3);
 }

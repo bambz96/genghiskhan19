@@ -1,18 +1,19 @@
 % successfully sends polynomial coefficients
 clear all % remove serial that insists on hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM5','BAUD',57600);
 
 %% 4 polynomial coeffs
 length = 1;
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 1, 3, 0.5);
-xdata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(1, 0, 0, 0, 0.5);
-ydata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 1, 0, 0.5);
-zdata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(0.5, 0, 0, -3, 0.5);
-thdata = [a3 a2 a1 a0 0.5];
+tf = 3;
+[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.2, 0, tf);
+xdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.2, 0, tf);
+ydata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(0.3, 0, 0.2, 0, tf);
+zdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf);
+thdata = [a3 a2 a1 a0 tf];
 
 % length = 2;
 % tv = 0.2; tf = 0.4;
