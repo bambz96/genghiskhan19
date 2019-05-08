@@ -6,7 +6,7 @@ classdef taskTrajectory
         Trajectory is calculated on initialisation, from inputs to the
         class constructor
         
-        Trajectory propperties shoudl be accessed using accessor methods 
+        Trajectory propperties should be accessed using accessor methods 
         supplied.
     
     %}
