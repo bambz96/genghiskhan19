@@ -23,6 +23,10 @@
 #define LENGTH_GOAL_VELOCITY_320            2
 #define LENGTH_PRESENT_POSITION_320         2
 
+#define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
+#define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //degrees per unit
+
+
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
@@ -53,6 +57,19 @@
 #define ESC_ASCII_VALUE                 0x1b
 uint8_t dxl_error = 0;                          // Dynamixel error
 unsigned long loops = 0; 
+
+int dxl_comm_result;             // Communication result
+bool dxl_addparam_result;                // addParam result
+
+
+
+typedef struct {
+  float q1;
+  float q2;
+  float q3;
+  float q4;
+  float q5;
+} Q_t;
 
 void setup() {
   Serial.begin(57600);
@@ -282,4 +299,68 @@ int positionMode430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
 
 int positionMode320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_320, POSITION_MODE_320, &dxl_error);
+}
+
+void writeQ(Q_t *Q, dynamixel::GroupSyncWrite *groupSyncWrite430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler){
+  
+  
+  int q1 = convertToPositionCommand430(Q->q1,false); 
+  int q2 = convertToPositionCommand430(Q->q2,true); 
+  int q3 = convertToPositionCommand430(Q->q3,true);  
+  int q4 = convertToPositionCommand320(Q->q4,false); 
+  int q5 = convertToPositionCommand320(Q->q5,false); 
+
+  uint8_t q1_ba[4];
+  uint8_t q2_ba[4];
+  uint8_t q3_ba[4];
+  uint8_t q4_ba[4];
+  uint8_t q5_ba[4];
+
+  convertToByteArray(q1_ba,q1); 
+  convertToByteArray(q2_ba,q2); 
+  convertToByteArray(q3_ba,q3); 
+  convertToByteArray(q4_ba,q4); 
+  convertToByteArray(q5_ba,q5); 
+
+  dxl_addparam_result = groupSyncWrite430->addParam(DXL1_ID, q1_ba);
+  dxl_addparam_result = groupSyncWrite430->addParam(DXL2_ID, q2_ba);
+  dxl_addparam_result = groupSyncWrite430->addParam(DXL3_ID, q3_ba);
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
+  
+  // Syncwrite goal position
+  dxl_comm_result = groupSyncWrite430->txPacket();
+  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
+  dxl_comm_result = groupSyncWrite320->txPacket();
+  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
+
+  // Clear syncwrite parameter storage
+  groupSyncWrite430->clearParam();
+  groupSyncWrite320->clearParam();
+
+}
+
+int convertToPositionCommand430(float q, boolean flip){
+  if(flip){
+    return (-q+PI)/ANGLE_CONVERSION_CONSTANT_430;
+    }
+  else{
+    return (q+PI)/ANGLE_CONVERSION_CONSTANT_430;
+  }
+}
+
+int convertToPositionCommand320(float q, boolean flip){
+  if(flip){
+    return (-q+PI)/ANGLE_CONVERSION_CONSTANT_320;
+    }
+  else{
+    return (q+PI)/ANGLE_CONVERSION_CONSTANT_320;
+  }
+}
+
+void convertToByteArray(uint8_t *a, int val){
+  a[0] = DXL_LOBYTE(DXL_LOWORD(val));
+  a[1] = DXL_HIBYTE(DXL_LOWORD(val));
+  a[2] = DXL_LOBYTE(DXL_HIWORD(val));
+  a[3] = DXL_HIBYTE(DXL_HIWORD(val));
 }

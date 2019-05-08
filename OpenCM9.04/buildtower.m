@@ -1,16 +1,20 @@
 % successfully sends polynomial coefficients
 clear all % remove serial that insists on hanging around and fucking shit up
 close all
-serial = serial('COM5','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 %% 4 polynomial coeffs
 length = 1;
 tf = 3;
-[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.2, 0, tf);
+37.5; 187.5;
+% [a3, a2, a1, a0] = cubic_coeffs(0.037, 0, 0.25, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.25, 0, 0.037, 0, tf);
 xdata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.2, 0, tf);
+% [a3, a2, a1, a0] = cubic_coeffs(0.1875, 0, 0, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, .1875, 0, tf);
 ydata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.3, 0, 0.2, 0, tf);
+% [a3, a2, a1, a0] = cubic_coeffs(0.01, 0, 0.27, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.01, 0, tf);
 zdata = [a3 a2 a1 a0 tf];
 [a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf);
 thdata = [a3 a2 a1 a0 tf];
@@ -51,6 +55,10 @@ sendRow(serial, ydata);
 sendRow(serial, zdata);
 sendRow(serial, thdata);
 toc
+
+fclose(serial);
+delete(serial);
+return
 
 %% received plotting data
 [tx, x] = readRow(serial);
