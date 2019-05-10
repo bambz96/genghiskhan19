@@ -1,23 +1,36 @@
 % successfully sends polynomial coefficients
 clear all % remove serial that insists on hanging around and fucking shit up
 close all
-serial = serial('COM4','BAUD',57600);
+serial = serial('COM3','BAUD',57600);
 
 %% 4 polynomial coeffs
-length = 1;
-tf = 3;
-37.5; 187.5;
-% [a3, a2, a1, a0] = cubic_coeffs(0.037, 0, 0.25, 0, tf);
+
+tf = 4;
+tf2 = 2.5;
+
+% X     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [a3, a2, a1, a0] = cubic_coeffs(0.25, 0, 0.037, 0, tf);
 xdata = [a3 a2 a1 a0 tf];
-% [a3, a2, a1, a0] = cubic_coeffs(0.1875, 0, 0, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.037, 0, 0.25, 0, tf2);
+xdata = [xdata; a3 a2 a1 a0 tf2];
+% Y     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [a3, a2, a1, a0] = cubic_coeffs(0, 0, .1875, 0, tf);
 ydata = [a3 a2 a1 a0 tf];
-% [a3, a2, a1, a0] = cubic_coeffs(0.01, 0, 0.27, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.1875, 0, 0, 0, tf2);
+ydata = [ydata; a3 a2 a1 a0 tf2];
+% Z     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.01, 0, tf);
 zdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(0.01, 0, 0.27, 0, tf2);
+zdata = [zdata; a3 a2 a1 a0 tf2];
+% THETA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf);
 thdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf2);
+thdata = [thdata; a3 a2 a1 a0 tf2];
+
+% number of rows
+length = 2;
 
 % length = 2;
 % tv = 0.2; tf = 0.4;
@@ -56,15 +69,19 @@ sendRow(serial, zdata);
 sendRow(serial, thdata);
 toc
 
-fclose(serial);
-delete(serial);
-return
+% fclose(serial);
+% delete(serial);
+% return
 
 %% received plotting data
-[tx, x] = readRow(serial);
-[ty, y] = readRow(serial);
-[tz, z] = readRow(serial);
-[tth, th] = readRow(serial);
+[tx, x] = readRow(serial, length);
+disp('Received x trajectory.')
+[ty, y] = readRow(serial, length);
+disp('Received y trajectory.')
+[tz, z] = readRow(serial, length);
+disp('Received z trajectory.')
+[tth, th] = readRow(serial, length);
+disp('Received theta trajectory.')
 subplot(121)
 hold on
 plot(tx, x)
@@ -97,11 +114,11 @@ function sendRow(serial, data)
     end
 end
 
-function [t, d] = readRow(serial)
+function [t, d] = readRow(serial, length)
     i = 1;
-    t = zeros(1, 99);
-    d = zeros(1, 99);
-    while i <= 100
+    t = zeros(1, 100*length - 1);
+    d = zeros(1, 100*length - 1);
+    while i <= 100*length
         data = strtrim(fscanf(serial));
         res = regexp(data, '[+-]?\d+\.?\d*','match');
         t(i) = str2double(res{1});

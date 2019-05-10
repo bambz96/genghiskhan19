@@ -1,14 +1,15 @@
-#define FLOAT_TO_INT 1000
+#define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
+#define MAX_CUBICS 10
 // states
-#define WAITING 0
-#define RECEIVING_X 1
-#define RECEIVING_Y 2
-#define RECEIVING_Z 3
-#define RECEIVING_TH 4
-#define PLOTTING 5 // send all paths (t, x, y, z) back to Matlab
-#define SIMULATION 6 // simulate measurement/control
-#define POSITION_CONTROL 7
-#define FINISHED 8
+#define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
+#define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
+#define RECEIVING_Y 2		//     ... for y(t)
+#define RECEIVING_Z 3		//     ... for z(t)
+#define RECEIVING_TH 4		//     ... for theta(t)
+#define PLOTTING 5			// send all paths (t, x, y, z) back to Matlab
+#define SIMULATION 6		// simulate measurement/control
+#define POSITION_CONTROL 7	// position control, no feedback
+#define FINISHED 8			// do nothing
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -79,24 +80,23 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
-int value;
-int count = 0;
+int nPolys;		// number of polynomials sent by Matlab and stored for operation
+int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
 struct Cubic {
   int coef[4]; // FLOAT_TO_INT times larger than actual value
-  int tf; // milliseconds
+  unsigned int tf; // milliseconds
 };
 
-// 54 blocks, so this gives ~10 polys per block
-// a single path is 6-9 polys
-//struct Cubic polys[500];
-struct Cubic xpoly[10];
-struct Cubic ypoly[10];
-struct Cubic zpoly[10];
-struct Cubic thpoly[10];
+// only MAX_CUBICS cubic path segments can be stored at a time due to SRAM constraints
+struct Cubic xpoly[MAX_CUBICS];
+struct Cubic ypoly[MAX_CUBICS];
+struct Cubic zpoly[MAX_CUBICS];
+struct Cubic thpoly[MAX_CUBICS];
 
+// task space coordinates
 typedef struct {
   float x; 
   float y;
@@ -104,6 +104,7 @@ typedef struct {
   float theta; 
 } X_t;
 
+// joint space coordinates
 typedef struct {
   float q1;
   float q2;
@@ -122,13 +123,6 @@ float L3 = 0.2;
 float L4 = 0.138;
 
 float piOverTwo = M_PI/2;
-
-// todo
-// plotting does correct length, maybe tells matlab how many samples are being sent
-// save t0 = millis() when beginning any path, then use dt = millis() - t0 to get path
-// SIMULATION state - fake read, fake control, fake current position sent back to matlab which compares with intended path?
-// matlab
-// handle multiple paths being returned
 
 void setup()
 {
@@ -149,7 +143,7 @@ void setup()
   dynamixel::GroupSyncWrite groupSyncWrite430(portHandler, packetHandler, ADDRESS_GOAL_POSITION_430, LENGTH_GOAL_POSITION_430);
   dynamixel::GroupSyncWrite groupSyncWrite320(portHandler, packetHandler, ADDRESS_GOAL_POSITION_320, LENGTH_GOAL_POSITION_320);
 
-  // Initialize Groupsyncread instance for Present Position
+  // Initialize GroupSyncRead instance for Present Position
   dynamixel::GroupSyncRead groupSyncRead430(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
   dynamixel::GroupSyncRead groupSyncRead320(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
 
@@ -214,48 +208,45 @@ void setup()
   dxl_addparam_result = groupSyncRead320.addParam(DXL5_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL6_ID);
 
-//  Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
-
-//  writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
+// uncomment these to test writing the pose Q, note Q is initialised above
+// Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
+// writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
 
 while (1) {
   if (state == WAITING) {
     if(Serial.available()>0) {
-      value = Serial.parseInt();
+      nPolys = Serial.parseInt();
       Serial.read(); // clear rest of input buffer (i.e. trailing \n)
-      Serial.println(value);
+      Serial.println(nPolys);
       state = RECEIVING_X;
-    } else {
-//      Serial.println('A'); // hello?
-//      delay(300);
     }
   } else if (state == RECEIVING_X) {
     readData(xpoly);
-    if (count >= value) {
+    if (count >= nPolys) {
       count = 0;
       state = RECEIVING_Y;
     }
   } else if (state == RECEIVING_Y) {
     readData(ypoly);
-    if (count >= value) {
+    if (count >= nPolys) {
       count = 0;
       state = RECEIVING_Z;
     }
   } else if (state == RECEIVING_Z) {
     readData(zpoly);
-    if (count >= value) {
+    if (count >= nPolys) {
       count = 0;
       state = RECEIVING_TH;
     }
   } else if (state == RECEIVING_TH) {
     readData(thpoly);
-    if (count >= value) {
-      count = value; // should assert count == value
+    if (count >= nPolys) {
+      count = 0;
       state = POSITION_CONTROL;
     }
   } else if (state == PLOTTING) {
     // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
-    int verify = 1; // number of paths to verify
+    int verify = nPolys; // number of paths to verify
     sendNPoly(verify, xpoly);
     sendNPoly(verify, ypoly);
     sendNPoly(verify, zpoly);
@@ -265,39 +256,48 @@ while (1) {
     // clear polys arrays?
     state = WAITING;
   } else if (state == POSITION_CONTROL) {
-    delay(5000);
-    unsigned int t0 = millis();
-    unsigned int dt = 0;
-    unsigned int tf = 3000;
+	// delay before starting trajectory
+    delay(1000);
+
+	count = 0;
+	
+	while (count < nPolys) {
+		// delay before each new segment
+		delay(1000);
+		unsigned int t0 = millis();
+		unsigned int dt = 0;
+		// duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
+		unsigned int tf = xpoly[count].tf;
+		
+		// complete current path
+		while (dt < tf) {
+		  // get task space coordinates and assign to X
+		  float x = evaluate(&xpoly[count], dt/1000.0);
+		  float y = evaluate(&ypoly[count], dt/1000.0);
+		  float z = evaluate(&zpoly[count], dt/1000.0);
+		  X.x = x;
+		  X.y = y;
+		  X.z = z;
+		  X.theta = 0; // todo EE orientation
+
+		  // get joint space Q with IK, using X
+		  inverse_kinematics(&Q, &X);
+
+		  // write joint space Q to servos
+		  writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
+
+		  dt = millis() - t0;
+		}
+		// current path finished
+		count++;
+	}
     
-    while (dt < tf) {
-      // get task space coord
-      float x = evaluate(&xpoly[0], dt/1000.0);
-      float y = evaluate(&ypoly[0], dt/1000.0);
-      float z = evaluate(&zpoly[0], dt/1000.0);
-
-      X.x = x;
-      X.y = y;
-      X.z = z;
-      X.theta = 0;
-
-      // get joint space with IK
-      inverse_kinematics(&Q, &X);
-
-//      Serial.print(Q.q1); Serial.print(' ');
-//      Serial.print(Q.q2); Serial.print(' ');
-//      Serial.print(Q.q3); Serial.print(' ');
-//      Serial.print(Q.q4); Serial.print(' ');
-//      Serial.print(Q.q5); Serial.print(' ');
-//      Serial.println();
-
-      // write joint space to servos
-      writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
-
-      dt = millis() - t0;
-    }
+	// all paths done, reset and listen for new paths
+	// todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
     state = WAITING;
     count = 0;
+	nPolys = 0;
+	
   } else if (state == FINISHED) {
     // rest
   }
@@ -340,11 +340,11 @@ void readData(struct Cubic *poly) {
     float tf = Serial.parseFloat();
     Serial.read(); // clear rest of input buffer (i.e. trailing \n
     // reply with read values
-    Serial.print(a3); Serial.print(' ');
-    Serial.print(a2); Serial.print(' ');
-    Serial.print(a1); Serial.print(' ');
-    Serial.print(a0); Serial.print(' ');
-    Serial.print(tf); Serial.print(' ');
+    Serial.print(a3,5); Serial.print(' ');
+    Serial.print(a2,5); Serial.print(' ');
+    Serial.print(a1,5); Serial.print(' ');
+    Serial.print(a0,5); Serial.print(' ');
+    Serial.print(tf,5); Serial.print(' ');
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
@@ -363,7 +363,7 @@ float poly(float t, float a0, float a1, float a2, float a3) {
   return a3*t*t*t + a2*t*t + a1*t + a0;
 }
 
-void sendNPoly(int n, struct Cubic cubic[100]) {
+void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
   // send the first n polynomial path segments
   float t0 = 0.0;
   for (int i=0; i<n; i++) {
@@ -388,11 +388,12 @@ void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
 }
 
 float evaluate(struct Cubic *cubic, float t) {
-   float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
-    float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
-    float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
-    float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
-    return poly(t, a0, a1, a2, a3);
+	// evaluate the given cubic at time t
+	float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
+	float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
+	float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
+	float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
+	return poly(t, a0, a1, a2, a3);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
