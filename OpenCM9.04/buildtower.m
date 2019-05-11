@@ -1,18 +1,30 @@
 % successfully sends polynomial coefficients
 clear all % remove serial that insists on hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 %% 4 polynomial coeffs
 length = 1;
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 1, 3, 0.5);
-xdata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(1, 0, 0, 0, 0.5);
-ydata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 1, 0, 0.5);
-zdata = [a3 a2 a1 a0 0.5];
-[a3, a2, a1, a0] = cubic_coeffs(0.5, 0, 0, -3, 0.5);
-thdata = [a3 a2 a1 a0 0.5];
+tf = 3;
+37.5; 187.5;
+
+% startPath = [0.037,0.1875,0.01,0]; % Loading zone
+% endPath = [0.25,0,0.27,0]; % Pseudo Tower
+
+startPath = [0.25,0,0.27,0]; % Pseudo Tower
+endPath = [0.037,0.1875,0.01,0]; % Loading zone
+
+[a3, a2, a1, a0] = cubic_coeffs(startPath(1), 0, endPath(1), 0, tf);
+% [a3, a2, a1, a0] = cubic_coeffs(0.25, 0, 0.037, 0, tf);
+xdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(startPath(2), 0, endPath(2), 0, tf);
+% [a3, a2, a1, a0] = cubic_coeffs(0, 0, .1875, 0, tf);
+ydata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(startPath(3), 0, endPath(3), 0, tf);
+% [a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.01, 0, tf);
+zdata = [a3 a2 a1 a0 tf];
+[a3, a2, a1, a0] = cubic_coeffs(startPath(4), 0, endPath(4), 0, tf);
+thdata = [a3 a2 a1 a0 tf];
 
 % length = 2;
 % tv = 0.2; tf = 0.4;
@@ -50,6 +62,10 @@ sendRow(serial, ydata);
 sendRow(serial, zdata);
 sendRow(serial, thdata);
 toc
+
+fclose(serial);
+delete(serial);
+return
 
 %% received plotting data
 [tx, x] = readRow(serial);
