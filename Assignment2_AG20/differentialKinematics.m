@@ -34,14 +34,12 @@ classdef differentialKinematics
                 R = obj.Rotation(robot, 0, joint);
                 z = R*obj.z_hat;
                 P = R*obj.Position(robot, joint, obj.Frame);
-                
                 Jacobian = [Jacobian, obj.jacobianRevolute(z, P)];
                 
             end
             %Final Result
             Jacobian = simplify(Jacobian);
         end 
-        
         
         %Helper function for calculating jacobian for a single revolute
         %joint
@@ -63,8 +61,5 @@ classdef differentialKinematics
         end
         
     end
-    
 
-    
-   
 end   

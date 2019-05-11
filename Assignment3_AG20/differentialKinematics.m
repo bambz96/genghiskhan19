@@ -33,7 +33,7 @@ classdef differentialKinematics <handle
         function obj = differentialKinematics(robot)
             obj.Jacobian = jacobianCalculator(obj, robot);
             obj.robot = robot;
-%            obj.invJacobian = invJacobianCalculator(obj.Jacobian);
+%           obj.invJacobian = invJacobianCalculator(obj.Jacobian);
         end
 
         %Jacobian calculator (most important function)
@@ -86,7 +86,7 @@ classdef differentialKinematics <handle
 
             % Method 2 taught in lecture 19
             % Express everything in Frame 1
-            J_N = evalJacobian(obj,q_i(1),q_i(2),q_i(3),q_i(4),q_i(5));
+            J_N = evalJacobian(obj,q_i(1),q_i(2),q_i(3),q_i(4),q_i(5))
 
 %             R_01_f = matlabFunction(RotationFast(obj,obj.robot,1,0));
 %             R_01 = R_01_f(q_i(1));
@@ -110,7 +110,7 @@ classdef differentialKinematics <handle
             end
 
             % Invert Jacobian
-%             J_1_Inv = inv(J_1N);
+            %inv(J_1)
 
             % Calculate q_dot_i by inverting J_1
             q_dot_i = J_1\x_dot_1_i;

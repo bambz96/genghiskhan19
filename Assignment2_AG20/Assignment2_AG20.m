@@ -11,7 +11,7 @@ Usage:
 %% Set up
 jenghis = robot;
 
-
+jacobian = jenghis.differentialKinematics.Jacobian;
 %Unit vector z in reference frame
 z_hat = [0;0;1];
 
