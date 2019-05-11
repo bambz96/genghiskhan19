@@ -120,7 +120,7 @@ Q_t Q = {0, 0, 0, 0, 0};
 float L1 = 0.2;
 float L2 = 0.2;
 float L3 = 0.2;
-float L4 = 0.138;
+float L4 = 0.1;
 
 float piOverTwo = M_PI/2;
 
@@ -257,7 +257,7 @@ while (1) {
     state = WAITING;
   } else if (state == POSITION_CONTROL) {
 	// delay before starting trajectory
-    delay(1000);
+    delay(2000);
 
 	count = 0;
 	
@@ -275,10 +275,11 @@ while (1) {
 		  float x = evaluate(&xpoly[count], dt/1000.0);
 		  float y = evaluate(&ypoly[count], dt/1000.0);
 		  float z = evaluate(&zpoly[count], dt/1000.0);
+      float theta = evaluate(&thpoly[count],dt/1000.0); 
 		  X.x = x;
 		  X.y = y;
 		  X.z = z;
-		  X.theta = 0; // todo EE orientation
+		  X.theta = theta; // todo EE orientation
 
 		  // get joint space Q with IK, using X
 		  inverse_kinematics(&Q, &X);

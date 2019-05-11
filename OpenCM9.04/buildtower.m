@@ -1,36 +1,54 @@
 % successfully sends polynomial coefficients
 clear all % remove serial that insists on hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 %% 4 polynomial coeffs
 
-tf = 4;
-tf2 = 2.5;
+tf = 3;
+tf2 = 3;
+tf3 = 3;
+tf4 = 3; 
 
 % X     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [a3, a2, a1, a0] = cubic_coeffs(0.25, 0, 0.037, 0, tf);
 xdata = [a3 a2 a1 a0 tf];
 [a3, a2, a1, a0] = cubic_coeffs(0.037, 0, 0.25, 0, tf2);
 xdata = [xdata; a3 a2 a1 a0 tf2];
+[a3, a2, a1, a0] = cubic_coeffs(0.25, 0, 0.037, 0, tf3);
+xdata = [xdata; a3 a2 a1 a0 tf3];
+[a3, a2, a1, a0] = cubic_coeffs(0.037, 0, 0.25, 0, tf4);
+xdata = [xdata;a3 a2 a1 a0 tf4];
 % Y     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, .1875, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, -0.1875, 0, tf);
 ydata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.1875, 0, 0, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, 0, 0, tf2);
 ydata = [ydata; a3 a2 a1 a0 tf2];
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, 0.1875, 0, tf3);
+ydata = [ydata; a3 a2 a1 a0 tf3];
+[a3, a2, a1, a0] = cubic_coeffs(0.1875, 0, 0, 0, tf4);
+ydata = [ydata;a3 a2 a1 a0 tf4];
 % Z     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.01, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.015, 0, tf);
 zdata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.01, 0, 0.27, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(0.015, 0, 0.27, 0, tf2);
 zdata = [zdata; a3 a2 a1 a0 tf2];
+[a3, a2, a1, a0] = cubic_coeffs(0.27, 0, 0.015, 0, tf3);
+zdata = [zdata; a3 a2 a1 a0 tf3];
+[a3, a2, a1, a0] = cubic_coeffs(0.015, 0, 0.27, 0, tf4);
+zdata = [zdata; a3 a2 a1 a0 tf4];
 % THETA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, 1.55, 0, tf);
 thdata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, 0, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(1.55, 0, 0, 0, tf2);
 thdata = [thdata; a3 a2 a1 a0 tf2];
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, -1.55, 0, tf3);
+thdata = [thdata; a3 a2 a1 a0 tf3];
+[a3, a2, a1, a0] = cubic_coeffs(-1.55, 0, 0, 0, tf4);
+thdata = [thdata; a3 a2 a1 a0 tf4];
 
 % number of rows
-length = 2;
+length = 4;
 
 % length = 2;
 % tv = 0.2; tf = 0.4;
@@ -69,9 +87,9 @@ sendRow(serial, zdata);
 sendRow(serial, thdata);
 toc
 
-% fclose(serial);
-% delete(serial);
-% return
+fclose(serial);
+delete(serial);
+return
 
 %% received plotting data
 [tx, x] = readRow(serial, length);
