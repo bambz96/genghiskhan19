@@ -1,11 +1,12 @@
 #define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
-#define MAX_CUBICS 10
+#define MAX_CUBICS 20
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
 #define RECEIVING_Y 2		//     ... for y(t)
 #define RECEIVING_Z 3		//     ... for z(t)
 #define RECEIVING_TH 4		//     ... for theta(t)
+#define RECEIVING_GRIP 9    //     ... for theta(t)
 #define PLOTTING 5			// send all paths (t, x, y, z) back to Matlab
 #define SIMULATION 6		// simulate measurement/control
 #define POSITION_CONTROL 7	// position control, no feedback
@@ -95,6 +96,7 @@ struct Cubic xpoly[MAX_CUBICS];
 struct Cubic ypoly[MAX_CUBICS];
 struct Cubic zpoly[MAX_CUBICS];
 struct Cubic thpoly[MAX_CUBICS];
+struct Cubic grippoly[MAX_CUBICS];
 
 // task space coordinates
 typedef struct {
@@ -102,6 +104,7 @@ typedef struct {
   float y;
   float z;
   float theta; 
+  float grip;
 } X_t;
 
 // joint space coordinates
@@ -111,6 +114,7 @@ typedef struct {
   float q3;
   float q4;
   float q5;
+  float q6; 
 } Q_t;
 
 X_t X;
@@ -198,7 +202,7 @@ void setup()
   enableTorque430(DXL3_ID, portHandler, packetHandler);
   enableTorque320(DXL4_ID, portHandler, packetHandler);
   enableTorque320(DXL5_ID, portHandler, packetHandler);
-  //enableTorque320(DXL6_ID, portHandler, packetHandler);
+  enableTorque320(DXL6_ID, portHandler, packetHandler);
 
   // Add parameter storage for Dynamixel#1 present position value
   dxl_addparam_result = groupSyncRead430.addParam(DXL1_ID);
@@ -242,6 +246,12 @@ while (1) {
     readData(thpoly);
     if (count >= nPolys) {
       count = 0;
+      state = RECEIVING_GRIP;
+    }
+  } else if (state == RECEIVING_GRIP) {
+    readData(grippoly);
+    if (count >= nPolys) {
+      count = 0;
       state = POSITION_CONTROL;
     }
   } else if (state == PLOTTING) {
@@ -251,6 +261,7 @@ while (1) {
     sendNPoly(verify, ypoly);
     sendNPoly(verify, zpoly);
     sendNPoly(verify, thpoly);
+    sendNPoly(verify, grippoly); 
     // reset count of most recent read in rows
     count = 0;
     // clear polys arrays?
@@ -263,7 +274,7 @@ while (1) {
 	
 	while (count < nPolys) {
 		// delay before each new segment
-		delay(1000);
+		delay(5000);
 		unsigned int t0 = millis();
 		unsigned int dt = 0;
 		// duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
@@ -276,10 +287,12 @@ while (1) {
 		  float y = evaluate(&ypoly[count], dt/1000.0);
 		  float z = evaluate(&zpoly[count], dt/1000.0);
       float theta = evaluate(&thpoly[count],dt/1000.0); 
+      float grip = evaluate(&grippoly[count],dt/1000.0); 
 		  X.x = x;
 		  X.y = y;
 		  X.z = z;
-		  X.theta = theta; // todo EE orientation
+		  X.theta = theta;
+      X.grip = grip; 
 
 		  // get joint space Q with IK, using X
 		  inverse_kinematics(&Q, &X);
@@ -322,6 +335,8 @@ void inverse_kinematics(Q_t *Q, X_t *X) {
   Q->q4 = -(Q->q2 + Q->q3);
 
   Q->q5 = Q->q1 - X->theta;
+
+  Q->q6 = X->grip; 
 }
 
 float cosine_rule(float a, float b, float c) {
@@ -442,24 +457,29 @@ void writeQ(Q_t *Q, dynamixel::GroupSyncWrite *groupSyncWrite430, dynamixel::Gro
   int q3 = convertToPositionCommand430(Q->q3,true);  
   int q4 = convertToPositionCommand320(Q->q4,false); 
   int q5 = convertToPositionCommand320(Q->q5,false); 
+  int q6 = convertToPositionCommand320(Q->q6,false); 
 
   uint8_t q1_ba[4];
   uint8_t q2_ba[4];
   uint8_t q3_ba[4];
   uint8_t q4_ba[4];
   uint8_t q5_ba[4];
+  uint8_t q6_ba[4];
 
   convertToByteArray(q1_ba,q1); 
   convertToByteArray(q2_ba,q2); 
   convertToByteArray(q3_ba,q3); 
   convertToByteArray(q4_ba,q4); 
   convertToByteArray(q5_ba,q5); 
+  convertToByteArray(q6_ba,q6);
 
   dxl_addparam_result = groupSyncWrite430->addParam(DXL1_ID, q1_ba);
   dxl_addparam_result = groupSyncWrite430->addParam(DXL2_ID, q2_ba);
   dxl_addparam_result = groupSyncWrite430->addParam(DXL3_ID, q3_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
+  
   
   // Syncwrite goal position
   dxl_comm_result = groupSyncWrite430->txPacket();
