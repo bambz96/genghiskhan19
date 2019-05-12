@@ -1,5 +1,5 @@
 #define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
-#define MAX_CUBICS 20
+#define MAX_CUBICS 6
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -274,7 +274,7 @@ while (1) {
 	
 	while (count < nPolys) {
 		// delay before each new segment
-		delay(5000);
+		delay(500);
 		unsigned int t0 = millis();
 		unsigned int dt = 0;
 		// duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value

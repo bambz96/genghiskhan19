@@ -5,23 +5,23 @@ serial = serial('COM4','BAUD',57600);
 
 %% 4 polynomial coeffs
 
-tf = 4;
+tf = 2;
 tf2 = 1;
 tf3 = 1;
 tf4 = 1;
 tf5 = 1; 
-tf6 = 3; 
+tf6 = 2; 
 
 grip = 1.015976119; 
 ungrip = 0.422257077; 
 
 
 % X     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.0275, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.2, 0, 0.0225, 0, tf);
 xdata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.0275, 0, 0.0275, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(0.0225, 0, 0.0225, 0, tf2);
 xdata = [xdata; a3 a2 a1 a0 tf2];
-[a3, a2, a1, a0] = cubic_coeffs(0.0275, 0, 0.0375, 0, tf3);
+[a3, a2, a1, a0] = cubic_coeffs(0.0225, 0, 0.0375, 0, tf3);
 xdata = [xdata; a3 a2 a1 a0 tf3];
 [a3, a2, a1, a0] = cubic_coeffs(0.0375, 0, 0.0375, 0, tf4);
 xdata = [xdata;a3 a2 a1 a0 tf4];
@@ -30,28 +30,28 @@ xdata = [xdata; a3 a2 a1 a0 tf5];
 [a3, a2, a1, a0] = cubic_coeffs(0.0375, 0, 0.2, 0, tf6);
 xdata = [xdata;a3 a2 a1 a0 tf6];
 % Y     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0, 0, -0.1875, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0, 0, -0.1875-0.022, 0, tf);
 ydata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, -0.1857, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875-0.022, 0, -0.1875-0.022, 0, tf2);
 ydata = [ydata; a3 a2 a1 a0 tf2];
-[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, -0.1875, 0, tf3);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875-0.022, 0, -0.1875-0.022, 0, tf3);
 ydata = [ydata; a3 a2 a1 a0 tf3];
-[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, -0.1875, 0, tf4);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875-0.022, 0, -0.1875-0.022, 0, tf4);
 ydata = [ydata;a3 a2 a1 a0 tf4];
-[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, -0.1875, 0, tf5);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875-0.022, 0, -0.1875-0.022, 0, tf5);
 ydata = [ydata; a3 a2 a1 a0 tf5];
-[a3, a2, a1, a0] = cubic_coeffs(-0.1875, 0, 0, 0, tf6);
+[a3, a2, a1, a0] = cubic_coeffs(-0.1875-0.022, 0, 0, 0, tf6);
 ydata = [ydata;a3 a2 a1 a0 tf6];
 % Z     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[a3, a2, a1, a0] = cubic_coeffs(0.3, 0, 0.02, 0, tf);
+[a3, a2, a1, a0] = cubic_coeffs(0.3, 0, 0.020, 0, tf);
 zdata = [a3 a2 a1 a0 tf];
-[a3, a2, a1, a0] = cubic_coeffs(0.02, 0, -0.003, 0, tf2);
+[a3, a2, a1, a0] = cubic_coeffs(0.020, 0, 0.002, 0, tf2);
 zdata = [zdata; a3 a2 a1 a0 tf2];
-[a3, a2, a1, a0] = cubic_coeffs(-0.003, 0, -0.003, 0, tf3);
+[a3, a2, a1, a0] = cubic_coeffs(0.002, 0, 0.002, 0, tf3);
 zdata = [zdata; a3 a2 a1 a0 tf3];
-[a3, a2, a1, a0] = cubic_coeffs(-0.003, 0, -0.003, 0, tf4);
+[a3, a2, a1, a0] = cubic_coeffs(0.002, 0, 0.002, 0, tf4);
 zdata = [zdata; a3 a2 a1 a0 tf4];
-[a3, a2, a1, a0] = cubic_coeffs(-0.003, 0, 0.02, 0, tf5);
+[a3, a2, a1, a0] = cubic_coeffs(0.002, 0, 0.02, 0, tf5);
 zdata = [zdata; a3 a2 a1 a0 tf5];
 [a3, a2, a1, a0] = cubic_coeffs(0.02, 0, 0.3, 0, tf6);
 zdata = [zdata; a3 a2 a1 a0 tf6];
