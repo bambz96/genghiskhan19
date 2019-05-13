@@ -1,4 +1,4 @@
-function [a3, a2, a1, a0] = cubic_coeffs(x0, x0d, xf, xfd, tf)
+function coeffs = cubic_coeffs(x0, x0d, xf, xfd, tf)
     % Find the coefficients for a cubic polynomial that fit between the
     % initial and final positions and velocities. Duration tf.
     % x = a3*t.^3 + a2*t.^2 + a1*t + a0;
@@ -11,6 +11,8 @@ function [a3, a2, a1, a0] = cubic_coeffs(x0, x0d, xf, xfd, tf)
     a2 = myShrink(b(3));
     a1 = myShrink(b(2));
     a0 = myShrink(b(1));
+    
+    coeffs = [a3 a2 a1 a0 tf];
 
 end
 

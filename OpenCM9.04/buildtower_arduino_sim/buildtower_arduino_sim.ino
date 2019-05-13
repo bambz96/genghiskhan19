@@ -1,15 +1,15 @@
-#define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
-#define MAX_CUBICS 10
+#define MAX_CUBICS 25
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
 #define RECEIVING_Y 2		//     ... for y(t)
 #define RECEIVING_Z 3		//     ... for z(t)
 #define RECEIVING_TH 4		//     ... for theta(t)
-#define PLOTTING 5			// send all paths (t, x, y, z) back to Matlab
-#define SIMULATION 6		// simulate measurement/control
-#define POSITION_CONTROL 7	// position control, no feedback
-#define FINISHED 8			// do nothing
+#define RECEIVING_GRIP 5    //     ... for theta(t)
+#define PLOTTING 6			// send all paths (t, x, y, z) back to Matlab
+#define SIMULATION 7		// simulate measurement/control
+#define POSITION_CONTROL 8	// position control, no feedback
+#define FINISHED 9			// do nothing
 
 int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
@@ -21,14 +21,16 @@ int count = 0;	// used to count up to nPolys whilst receiving coefficients from 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
 struct Cubic {
-  int coef[4]; // FLOAT_TO_INT times larger than actual value
+  float coef[4];
   unsigned int tf; // milliseconds
 };
 
+// only MAX_CUBICS cubic path segments can be stored at a time due to SRAM constraints
 struct Cubic xpoly[MAX_CUBICS];
 struct Cubic ypoly[MAX_CUBICS];
 struct Cubic zpoly[MAX_CUBICS];
 struct Cubic thpoly[MAX_CUBICS];
+struct Cubic grippoly[MAX_CUBICS];
 
 // task space coordinates
 typedef struct {
@@ -36,6 +38,7 @@ typedef struct {
   float y;
   float z;
   float theta; 
+  float grip;
 } X_t;
 
 // joint space coordinates
@@ -45,6 +48,7 @@ typedef struct {
   float q3;
   float q4;
   float q5;
+  float q6; 
 } Q_t;
 
 X_t X;
@@ -54,7 +58,7 @@ Q_t Q = {0, 0, 0, 0, 0};
 float L1 = 0.2;
 float L2 = 0.2;
 float L3 = 0.2;
-float L4 = 0.138;
+float L4 = 0.1;
 
 float piOverTwo = M_PI/2;
 
@@ -63,6 +67,7 @@ void setup()
   pinMode(led_pin, OUTPUT);
   Serial.begin(57600);
   while (!Serial) {} // wait for serial port to connect. Needed for native USB
+  
 
 while (1) {
   if (state == WAITING) {
@@ -94,7 +99,13 @@ while (1) {
     readData(thpoly);
     if (count >= nPolys) {
       count = 0;
-      state = POSITION_CONTROL;
+      state = RECEIVING_GRIP;
+    }
+  } else if (state == RECEIVING_GRIP) {
+    readData(grippoly);
+    if (count >= nPolys) {
+      count = 0;
+      state = PLOTTING;
     }
   } else if (state == PLOTTING) {
     // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
@@ -103,51 +114,56 @@ while (1) {
     sendNPoly(verify, ypoly);
     sendNPoly(verify, zpoly);
     sendNPoly(verify, thpoly);
+    sendNPoly(verify, grippoly); 
+    // reset count of most recent read in rows
+    count = 0;
     // clear polys arrays?
     state = WAITING;
   } else if (state == POSITION_CONTROL) {
 	// delay before starting trajectory
-    delay(1000);
+    delay(2000);
 
-  	count = 0;
-  	
-  	while (count < nPolys) {
-  		// delay before each new segment
-  		delay(1000);
-  		unsigned int t0 = millis();
-  		unsigned int dt = 0;
-  		// duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
-  		unsigned int tf = xpoly[count].tf;
-  		
-  		// complete current path
-  		while (dt < tf) {
-  		  // get task space coordinates and assign to X
-  		  float x = evaluate(&xpoly[count], dt/1000.0);
-  		  float y = evaluate(&ypoly[count], dt/1000.0);
-  		  float z = evaluate(&zpoly[count], dt/1000.0);
-  		  X.x = x;
-  		  X.y = y;
-  		  X.z = z;
-  		  X.theta = 0;
-  
-  		  // get joint space Q with IK, using X
-  		  inverse_kinematics(&Q, &X);
-  
-  		  // write joint space Q to servos
-  		  // writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
-  
-  		  dt = millis() - t0;
-  		}
-  		// current path finished
-  		count++;
-  	}
-      
-  	// all paths done, reset and listen for new paths
-  	// todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
-      state = WAITING;
-      count = 0;
-  	nPolys = 0;
-  	
+	count = 0;
+	
+	while (count < nPolys) {
+		// delay before each new segment
+		delay(500);
+		unsigned int t0 = millis();
+		unsigned int dt = 0;
+		// duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
+		unsigned int tf = xpoly[count].tf;
+		
+		// complete current path
+		while (dt < tf) {
+		  // get task space coordinates and assign to X
+		  float x = evaluate(&xpoly[count], dt/1000.0);
+		  float y = evaluate(&ypoly[count], dt/1000.0);
+		  float z = evaluate(&zpoly[count], dt/1000.0);
+      float theta = evaluate(&thpoly[count],dt/1000.0); 
+      float grip = evaluate(&grippoly[count],dt/1000.0); 
+		  X.x = x;
+		  X.y = y;
+		  X.z = z;
+		  X.theta = theta;
+      X.grip = grip; 
+
+		  // get joint space Q with IK, using X
+		  inverse_kinematics(&Q, &X);
+
+		  // write joint space Q to servos
+
+		  dt = millis() - t0;
+		}
+		// current path finished
+		count++;
+	}
+    
+	// all paths done, reset and listen for new paths
+	// todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
+    state = WAITING;
+    count = 0;
+	nPolys = 0;
+	
   } else if (state == FINISHED) {
     // rest
   }
@@ -171,6 +187,8 @@ void inverse_kinematics(Q_t *Q, X_t *X) {
   Q->q4 = -(Q->q2 + Q->q3);
 
   Q->q5 = Q->q1 - X->theta;
+
+  Q->q6 = X->grip; 
 }
 
 float cosine_rule(float a, float b, float c) {
@@ -198,10 +216,10 @@ void readData(struct Cubic *poly) {
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
-    cubic.coef[0] = int(a0*FLOAT_TO_INT);
-    cubic.coef[1] = int(a1*FLOAT_TO_INT);
-    cubic.coef[2] = int(a2*FLOAT_TO_INT);
-    cubic.coef[3] = int(a3*FLOAT_TO_INT);
+    cubic.coef[0] = a0;
+    cubic.coef[1] = a1;
+    cubic.coef[2] = a2;
+    cubic.coef[3] = a3;
     cubic.tf = tf*1000; // convert s to ms
     poly[count] = cubic;
     count++;
@@ -209,7 +227,7 @@ void readData(struct Cubic *poly) {
 }
 
 float poly(float t, float a0, float a1, float a2, float a3) {
-  // evaluate the given cubic polynomial
+  // evaluate the given cubic polynomial at time t
   return a3*t*t*t + a2*t*t + a1*t + a0;
 }
 
@@ -217,7 +235,6 @@ void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
   // send the first n polynomial path segments
   float t0 = 0.0;
   for (int i=0; i<n; i++) {
-    // calculate trajectory for ith segment and send
     for (int j=0; j<100; j++) {
       float t = j/100.0 * cubic[i].tf/1000.0; // convert to real duration
       sendPolyAtTime(t, t0, &cubic[i]);
@@ -228,21 +245,22 @@ void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
 
 void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
   // send ti and x(ti)
-  float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
-  float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
-  float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
-  float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
-  float x = poly(t, a0, a1, a2, a3);
+  float x = evaluate(cubic, t);
+//  float a0 = cubic->coef[0];
+//  float a1 = cubic->coef[1];
+//  float a2 = cubic->coef[2];
+//  float a3 = cubic->coef[3];
+//  float x = poly(t, a0, a1, a2, a3);
   Serial.print(t+t0, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
 }
 
 float evaluate(struct Cubic *cubic, float t) {
-  // evaluate the given cubic at time t
-  float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
-  float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
-  float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
-  float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
-  return poly(t, a0, a1, a2, a3);
+	// evaluate the given cubic at time t
+	float a0 = cubic->coef[0];
+	float a1 = cubic->coef[1];
+	float a2 = cubic->coef[2];
+	float a3 = cubic->coef[3];
+	return poly(t, a0, a1, a2, a3);
 }
