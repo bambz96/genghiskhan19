@@ -1,5 +1,4 @@
-#define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
-#define MAX_CUBICS 6
+#define MAX_CUBICS 25
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -87,7 +86,7 @@ int count = 0;	// used to count up to nPolys whilst receiving coefficients from 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
 struct Cubic {
-  int coef[4]; // FLOAT_TO_INT times larger than actual value
+  float coef[4];
   unsigned int tf; // milliseconds
 };
 
@@ -364,10 +363,10 @@ void readData(struct Cubic *poly) {
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
-    cubic.coef[0] = int(a0*FLOAT_TO_INT);
-    cubic.coef[1] = int(a1*FLOAT_TO_INT);
-    cubic.coef[2] = int(a2*FLOAT_TO_INT);
-    cubic.coef[3] = int(a3*FLOAT_TO_INT);
+    cubic.coef[0] = a0;
+    cubic.coef[1] = a1;
+    cubic.coef[2] = a2;
+    cubic.coef[3] = a3;
     cubic.tf = tf*1000; // convert s to ms
     poly[count] = cubic;
     count++;
@@ -375,7 +374,7 @@ void readData(struct Cubic *poly) {
 }
 
 float poly(float t, float a0, float a1, float a2, float a3) {
-  // evaluate the given cubic polynomial
+  // evaluate the given cubic polynomial at time t
   return a3*t*t*t + a2*t*t + a1*t + a0;
 }
 
@@ -393,11 +392,12 @@ void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
 
 void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
   // send ti and x(ti)
-  float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
-  float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
-  float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
-  float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
-  float x = poly(t, a0, a1, a2, a3);
+  float x = evaluate(cubic, t);
+//  float a0 = cubic->coef[0];
+//  float a1 = cubic->coef[1];
+//  float a2 = cubic->coef[2];
+//  float a3 = cubic->coef[3];
+//  float x = poly(t, a0, a1, a2, a3);
   Serial.print(t+t0, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
@@ -405,10 +405,10 @@ void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
 
 float evaluate(struct Cubic *cubic, float t) {
 	// evaluate the given cubic at time t
-	float a0 = float(cubic->coef[0])/FLOAT_TO_INT;
-	float a1 = float(cubic->coef[1])/FLOAT_TO_INT;
-	float a2 = float(cubic->coef[2])/FLOAT_TO_INT;
-	float a3 = float(cubic->coef[3])/FLOAT_TO_INT;
+	float a0 = cubic->coef[0];
+	float a1 = cubic->coef[1];
+	float a2 = cubic->coef[2];
+	float a3 = cubic->coef[3];
 	return poly(t, a0, a1, a2, a3);
 }
 
