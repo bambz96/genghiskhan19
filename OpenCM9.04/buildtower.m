@@ -1,6 +1,6 @@
 clear serial % remove any serial that is hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 running = 1;
 while running
@@ -127,48 +127,61 @@ ungrip = 0.422257077;
 
 % metres, degrees, degrees, ?, seconds
 % x y z theta grip duration
-% p = [
-%     0 1 0.2 0 grip 1;
-%     1 0 0.5 90 ungrip 1;
-%     0 1 0.1 0 grip 1;
-% ];
+delay = 5;
+p = [
+    0.2 0 0.3 0 ungrip 2;
+    0.15 -0.2 0.01 0 ungrip delay;
+    0.15 -0.2 0.01 0 ungrip 1;
+    0.2 0 0.01 0 ungrip delay;
+    0.2 0 0.01 0 ungrip 1;
+    0.125 0.25 0.01 0 ungrip delay;
+    0.125 0.25 0.01 0 ungrip 1;
+    0.2 0 0.01 0 ungrip delay;
+    0.2 0 0.01 0 ungrip 1;
+    0.15 -0.2 0.01 0 ungrip delay;
+    0.15 -0.2 0.01 0 ungrip 1;
+    0.2 0 0.01 0 ungrip delay;
+    0.2 0 0.01 0 ungrip 1;
+    0.2 0 0.3 0 ungrip 2
+];
 % tower corner
-x0 = 0.2;
-y0 = -0.2;
-% home pos
-xh = 0.0375;
-yh = -0.1875;
-zh = 0.003; % -0.003
-thetah = -90;
-
-p = [];
-nblocks = 3;
-i = 1; % number of loops
-n = 1; % up to block
-while n <= nblocks
-    if mod(i,2) == 0 % i = 2, 4, 6...
-        [x, y, z, theta] = block_pos(n,x0,y0);
-        n = n + 1;
-        % move to above target holding block
-        p = [p; x y z+0.05 theta grip 2];
-        % lower
-        p = [p; x y z+0.005 theta grip 1];
-        % stay at point and release block
-        p = [p; x y z+0.005 theta ungrip 0.3];
-        % raise again
-        p = [p; x y z+0.005 theta ungrip 1];
-    else
-        % move to above block pick up
-        p = [p; xh yh zh+0.05 thetah ungrip 2];
-        % move down
-        p = [p; xh yh zh thetah ungrip 2];
-        % nudge forwards to fit block precisely and pick up
-        p = [p; xh+0.001 yh zh thetah grip 0.3];
-        % move up
-        p = [p; xh yh zh+0.05 thetah grip 1];
-    end
-    i = i + 1;
-end
+% x0 = 0.2;
+% y0 = -0.2;
+% % home pos
+% xh = 0.0375;
+% yh = -0.1875;
+% zh = 0.003; % -0.003
+% thetah = -90;
+% 
+% p = [];
+% nblocks = 3;
+% i = 1; % number of loops
+% n = 1; % up to block
+% while n <= nblocks
+%     if mod(i,2) == 0 % i = 2, 4, 6...
+%         [x, y, z, theta] = block_pos(n,x0,y0);
+%         n = n + 1;
+%         % move to above target holding block
+%         p = [p; x y z+0.05 theta grip 2];
+%         % lower
+%         p = [p; x y z+0.005 theta grip 1];
+%         % stay at point and release block
+%         p = [p; x y z+0.005 theta ungrip 0.3];
+%         % raise again
+%         p = [p; x y z+0.005 theta ungrip 1];
+%     else
+%         % move to above block pick up
+%         p = [p; xh yh zh+0.05 thetah ungrip 2];
+%         % move down
+%         p = [p; xh yh zh thetah ungrip 2];
+%         % nudge forwards to fit block precisely and pick up
+%         p = [p; xh+0.001 yh zh thetah grip 0.3];
+%         % move up
+%         p = [p; xh yh zh+0.05 thetah grip 1];
+%     end
+%     i = i + 1;
+% end
+% p = [p; xh yh zh+0.05 thetah ungrip 2];
 
 disp(p)
 

@@ -1,20 +1,22 @@
-#define MAX_CUBICS 25
+#define FLOAT_TO_INT 100000 // experiment storying cubics with int coefficients for storage, probably not worth the hassle and potential loss in accuracy
+#define MAX_CUBICS 6
 // states
-#define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
-#define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
-#define RECEIVING_Y 2		//     ... for y(t)
-#define RECEIVING_Z 3		//     ... for z(t)
-#define RECEIVING_TH 4		//     ... for theta(t)
-#define RECEIVING_GRIP 5    //     ... for theta(t)
-#define PLOTTING 6			// send all paths (t, x, y, z) back to Matlab
-#define SIMULATION 7		// simulate measurement/control
-#define POSITION_CONTROL 8	// position control, no feedback
-#define PASSIVE_READ 9  // turn torques off and read Q -> FK -> print x/y/z/theta
-#define FINISHED 10			// do nothing
+#define WAITING 0      // listen for communication from Matlab over serial, which send N, the number of path segments coming
+#define RECEIVING_X 1   // receive polynomial coefficients for all N cubic path segments x(t)
+#define RECEIVING_Y 2   //     ... for y(t)
+#define RECEIVING_Z 3   //     ... for z(t)
+#define RECEIVING_TH 4    //     ... for theta(t)
+#define RECEIVING_GRIP 9    //     ... for theta(t)
+#define PLOTTING 5      // send all paths (t, x, y, z) back to Matlab
+#define SIMULATION 6    // simulate measurement/control
+#define POSITION_CONTROL 7  // position control, no feedback
+#define FINISHED 8      // do nothing
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
 #include <DynamixelSDK.h>
+#include <math.h>
+//#include <kinematic_functions.h>
 
 // Control table 430
 #define ADDRESS_TORQUE_ENABLE_430           64
@@ -40,11 +42,11 @@
 #define LENGTH_PRESENT_POSITION_320         2
 
 #define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
-#define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
+#define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //degrees per unit
 
 #define DXL1_OFFSET                         5.5 //motor unit offset
-#define DXL2_OFFSET                         -23.5
-#define DXL3_OFFSET                         -31.5
+#define DXL2_OFFSET                         23.5
+#define DXL3_OFFSET                         31.5
 #define DXL4_OFFSET                         5.5
 #define DXL5_OFFSET                         0
 #define DXL6_OFFSET                         0
@@ -88,13 +90,13 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
-int nPolys;		// number of polynomials sent by Matlab and stored for operation
-int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
+int nPolys;   // number of polynomials sent by Matlab and stored for operation
+int count = 0;  // used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
 struct Cubic {
-  float coef[4];
+  int coef[4]; // FLOAT_TO_INT times larger than actual value
   unsigned int tf; // milliseconds
 };
 
@@ -129,7 +131,6 @@ X_t X; //robot position
 X_t Xprev ={0.2, 0, 0.3, 0, 0}; //previous robot position, initial is home
 Q_t Q = {0, 0, 0, 0, 0}; //robot joint angles
 Q_t Qc = {0, 0, 0, 0, 0}; //controller joint angles
-
 float L1 = 0.2;
 float L2 = 0.2;
 float L3 = 0.2;
@@ -205,6 +206,14 @@ void setup()
   positionMode320(DXL5_ID, portHandler, packetHandler);
   positionMode320(DXL6_ID, portHandler, packetHandler);
 
+  // Enable Torques
+  enableTorque430(DXL1_ID, portHandler, packetHandler);
+  enableTorque430(DXL2_ID, portHandler, packetHandler);
+  enableTorque430(DXL3_ID, portHandler, packetHandler);
+  enableTorque320(DXL4_ID, portHandler, packetHandler);
+  enableTorque320(DXL5_ID, portHandler, packetHandler);
+  enableTorque320(DXL6_ID, portHandler, packetHandler);
+
   // Add parameter storage for Dynamixel#1 present position value
   dxl_addparam_result = groupSyncRead430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL2_ID);
@@ -268,37 +277,27 @@ void setup()
       // clear polys arrays?
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
-      // Enable Torques
-      enableTorque430(DXL1_ID, portHandler, packetHandler);
-      enableTorque430(DXL2_ID, portHandler, packetHandler);
-      enableTorque430(DXL3_ID, portHandler, packetHandler);
-      enableTorque320(DXL4_ID, portHandler, packetHandler);
-      enableTorque320(DXL5_ID, portHandler, packetHandler);
-      enableTorque320(DXL6_ID, portHandler, packetHandler);
-  
       // delay before starting trajectory
       delay(2000);
 
       count = 0;
-      readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-      forward_kinematics(&Xprev, Q);
+
       while (count < nPolys) {
         // delay before each new segment
-        //delay(500);
+        delay(5000);
         unsigned int t0 = millis();
         unsigned int dt = 0;
         // duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
         unsigned int tf = xpoly[count].tf;
 
-
         // complete current path
-        while (dt < tf) {
+        while (dt <= tf) {
           //find current joint angles
           readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           //find actual task space
           forward_kinematics(&X, Q);
 
-          // get task space coordinates and assign to X
+          //get trajectory coordinates and assign to Xref
           float x = evaluate(&xpoly[count], dt / 1000.0);
           float y = evaluate(&ypoly[count], dt / 1000.0);
           float z = evaluate(&zpoly[count], dt / 1000.0);
@@ -312,16 +311,15 @@ void setup()
 
           //Calculate feedback from measured task space, reference task space and previous measured task space
           X_t ex = feedback(Xprev, Xref, X);
-
+          
           // get joint space control, Qc with IK, using feedback
           inverse_kinematics(&Qc, &ex);
 
           // write joint space Qc to servos
           writeQ(&Qc, &groupSyncWrite430, &groupSyncWrite320,  packetHandler);
 
-
-          Xprev = Xref;
-
+          
+          Xprev = X;
 
           dt = millis() - t0;
         }
@@ -334,19 +332,7 @@ void setup()
       state = WAITING;
       count = 0;
       nPolys = 0;
-    } else if (state == PASSIVE_READ) {
-      readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-      forward_kinematics(&X, Q);
-      Serial.print(Q.q1*180/PI); Serial.print(' ');
-      Serial.print(Q.q2*180/PI); Serial.print(' ');
-      Serial.print(Q.q3*180/PI); Serial.print(' ');
-      Serial.print(Q.q4*180/PI); Serial.print(' ');
-      Serial.print(Q.q5*180/PI); Serial.print(' ');
-      Serial.print(1000*X.x); Serial.print(' ');
-      Serial.print(1000*X.y); Serial.print(' ');
-      Serial.print(1000*X.z); Serial.print(' ');
-      Serial.print(X.theta,4); Serial.print(' ');
-      Serial.println();
+
     } else if (state == FINISHED) {
       // rest
     }
@@ -417,10 +403,10 @@ void readData(struct Cubic *poly) {
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
-    cubic.coef[0] = a0;
-    cubic.coef[1] = a1;
-    cubic.coef[2] = a2;
-    cubic.coef[3] = a3;
+    cubic.coef[0] = int(a0 * FLOAT_TO_INT);
+    cubic.coef[1] = int(a1 * FLOAT_TO_INT);
+    cubic.coef[2] = int(a2 * FLOAT_TO_INT);
+    cubic.coef[3] = int(a3 * FLOAT_TO_INT);
     cubic.tf = tf * 1000; // convert s to ms
     poly[count] = cubic;
     count++;
@@ -428,7 +414,7 @@ void readData(struct Cubic *poly) {
 }
 
 float poly(float t, float a0, float a1, float a2, float a3) {
-  // evaluate the given cubic polynomial at time t
+  // evaluate the given cubic polynomial
   return a3 * t * t * t + a2 * t * t + a1 * t + a0;
 }
 
@@ -446,12 +432,11 @@ void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
 
 void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
   // send ti and x(ti)
-  float x = evaluate(cubic, t);
-  //  float a0 = cubic->coef[0];
-  //  float a1 = cubic->coef[1];
-  //  float a2 = cubic->coef[2];
-  //  float a3 = cubic->coef[3];
-  //  float x = poly(t, a0, a1, a2, a3);
+  float a0 = float(cubic->coef[0]) / FLOAT_TO_INT;
+  float a1 = float(cubic->coef[1]) / FLOAT_TO_INT;
+  float a2 = float(cubic->coef[2]) / FLOAT_TO_INT;
+  float a3 = float(cubic->coef[3]) / FLOAT_TO_INT;
+  float x = poly(t, a0, a1, a2, a3);
   Serial.print(t + t0, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
@@ -459,10 +444,10 @@ void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
 
 float evaluate(struct Cubic *cubic, float t) {
   // evaluate the given cubic at time t
-  float a0 = cubic->coef[0];
-  float a1 = cubic->coef[1];
-  float a2 = cubic->coef[2];
-  float a3 = cubic->coef[3];
+  float a0 = float(cubic->coef[0]) / FLOAT_TO_INT;
+  float a1 = float(cubic->coef[1]) / FLOAT_TO_INT;
+  float a2 = float(cubic->coef[2]) / FLOAT_TO_INT;
+  float a3 = float(cubic->coef[3]) / FLOAT_TO_INT;
   return poly(t, a0, a1, a2, a3);
 }
 
@@ -506,20 +491,19 @@ int positionMode320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
 void readQ(Q_t *Q, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupSyncRead *groupSyncRead320, dynamixel::PacketHandler *packetHandler){
   dxl_comm_result = groupSyncRead430->txRxPacket();
   dxl_comm_result = groupSyncRead320->txRxPacket();
-  Q->q1 = -PI + ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL1_OFFSET); 
-  Q->q2 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL2_OFFSET); 
-  Q->q3 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL3_OFFSET); 
-  Q->q4 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL4_OFFSET); 
-  Q->q5 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL5_OFFSET); 
-  Q->q6 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL6_OFFSET); 
+  Q->q1 = ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) - DXL1_OFFSET); 
+  Q->q2 = ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL2_OFFSET); 
+  Q->q3 = ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL3_OFFSET); 
+  Q->q4 = ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) - DXL4_OFFSET); 
+  Q->q5 = ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) - DXL5_OFFSET); 
+  Q->q6 = ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) - DXL6_OFFSET); 
 }
 
 void writeQ(Q_t *Q, dynamixel::GroupSyncWrite *groupSyncWrite430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler) {
 
-
   int q1 = convertToPositionCommand430(Q->q1, false) + DXL1_OFFSET;
-  int q2 = convertToPositionCommand430(Q->q2, true) + DXL2_OFFSET;
-  int q3 = convertToPositionCommand430(Q->q3, true) + DXL3_OFFSET;
+  int q2 = convertToPositionCommand430(Q->q2, true) - DXL2_OFFSET;
+  int q3 = convertToPositionCommand430(Q->q3, true) - DXL3_OFFSET;
   int q4 = convertToPositionCommand320(Q->q4, false) + DXL4_OFFSET;
   int q5 = convertToPositionCommand320(Q->q5, false) + DXL5_OFFSET;
   int q6 = convertToPositionCommand320(Q->q6, false) +DXL6_OFFSET;
@@ -570,7 +554,7 @@ int convertToPositionCommand430(float q, boolean flip) {
 int convertToPositionCommand320(float q, boolean flip) {
   if (flip) {
     return (-q + 150 * PI / 180) / ANGLE_CONVERSION_CONSTANT_320;
-  }
+  } 
   else {
     return (q + 150 * PI / 180) / ANGLE_CONVERSION_CONSTANT_320;
   }
