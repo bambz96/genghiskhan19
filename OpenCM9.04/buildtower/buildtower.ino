@@ -45,16 +45,25 @@
 #define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
 
 #define Q1_SCALE                            1.020078546
+#define Q2_SCALE                            1.0
+#define Q3_SCALE                            1.0
+#define Q4_SCALE                            1.0
+#define Q5_SCALE                            1.0
+#define Q6_SCALE                            1.0
+
 #define Q1_OFFSET                           3.15
 #define Q2_OFFSET                           0 //-5.7145
 #define Q3_OFFSET                           0 //-3.3825
+#define Q4_OFFSET                           0
+#define Q5_OFFSET                           0
+#define Q6_OFFSET                           0
           
-#define DXL1_OFFSET                         5.5 //motor unit offset
-#define DXL2_OFFSET                         -23.5
-#define DXL3_OFFSET                         -31.5
-#define DXL4_OFFSET                         5.5
-#define DXL5_OFFSET                         0
-#define DXL6_OFFSET                         0
+//#define DXL1_OFFSET                         5.5 //motor unit offset
+//#define DXL2_OFFSET                         -23.5
+//#define DXL3_OFFSET                         -31.5
+//#define DXL4_OFFSET                         5.5
+//#define DXL5_OFFSET                         0
+//#define DXL6_OFFSET                         0
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
