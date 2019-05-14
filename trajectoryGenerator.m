@@ -27,7 +27,7 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 5, FirstBlock);
+Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
 
 plot(Mark.getTimeseries, Mark.getPosition);  
 
@@ -38,13 +38,25 @@ TimeVals = Mark.getTime;
 % columns [a3, a2, a1, a0, ts, tf]
 % pages: coordinates
 
-for x = 1:DOF
+for x = 1:3
     % Get Coefficients for one coordinate trajectory
     Coeffs = Mark.getCoefficients;
     for p = 1:pieces
         % shrink data
         for a = 1:4
             DATA(p, a, x) = myShrink(Coeffs(p, a, x)/1000);
+        end
+        DATA(p, 5:6, x) = TimeVals(p:p + 1);
+    end
+end
+
+for x = 4:5
+    % Get Coefficients for one coordinate trajectory
+    Coeffs = Mark.getCoefficients;
+    for p = 1:pieces
+        % shrink data
+        for a = 1:4
+            DATA(p, a, x) = myShrink(Coeffs(p, a, x)*pi/180);
         end
         DATA(p, 5:6, x) = TimeVals(p:p + 1);
     end

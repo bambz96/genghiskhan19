@@ -1,13 +1,13 @@
 clear serial % remove any serial that is hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 openTime = 1; % seconds paused after serial opened
 
 % This is filth...
-if ~(exists('Mark', 'Var'))
-    trajectoryGenerator;
-end
+% if ~(exists('Mark', 'Var'))
+%     trajectoryGenerator;
+% end
 
 
 %% pause to make sure it's opened
@@ -37,6 +37,7 @@ while running
         zdata = DATA(:,:,3);
         thdata = DATA(:,:,4);
         gripdata = DATA(:,:,5);
+        [length, ~, ~] = size(DATA);
                
         
         %% send command

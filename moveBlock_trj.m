@@ -35,7 +35,8 @@ classdef moveBlock_trj < taskTrajectory
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
         % A very basic "approach position" in the frame of the block
-        ApproachP = [-jBlock.Length; 0; jBlock.Height;];
+%         ApproachP = [-jBlock.Length; 0; jBlock.Height;];
+        ApproachP = [0; 0; jBlock.Height;];
         
     end 
     properties(Access = private)

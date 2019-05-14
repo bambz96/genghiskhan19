@@ -14,7 +14,7 @@ int enableTorque430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
 }
 
 int velocityLimit430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write4ByteTxRx(portHandler, DXL_ID, 112, 131, &dxl_error);
+  return packetHandler->write4ByteTxRx(portHandler, DXL_ID, 112, 200, &dxl_error);
 }
 
 int enableTorque320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
@@ -40,9 +40,9 @@ int positionMode320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
 void readQ(Q_t *Q, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupSyncRead *groupSyncRead320, dynamixel::PacketHandler *packetHandler){
   dxl_comm_result = groupSyncRead430->txRxPacket();
   dxl_comm_result = groupSyncRead320->txRxPacket();
-  Q->q1 = -PI + ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL1_OFFSET); 
-  Q->q2 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL2_OFFSET); 
-  Q->q3 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL3_OFFSET); 
+  Q->q1 = -Q1_OFFSET*PI/180-PI + Q1_SCALE*ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL1_OFFSET); 
+  Q->q2 = Q2_OFFSET*PI/180+PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL2_OFFSET); 
+  Q->q3 = Q3_OFFSET*PI/180+PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL3_OFFSET); 
   Q->q4 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL4_OFFSET); 
   Q->q5 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL5_OFFSET); 
   Q->q6 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL6_OFFSET); 
@@ -51,9 +51,9 @@ void readQ(Q_t *Q, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupS
 void writeQ(Q_t *Q, dynamixel::GroupSyncWrite *groupSyncWrite430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler) {
 
 
-  int q1 = convertToPositionCommand430(Q->q1, false) + DXL1_OFFSET;
-  int q2 = convertToPositionCommand430(Q->q2, true) + DXL2_OFFSET;
-  int q3 = convertToPositionCommand430(Q->q3, true) + DXL3_OFFSET;
+  int q1 = convertToPositionCommand430(Q->q1, false)/Q1_SCALE + DXL1_OFFSET + Q1_OFFSET*(PI/180)/ANGLE_CONVERSION_CONSTANT_430;
+  int q2 = convertToPositionCommand430(Q->q2, true) + DXL2_OFFSET + Q2_OFFSET*(PI/180)/ANGLE_CONVERSION_CONSTANT_430;
+  int q3 = convertToPositionCommand430(Q->q3, true) + DXL3_OFFSET + Q3_OFFSET*(PI/180)/ANGLE_CONVERSION_CONSTANT_430;
   int q4 = convertToPositionCommand320(Q->q4, false) + DXL4_OFFSET;
   int q5 = convertToPositionCommand320(Q->q5, false) + DXL5_OFFSET;
   int q6 = convertToPositionCommand320(Q->q6, false) +DXL6_OFFSET;
@@ -100,6 +100,7 @@ int convertToPositionCommand430(float q, boolean flip) {
     return (q + PI) / ANGLE_CONVERSION_CONSTANT_430;
   }
 }
+
 
 int convertToPositionCommand320(float q, boolean flip) {
   if (flip) {
