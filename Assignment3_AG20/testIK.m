@@ -3,9 +3,9 @@ clear all
 
 jenghisKhan = robot;
 
-x = 500;
+x = 200;
 y = 40;
-z = 20;
+z = 5;
 theta = 0; 
 
 [q1,q2,q3,q4,q5] = jenghisKhan.inverseKinematics.findQ(x,y,z,theta);

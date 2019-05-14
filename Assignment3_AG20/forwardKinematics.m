@@ -34,6 +34,8 @@ classdef forwardKinematics
         q3      = sym('q3'); % deg
         q4      = sym('q4'); % deg
         q5      = sym('q5'); % deg
+        
+    
     end
 
     methods
