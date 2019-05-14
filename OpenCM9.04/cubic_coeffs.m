@@ -12,12 +12,12 @@ function coeffs = cubic_coeffs(x0, x0d, xf, xfd, tf)
     a1 = myShrink(b(2));
     a0 = myShrink(b(1));
     
-    coeffs = [a3 a2 a1 a0 tf];
+    coeffs = [a3 a2 a1 a0 0 tf];
 
 end
 
 function val = myShrink(x)
-    if abs(x) < 1e-5
+    if abs(x) < 1e-4
         val = 0;
     else
         val = x;

@@ -13,6 +13,10 @@ int enableTorque430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_430, TORQUE_ENABLE, &dxl_error);
 }
 
+int velocityLimit430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
+  return packetHandler->write4ByteTxRx(portHandler, DXL_ID, 112, 131, &dxl_error);
+}
+
 int enableTorque320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_320, TORQUE_ENABLE, &dxl_error);
 }

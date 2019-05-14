@@ -176,6 +176,7 @@ function [t, d] = readRow(serial, length, path_res)
     d = zeros(1, path_res*length);
     while i <= path_res*length
         data = strtrim(fscanf(serial));
+        disp(data)
         res = regexp(data, '[+-]?\d+\.?\d*','match');
         t(i) = str2double(res{1});
         d(i) = str2double(res{2});
@@ -193,19 +194,19 @@ ungrip = 0.422257077;
 delay = 5;
 p = [
     0.2 0 0.3 0 ungrip 2;
-    0.15 -0.2 0.01 0 ungrip delay;
-    0.15 -0.2 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.125 0.25 0.01 0 ungrip delay;
-    0.125 0.25 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.15 -0.2 0.01 0 ungrip delay;
-    0.15 -0.2 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.2 0 0.3 0 ungrip 2
+    0.15 -0.2 0.01 0 ungrip 7;
+    0.15 -0.2 0.01 0 ungrip 8;
+    0.2 0 0.01 0 ungrip 13;
+    0.2 0 0.01 0 ungrip 14;
+    0.125 0.25 0.01 0 ungrip 19;
+    0.125 0.25 0.01 0 ungrip 20;
+    0.2 0 0.01 0 ungrip 25;
+    0.2 0 0.01 0 ungrip 26;
+    0.15 -0.2 0.01 0 ungrip 31;
+    0.15 -0.2 0.01 0 ungrip 32;
+    0.2 0 0.01 0 ungrip 37;
+    0.2 0 0.01 0 ungrip 42;
+    0.2 0 0.3 0 ungrip 44
 ];
 % tower corner
 % x0 = 0.2;
@@ -251,11 +252,11 @@ disp(p)
 [length, ~] = size(p);
 length = length - 1;
 
-xdata = zeros(length, 5);
-ydata = zeros(length, 5);
-zdata = zeros(length, 5);
-thdata = zeros(length, 5);
-gripdata = zeros(length, 5);
+xdata = zeros(length, 6);
+ydata = zeros(length, 6);
+zdata = zeros(length, 6);
+thdata = zeros(length, 6);
+gripdata = zeros(length, 6);
 
 %  current to p(1), the first pose, in 3 seconds
 

@@ -97,6 +97,7 @@ int count = 0;	// used to count up to nPolys whilst receiving coefficients from 
 // int instead of float to halve needed bytes (4 -> 2)
 struct Cubic {
   float coef[4];
+  unsigned int t0; // milliseconds
   unsigned int tf; // milliseconds
 };
 
@@ -207,6 +208,11 @@ void setup()
   positionMode320(DXL5_ID, portHandler, packetHandler);
   positionMode320(DXL6_ID, portHandler, packetHandler);
 
+  // Set velocity limits
+  velocityLimit430(DXL1_ID, portHandler, packetHandler);
+  velocityLimit430(DXL2_ID, portHandler, packetHandler);
+  velocityLimit430(DXL3_ID, portHandler, packetHandler);
+
   // Add parameter storage for Dynamixel#1 present position value
   dxl_addparam_result = groupSyncRead430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL2_ID);
@@ -214,6 +220,8 @@ void setup()
   dxl_addparam_result = groupSyncRead320.addParam(DXL4_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL5_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL6_ID);
+
+  
 
   // uncomment these to test writing the pose Q, note Q is initialised above
   // Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
@@ -312,7 +320,9 @@ while (1) {
       enableTorque320(DXL6_ID, portHandler, packetHandler);
   
       // delay before starting trajectory
-      delay(2000);
+      delay(500);
+
+      unsigned int tstart = millis();
 
       count = 0;
       readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
@@ -320,14 +330,15 @@ while (1) {
       while (count < nPolys) {
         // delay before each new segment
         //delay(500);
-        unsigned int t0 = millis();
-        unsigned int dt = 0;
+        unsigned int dt = millis() - tstart; // should be very close to 0 on the first poly (count=0)
         // duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
+        unsigned int t0 = xpoly[count].t0;
         unsigned int tf = xpoly[count].tf;
 
 
         // complete current path
         while (dt < tf) {
+          
           //find current joint angles
           readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           //find actual task space
@@ -354,11 +365,9 @@ while (1) {
           // write joint space Qc to servos
           writeQ(&Qc, &groupSyncWrite430, &groupSyncWrite320,  packetHandler);
 
-
           Xprev = Xref;
 
-
-          dt = millis() - t0;
+          dt = millis() - tstart;
         }
         // current path finished
         count++;
