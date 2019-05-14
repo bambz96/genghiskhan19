@@ -8,9 +8,10 @@
 #define RECEIVING_GRIP 5    //     ... for theta(t)
 #define PLOTTING 6			// send all paths (t, x, y, z) back to Matlab
 #define SIMULATION 7		// simulate measurement/control
-#define POSITION_CONTROL 8	// position control, no feedback
-#define PASSIVE_READ 9  // turn torques off and read Q -> FK -> print x/y/z/theta
-#define FINISHED 10			// do nothing
+#define POSITION_CONTROL 8	// position control
+#define VELOCITY_CONTROL 9  // velocity control
+#define PASSIVE_READ 10  // turn torques off and read Q -> FK -> print x/y/z/theta
+#define FINISHED 11			// do nothing
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -217,55 +218,70 @@ void setup()
   // Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
   // writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
 
-  while (1) {
-    if (state == WAITING) {
-      if (Serial.available() > 0) {
+while (1) {
+  if (state == WAITING) {
+    if(Serial.available()>0) {
+      String command = Serial.readStringUntil('\n');
+      if (command == "N") {
+        // receiving N polynomials
+        Serial.println(command);
+        while (Serial.available()==0) {} // wait for reply
         nPolys = Serial.parseInt();
         Serial.read(); // clear rest of input buffer (i.e. trailing \n)
-        Serial.println(nPolys);
+        Serial.println(nPolys); // confirm N polys before Matlab will send
         state = RECEIVING_X;
-      }
-    } else if (state == RECEIVING_X) {
-      readData(xpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_Y;
-      }
-    } else if (state == RECEIVING_Y) {
-      readData(ypoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_Z;
-      }
-    } else if (state == RECEIVING_Z) {
-      readData(zpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_TH;
-      }
-    } else if (state == RECEIVING_TH) {
-      readData(thpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_GRIP;
-      }
-    } else if (state == RECEIVING_GRIP) {
-      readData(grippoly);
-      if (count >= nPolys) {
-        count = 0;
+      } else if (command == "P") {
+        // instruction to plot current stored trajectory
+        delay(100); // delay 100ms to make sure Matlab is ready to receive
+        Serial.println(nPolys); // tell Matlab number of paths
+        // if N=0, do nothing (stay WAITING), otherwise...
+        if (nPolys != 0) {
+          delay(100);
+          Serial.println(PLOTTED_PATH_RES); // tell Matlab path resolution used
+          delay(100);
+          state = PLOTTING; // begin sending path data
+        }
+      } else if (command == "PC") {
+        // position control
+        Serial.println("PC");
         state = POSITION_CONTROL;
+      } else if (command == "VC") {
+        // velocity control
+        Serial.println("VC");
+        state = VELOCITY_CONTROL;
+      } else if (command == "R") {
+        // passive read, no torques enabled
+        state = PASSIVE_READ;
       }
-    } else if (state == PLOTTING) {
-      // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
-      int verify = nPolys; // number of paths to verify
-      sendNPoly(verify, xpoly);
-      sendNPoly(verify, ypoly);
-      sendNPoly(verify, zpoly);
-      sendNPoly(verify, thpoly);
-      sendNPoly(verify, grippoly);
-      // reset count of most recent read in rows
+    }
+  } else if (state == RECEIVING_X) {
+    readData(xpoly);
+    if (count >= nPolys) {
       count = 0;
-      // clear polys arrays?
+      state = RECEIVING_Y;
+    }
+  } else if (state == RECEIVING_Y) {
+    readData(ypoly);
+    if (count >= nPolys) {
+      count = 0;
+      state = RECEIVING_Z;
+    }
+  } else if (state == RECEIVING_Z) {
+    readData(zpoly);
+    if (count >= nPolys) {
+      count = 0;
+      state = RECEIVING_TH;
+    }
+  } else if (state == RECEIVING_TH) {
+    readData(thpoly);
+    if (count >= nPolys) {
+      count = 0;
+      state = RECEIVING_GRIP;
+    }
+  } else if (state == RECEIVING_GRIP) {
+    readData(grippoly);
+    if (count >= nPolys) {
+      count = 0;
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
       // Enable Torques
@@ -334,6 +350,7 @@ void setup()
       state = WAITING;
       count = 0;
       nPolys = 0;
+      } else if (state == VELOCITY_CONTROL) {
     } else if (state == PASSIVE_READ) {
       readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
       forward_kinematics(&X, Q);
@@ -347,6 +364,10 @@ void setup()
       Serial.print(1000*X.z); Serial.print(' ');
       Serial.print(X.theta,4); Serial.print(' ');
       Serial.println();
+      if(Serial.available()>0) {
+        Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
+        state = WAITING;
+        }
     } else if (state == FINISHED) {
       // rest
     }
@@ -429,41 +450,41 @@ void readData(struct Cubic *poly) {
 
 float poly(float t, float a0, float a1, float a2, float a3) {
   // evaluate the given cubic polynomial at time t
-  return a3 * t * t * t + a2 * t * t + a1 * t + a0;
+  return a3*t*t*t + a2*t*t + a1*t + a0;
 }
 
 void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
   // send the first n polynomial path segments
   float t0 = 0.0;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < 100; j++) {
-      float t = j / 100.0 * cubic[i].tf / 1000.0; // convert to real duration
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<PLOTTED_PATH_RES; j++) {
+      float t = j/float(PLOTTED_PATH_RES) * cubic[i].tf/1000.0; // convert to real duration
       sendPolyAtTime(t, t0, &cubic[i]);
     }
-    t0 += cubic[i].tf / 1000.0;
+    t0 += cubic[i].tf/1000.0;
   }
 }
 
 void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
   // send ti and x(ti)
   float x = evaluate(cubic, t);
-  //  float a0 = cubic->coef[0];
-  //  float a1 = cubic->coef[1];
-  //  float a2 = cubic->coef[2];
-  //  float a3 = cubic->coef[3];
-  //  float x = poly(t, a0, a1, a2, a3);
-  Serial.print(t + t0, 5); Serial.print(' ');
+//  float a0 = cubic->coef[0];
+//  float a1 = cubic->coef[1];
+//  float a2 = cubic->coef[2];
+//  float a3 = cubic->coef[3];
+//  float x = poly(t, a0, a1, a2, a3);
+  Serial.print(t+t0, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
 }
 
 float evaluate(struct Cubic *cubic, float t) {
-  // evaluate the given cubic at time t
-  float a0 = cubic->coef[0];
-  float a1 = cubic->coef[1];
-  float a2 = cubic->coef[2];
-  float a3 = cubic->coef[3];
-  return poly(t, a0, a1, a2, a3);
+	// evaluate the given cubic at time t
+	float a0 = cubic->coef[0];
+	float a1 = cubic->coef[1];
+	float a2 = cubic->coef[2];
+	float a3 = cubic->coef[3];
+	return poly(t, a0, a1, a2, a3);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

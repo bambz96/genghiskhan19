@@ -1,4 +1,5 @@
 #define MAX_CUBICS 25
+#define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -8,8 +9,10 @@
 #define RECEIVING_GRIP 5    //     ... for theta(t)
 #define PLOTTING 6			// send all paths (t, x, y, z) back to Matlab
 #define SIMULATION 7		// simulate measurement/control
-#define POSITION_CONTROL 8	// position control, no feedback
-#define FINISHED 9			// do nothing
+#define POSITION_CONTROL 8	// position control
+#define VELOCITY_CONTROL 9  // velocity control
+#define PASSIVE_READ 10  // turn torques off and read Q -> FK -> print x/y/z/theta
+#define FINISHED 11			// do nothing
 
 int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
@@ -34,10 +37,10 @@ struct Cubic grippoly[MAX_CUBICS];
 
 // task space coordinates
 typedef struct {
-  float x; 
+  float x;
   float y;
   float z;
-  float theta; 
+  float theta;
   float grip;
 } X_t;
 
@@ -48,19 +51,21 @@ typedef struct {
   float q3;
   float q4;
   float q5;
-  float q6; 
+  float q6;
 } Q_t;
 
-X_t X;
-
-Q_t Q = {0, 0, 0, 0, 0};
+X_t Xref; //reference position
+X_t X; //robot position
+X_t Xprev ={0.2, 0, 0.3, 0, 0}; //previous robot position, initial is home
+Q_t Q = {0, 0, 0, 0, 0}; //robot joint angles
+Q_t Qc = {0, 0, 0, 0, 0}; //controller joint angles
 
 float L1 = 0.2;
 float L2 = 0.2;
 float L3 = 0.2;
 float L4 = 0.1;
 
-float piOverTwo = M_PI/2;
+float piOverTwo = M_PI / 2;
 
 void setup()
 {
@@ -72,10 +77,38 @@ void setup()
 while (1) {
   if (state == WAITING) {
     if(Serial.available()>0) {
-      nPolys = Serial.parseInt();
-      Serial.read(); // clear rest of input buffer (i.e. trailing \n)
-      Serial.println(nPolys);
-      state = RECEIVING_X;
+      String command = Serial.readStringUntil('\n');
+      if (command == "N") {
+        // receiving N polynomials
+        Serial.println(command);
+        while (Serial.available()==0) {} // wait for reply
+        nPolys = Serial.parseInt();
+        Serial.read(); // clear rest of input buffer (i.e. trailing \n)
+        Serial.println(nPolys); // confirm N polys before Matlab will send
+        state = RECEIVING_X;
+      } else if (command == "P") {
+        // instruction to plot current stored trajectory
+        delay(100); // delay 100ms to make sure Matlab is ready to receive
+        Serial.println(nPolys); // tell Matlab number of paths
+        // if N=0, do nothing (stay WAITING), otherwise...
+        if (nPolys != 0) {
+          delay(100);
+          Serial.println(PLOTTED_PATH_RES); // tell Matlab path resolution used
+          delay(100);
+          state = PLOTTING; // begin sending path data
+        }
+      } else if (command == "PC") {
+        // position control
+        Serial.println("PC");
+        state = POSITION_CONTROL;
+      } else if (command == "VC") {
+        // velocity control
+        Serial.println("VC");
+        state = VELOCITY_CONTROL;
+      } else if (command == "R") {
+        // passive read, no torques enabled
+        state = PASSIVE_READ;
+      }
     }
   } else if (state == RECEIVING_X) {
     readData(xpoly);
@@ -105,7 +138,7 @@ while (1) {
     readData(grippoly);
     if (count >= nPolys) {
       count = 0;
-      state = PLOTTING;
+      state = WAITING;
     }
   } else if (state == PLOTTING) {
     // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
@@ -162,27 +195,48 @@ while (1) {
 	// todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
     state = WAITING;
     count = 0;
-	nPolys = 0;
-	
+	  nPolys = 0;
+  } else if (state == VELOCITY_CONTROL) {
+    
+	} else if (state == PASSIVE_READ) {
+    Serial.println("random test data");
+    if(Serial.available()>0) {
+      Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
+      state = WAITING;
+    }
   } else if (state == FINISHED) {
     // rest
   }
 }
 }
 
-void loop() {
-  
+X_t feedback(X_t Xprev, X_t Xref, X_t X){
+  X_t Xe;
+  float K = 1;
+  Xe.x = Xref.x + K*(Xprev.x - X.x);
+  Xe.y = Xref.y + K*(Xprev.y - X.y);
+  Xe.z = Xref.z + K*(Xprev.z - X.z);
+  Xe.theta = Xref.theta + K*(Xprev.theta - X.theta);
+  Xe.grip = Xref.grip;
+  return Xe;
+}
+
+void forward_kinematics(X_t *X, Q_t Q) {
+  X->x = cos(Q.q1) * (L3 * cos(Q.q2 + Q.q3) - L2 * sin(Q.q2));
+  X->y = sin(Q.q1) * (L3 * cos(Q.q2 + Q.q3) - L2 * sin(Q.q2));
+  X->z = L3 * sin(Q.q2 + Q.q3) + L2 * cos(Q.q2) - L4 + L1;
+  X->theta = Q.q1 - Q.q5;
 }
 
 void inverse_kinematics(Q_t *Q, X_t *X) {
-  Q->q1 =  atan2(X->y,X->x);
-  
-  float L_b = sqrt(sq(X->x) +sq(X->y) + sq(X->z+L4-L1));
+  Q->q1 =  atan2(X->y, X->x);
+
+  float L_b = sqrt(sq(X->x) + sq(X->y) + sq(X->z + L4 - L1));
   //make sure to check the home position ...
   Q->q3 = cosine_rule(L_b, L2, L3) - piOverTwo;
 
-  float rad = atan2(X->z+L4-L1, sqrt(sq(X->x) + sq(X->y)));
-  Q->q2 = -(piOverTwo-rad-cosine_rule(L3,L_b,L2));
+  float rad = atan2(X->z + L4 - L1, sqrt(sq(X->x) + sq(X->y)));
+  Q->q2 = -(piOverTwo - rad - cosine_rule(L3, L_b, L2));
 
   Q->q4 = -(Q->q2 + Q->q3);
 
@@ -193,13 +247,13 @@ void inverse_kinematics(Q_t *Q, X_t *X) {
 
 float cosine_rule(float a, float b, float c) {
   // a is opposite the required angle
-  return acos((sq(b) + sq(c) - sq(a))/(2*b*c));
+  return acos((sq(b) + sq(c) - sq(a)) / (2 * b * c));
 }
 
 void readData(struct Cubic *poly) {
   // "a3 a2 a1 a0 tf" has been sent, parse it in, create a new Cubic struct
   // and add it to the array provided
-  if(Serial.available()>0)
+  if (Serial.available() > 0)
   {
     float a3 = Serial.parseFloat();
     float a2 = Serial.parseFloat();
@@ -208,11 +262,11 @@ void readData(struct Cubic *poly) {
     float tf = Serial.parseFloat();
     Serial.read(); // clear rest of input buffer (i.e. trailing \n
     // reply with read values
-    Serial.print(a3,5); Serial.print(' ');
-    Serial.print(a2,5); Serial.print(' ');
-    Serial.print(a1,5); Serial.print(' ');
-    Serial.print(a0,5); Serial.print(' ');
-    Serial.print(tf,5); Serial.print(' ');
+    Serial.print(a3, 5); Serial.print(' ');
+    Serial.print(a2, 5); Serial.print(' ');
+    Serial.print(a1, 5); Serial.print(' ');
+    Serial.print(a0, 5); Serial.print(' ');
+    Serial.print(tf, 5); Serial.print(' ');
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
@@ -220,7 +274,7 @@ void readData(struct Cubic *poly) {
     cubic.coef[1] = a1;
     cubic.coef[2] = a2;
     cubic.coef[3] = a3;
-    cubic.tf = tf*1000; // convert s to ms
+    cubic.tf = tf * 1000; // convert s to ms
     poly[count] = cubic;
     count++;
   }
@@ -235,8 +289,8 @@ void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
   // send the first n polynomial path segments
   float t0 = 0.0;
   for (int i=0; i<n; i++) {
-    for (int j=0; j<100; j++) {
-      float t = j/100.0 * cubic[i].tf/1000.0; // convert to real duration
+    for (int j=0; j<PLOTTED_PATH_RES; j++) {
+      float t = j/float(PLOTTED_PATH_RES) * cubic[i].tf/1000.0; // convert to real duration
       sendPolyAtTime(t, t0, &cubic[i]);
     }
     t0 += cubic[i].tf/1000.0;
