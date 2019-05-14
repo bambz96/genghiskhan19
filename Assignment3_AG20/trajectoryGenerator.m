@@ -5,6 +5,9 @@
     A simple script that generates trajectories for testing
     
     Currently testing the basic moveBlock_trj
+
+    Now trying to change this to output the required format 
+    to send to the robot
     %}
 
 % Define the loading bay coordinates

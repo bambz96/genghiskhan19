@@ -4,7 +4,7 @@ classdef moveBlock_trj < taskTrajectory
     Robotics Systems MCEN90028
     
     Very basic trajecory implementation
-    Defines a trajectory from the Loading bay taken as input 
+    Defines a trajectory from the Loading bay (taken as input)
     Delivers the block to the drop location determined from the block.
     
     NOTE: All coordinates in column vectors
