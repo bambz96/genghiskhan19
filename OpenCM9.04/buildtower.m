@@ -1,6 +1,6 @@
 clear serial % remove any serial that is hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 openTime = 1; % seconds paused after serial opened
 
@@ -23,7 +23,7 @@ while running
     if user == 1
         disp('Send trajectory to position from current...')
         disp('Not implemented!')
-    elif user == 2
+    elseif user == 2
         disp('Send build tower trajectories now...')
         [length, xdata, ydata, zdata, thdata, gripdata] = tower_paths();
         %% send command

@@ -1,4 +1,5 @@
 #define MAX_CUBICS 25
+#define PLOTTED_PATH_RES 50
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -224,6 +225,11 @@ while (1) {
       String command = Serial.readStringUntil('\n');
       if (command == "N") {
         // receiving N polynomials
+        // first clear
+        // todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
+        count = 0;
+        nPolys = 0;
+      
         Serial.println(command);
         while (Serial.available()==0) {} // wait for reply
         nPolys = Serial.parseInt();
@@ -283,7 +289,20 @@ while (1) {
     if (count >= nPolys) {
       count = 0;
       state = WAITING;
-    } else if (state == POSITION_CONTROL) {
+    }
+  } else if (state == PLOTTING) {
+      // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
+      int verify = nPolys; // number of paths to verify
+      sendNPoly(verify, xpoly);
+      sendNPoly(verify, ypoly);
+      sendNPoly(verify, zpoly);
+      sendNPoly(verify, thpoly);
+      sendNPoly(verify, grippoly);
+      // reset count of most recent read in rows
+      count = 0;
+      // clear polys arrays?
+      state = WAITING;
+  } else if (state == POSITION_CONTROL) {
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -345,12 +364,9 @@ while (1) {
         count++;
       }
 
-      // all paths done, reset and listen for new paths
-      // todo empty all xpoly/ypoly/zpoly/thpoly instead of overwriting
+      // all paths done, return to WAITING
       state = WAITING;
-      count = 0;
-      nPolys = 0;
-      } else if (state == VELOCITY_CONTROL) {
+    } else if (state == VELOCITY_CONTROL) {
     } else if (state == PASSIVE_READ) {
       readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
       forward_kinematics(&X, Q);
@@ -375,231 +391,5 @@ while (1) {
 }
 
 void loop() {
-
-}
-
-X_t feedback(X_t Xprev, X_t Xref, X_t X){
-  X_t Xe;
-  float K = 1;
-  Xe.x = Xref.x + K*(Xprev.x - X.x);
-  Xe.y = Xref.y + K*(Xprev.y - X.y);
-  Xe.z = Xref.z + K*(Xprev.z - X.z);
-  Xe.theta = Xref.theta + K*(Xprev.theta - X.theta);
-  Xe.grip = Xref.grip;
-  return Xe;
-}
-
-void forward_kinematics(X_t *X, Q_t Q) {
-  X->x = cos(Q.q1) * (L3 * cos(Q.q2 + Q.q3) - L2 * sin(Q.q2));
-  X->y = sin(Q.q1) * (L3 * cos(Q.q2 + Q.q3) - L2 * sin(Q.q2));
-  X->z = L3 * sin(Q.q2 + Q.q3) + L2 * cos(Q.q2) - L4 + L1;
-  X->theta = Q.q1 - Q.q5;
-}
-
-void inverse_kinematics(Q_t *Q, X_t *X) {
-  Q->q1 =  atan2(X->y, X->x);
-
-  float L_b = sqrt(sq(X->x) + sq(X->y) + sq(X->z + L4 - L1));
-  //make sure to check the home position ...
-  Q->q3 = cosine_rule(L_b, L2, L3) - piOverTwo;
-
-  float rad = atan2(X->z + L4 - L1, sqrt(sq(X->x) + sq(X->y)));
-  Q->q2 = -(piOverTwo - rad - cosine_rule(L3, L_b, L2));
-
-  Q->q4 = -(Q->q2 + Q->q3);
-
-  Q->q5 = Q->q1 - X->theta;
-
-  Q->q6 = X->grip;
-}
-
-float cosine_rule(float a, float b, float c) {
-  // a is opposite the required angle
-  return acos((sq(b) + sq(c) - sq(a)) / (2 * b * c));
-}
-
-void readData(struct Cubic *poly) {
-  // "a3 a2 a1 a0 tf" has been sent, parse it in, create a new Cubic struct
-  // and add it to the array provided
-  if (Serial.available() > 0)
-  {
-    float a3 = Serial.parseFloat();
-    float a2 = Serial.parseFloat();
-    float a1 = Serial.parseFloat();
-    float a0 = Serial.parseFloat();
-    float tf = Serial.parseFloat();
-    Serial.read(); // clear rest of input buffer (i.e. trailing \n
-    // reply with read values
-    Serial.print(a3, 5); Serial.print(' ');
-    Serial.print(a2, 5); Serial.print(' ');
-    Serial.print(a1, 5); Serial.print(' ');
-    Serial.print(a0, 5); Serial.print(' ');
-    Serial.print(tf, 5); Serial.print(' ');
-    Serial.println();
-    // create Cubic struct and save to given array of polynomials
-    struct Cubic cubic;
-    cubic.coef[0] = a0;
-    cubic.coef[1] = a1;
-    cubic.coef[2] = a2;
-    cubic.coef[3] = a3;
-    cubic.tf = tf * 1000; // convert s to ms
-    poly[count] = cubic;
-    count++;
-  }
-}
-
-float poly(float t, float a0, float a1, float a2, float a3) {
-  // evaluate the given cubic polynomial at time t
-  return a3*t*t*t + a2*t*t + a1*t + a0;
-}
-
-void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
-  // send the first n polynomial path segments
-  float t0 = 0.0;
-  for (int i=0; i<n; i++) {
-    for (int j=0; j<PLOTTED_PATH_RES; j++) {
-      float t = j/float(PLOTTED_PATH_RES) * cubic[i].tf/1000.0; // convert to real duration
-      sendPolyAtTime(t, t0, &cubic[i]);
-    }
-    t0 += cubic[i].tf/1000.0;
-  }
-}
-
-void sendPolyAtTime(float t, float t0, struct Cubic *cubic) {
-  // send ti and x(ti)
-  float x = evaluate(cubic, t);
-//  float a0 = cubic->coef[0];
-//  float a1 = cubic->coef[1];
-//  float a2 = cubic->coef[2];
-//  float a3 = cubic->coef[3];
-//  float x = poly(t, a0, a1, a2, a3);
-  Serial.print(t+t0, 5); Serial.print(' ');
-  Serial.print(x, 5); Serial.print(' ');
-  Serial.println();
-}
-
-float evaluate(struct Cubic *cubic, float t) {
-	// evaluate the given cubic at time t
-	float a0 = cubic->coef[0];
-	float a1 = cubic->coef[1];
-	float a2 = cubic->coef[2];
-	float a3 = cubic->coef[3];
-	return poly(t, a0, a1, a2, a3);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-void checkComms(int dxl_comm_result, dynamixel::PacketHandler *packetHandler ) {
-  if (dxl_comm_result != COMM_SUCCESS)
-  {
-    packetHandler->getTxRxResult(dxl_comm_result);
-  }
-  else if (dxl_error != 0)
-  {
-    packetHandler->getRxPacketError(dxl_error);
-  }
-}
-
-int enableTorque430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_430, TORQUE_ENABLE, &dxl_error);
-}
-
-int enableTorque320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_320, TORQUE_ENABLE, &dxl_error);
-}
-
-int disableTorque430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_430, TORQUE_DISABLE, &dxl_error);
-}
-
-int disableTorque320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_320, TORQUE_DISABLE, &dxl_error);
-}
-
-int positionMode430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_430, POSITION_MODE_430, &dxl_error);
-}
-
-int positionMode320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
-  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_320, POSITION_MODE_320, &dxl_error);
-}
-
-void readQ(Q_t *Q, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupSyncRead *groupSyncRead320, dynamixel::PacketHandler *packetHandler){
-  dxl_comm_result = groupSyncRead430->txRxPacket();
-  dxl_comm_result = groupSyncRead320->txRxPacket();
-  Q->q1 = -PI + ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL1_OFFSET); 
-  Q->q2 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL2_OFFSET); 
-  Q->q3 = PI - ANGLE_CONVERSION_CONSTANT_430 * (groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430) + DXL3_OFFSET); 
-  Q->q4 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL4_OFFSET); 
-  Q->q5 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL5_OFFSET); 
-  Q->q6 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320) + DXL6_OFFSET); 
-}
-
-void writeQ(Q_t *Q, dynamixel::GroupSyncWrite *groupSyncWrite430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler) {
-
-
-  int q1 = convertToPositionCommand430(Q->q1, false) + DXL1_OFFSET;
-  int q2 = convertToPositionCommand430(Q->q2, true) + DXL2_OFFSET;
-  int q3 = convertToPositionCommand430(Q->q3, true) + DXL3_OFFSET;
-  int q4 = convertToPositionCommand320(Q->q4, false) + DXL4_OFFSET;
-  int q5 = convertToPositionCommand320(Q->q5, false) + DXL5_OFFSET;
-  int q6 = convertToPositionCommand320(Q->q6, false) +DXL6_OFFSET;
-
-  uint8_t q1_ba[4];
-  uint8_t q2_ba[4];
-  uint8_t q3_ba[4];
-  uint8_t q4_ba[4];
-  uint8_t q5_ba[4];
-  uint8_t q6_ba[4];
-
-  convertToByteArray(q1_ba, q1);
-  convertToByteArray(q2_ba, q2);
-  convertToByteArray(q3_ba, q3);
-  convertToByteArray(q4_ba, q4);
-  convertToByteArray(q5_ba, q5);
-  convertToByteArray(q6_ba, q6);
-
-  dxl_addparam_result = groupSyncWrite430->addParam(DXL1_ID, q1_ba);
-  dxl_addparam_result = groupSyncWrite430->addParam(DXL2_ID, q2_ba);
-  dxl_addparam_result = groupSyncWrite430->addParam(DXL3_ID, q3_ba);
-  dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
-  dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
-  dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
-
-
-  // Syncwrite goal position
-  dxl_comm_result = groupSyncWrite430->txPacket();
-  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-  dxl_comm_result = groupSyncWrite320->txPacket();
-  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-
-  // Clear syncwrite parameter storage
-  groupSyncWrite430->clearParam();
-  groupSyncWrite320->clearParam();
-
-}
-
-int convertToPositionCommand430(float q, boolean flip) {
-  if (flip) {
-    return (-q + PI) / ANGLE_CONVERSION_CONSTANT_430;
-  }
-  else {
-    return (q + PI) / ANGLE_CONVERSION_CONSTANT_430;
-  }
-}
-
-int convertToPositionCommand320(float q, boolean flip) {
-  if (flip) {
-    return (-q + 150 * PI / 180) / ANGLE_CONVERSION_CONSTANT_320;
-  }
-  else {
-    return (q + 150 * PI / 180) / ANGLE_CONVERSION_CONSTANT_320;
-  }
-}
-
-void convertToByteArray(uint8_t *a, int val) {
-  a[0] = DXL_LOBYTE(DXL_LOWORD(val));
-  a[1] = DXL_HIBYTE(DXL_LOWORD(val));
-  a[2] = DXL_LOBYTE(DXL_HIWORD(val));
-  a[3] = DXL_HIBYTE(DXL_HIWORD(val));
+  // unused because scope
 }
