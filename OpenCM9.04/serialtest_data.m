@@ -1,6 +1,8 @@
+% tests data sending speeds, does not look like a promising method
+
 x = serial('COM3','BAUD',57600);
 
-length = 1000;
+length = 500;
 data = rand(length, 4);
 
 errors = 0;
@@ -33,5 +35,5 @@ end
 
 t = toc;
 disp('Total/avg: ' + string(t) + '/' + string(t/n))
-disp('Errors: ' + string(errors))
+% disp('Errors: ' + string(errors))
 fclose(x);

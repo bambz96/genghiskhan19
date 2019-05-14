@@ -64,18 +64,18 @@ Joe = jointTrajectory(Terry, jenghis.DoF, IK, DK);
 %% Plots
 figure(1)
 plot(Terry.getTimeseries, Terry.getPosition);
-title("Task Space Trajectory");
+title('Task Space Trajectory');
 legend('x', 'y', 'z', 'theta');
 
 figure(2)
 plot(Joe.getTimeseries, Joe.getQ);
-title("Joint Space Trajectory");
+title('Joint Space Trajectory');
 legend('q1', 'q2', 'q3', 'q4', 'q5');
 
 
 figure(3) 
 plot(Joe.getTimeseries, Joe.getQ_dot);
-title("Joint Space Velocity");
+title('Joint Space Velocity');
 legend('q1', 'q2', 'q3', 'q4', 'q5');
 
 
