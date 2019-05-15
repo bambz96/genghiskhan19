@@ -35,7 +35,8 @@ classdef moveBlock_trj < taskTrajectory
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
         % A very basic "approach position" in the frame of the block
-        ApproachP = [-jBlock.Length; 0; jBlock.Height;];
+%         ApproachP = [-jBlock.Length; 0; jBlock.Height;];
+        ApproachP = [0; 0; jBlock.Height;];
         
     end 
     properties(Access = private)
@@ -80,7 +81,7 @@ classdef moveBlock_trj < taskTrajectory
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2; 
+            v2 = (v1 + v3)/2 + [50;0;0;0;0]; 
             
             % place all position vectors into an array 
             x = [loadBay, v1, v2, v3, dropLocation];

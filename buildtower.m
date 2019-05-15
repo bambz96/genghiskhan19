@@ -1,6 +1,6 @@
 clear serial % remove any serial that is hanging around and fucking shit up
 close all
-serial = serial('COM3','BAUD',57600);
+serial = serial('COM4','BAUD',57600);
 
 openTime = 1; % seconds paused after serial opened
 
@@ -37,8 +37,9 @@ while running
         zdata = DATA(:,:,3);
         thdata = DATA(:,:,4);
         gripdata = DATA(:,:,5);
-               
-        
+        [length, ~, ~] = size(DATA);
+
+
         %% send command
         fprintf(serial, 'N');
         reply = strtrim(fscanf(serial));
@@ -140,10 +141,10 @@ while running
             i = i + 1;
         end
         fprintf(serial, 'x'); % send anything to interrupt
-        
+
         % todo with GUI, will be able to send anything over serial and
         % return to WAITING state, atm have to use Arduino's Serial Monitor
-        
+
         % simple GUI used to interrupt loop and view joint angles
 %         ButtonHandle = uicontrol('Style', 'PushButton', 'String', 'Stop read', 'Callback', 'delete(gcbf)');
 %         textHandle = uicontrol('Style', 'text', 'String', 'q1 q2 q3 q4 q5', 'Position', [150, 150, 300, 15]);
@@ -154,7 +155,7 @@ while running
 %             end
 %             textHandle.String = fgetl(serial);
 %         end
-        
+
     elseif user == 0
         disp('Quitting')
         fclose(serial);
@@ -228,7 +229,7 @@ p = [
 % yh = -0.1875;
 % zh = 0.003; % -0.003
 % thetah = -90;
-% 
+%
 % p = [];
 % nblocks = 3;
 % i = 1; % number of loops
