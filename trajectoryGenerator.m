@@ -12,12 +12,14 @@
     %}
 
 DOF = 5;
-pieces = 4;
+pieces = 1;
 
 DATA = zeros(pieces, 6, DOF);
 
 % Define the loading bay coordinates
-LoadingBay = [37.5; 187.5; 20; 90; 0];
+
+yOffset = 0; 
+LoadingBay = [37.5; -187.5+yOffset; -1.4; -90; 0];
 
 % Create the tower
 Tower = jTower(200, 0, 0);
@@ -27,8 +29,9 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
-% Mark = release_trj(LoadingBay, 0, SampleTime); 
+% Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
+% Mark = grip_trj(LoadingBay, 0, SampleTime); 
+Mark = release_trj(FirstBlock, 0, SampleTime); 
 % Mark = return_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
 
 plot(Mark.getTimeseries, Mark.getPosition);  

@@ -73,7 +73,7 @@ classdef jTower
                 % datum is in centre of brick
                 x = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
                 y = 0;
-                theta = 90; %even layers are cross-lay
+                theta = -90; %odd layers are cross-lay
             else
                 %datum i sin centre of block
                 y = (layerPos - obj.BPerLayer/2 -0.5)*jBlock.Width;

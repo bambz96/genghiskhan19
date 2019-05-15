@@ -38,6 +38,7 @@ classdef return_trj < taskTrajectory
         
         % A very basic "approach position" in the frame of the block
         ApproachP = [0; 0; jBlock.Height;]
+        OpenGrip = 0.422257077; 
         
     end 
     properties(Access = private)
@@ -73,18 +74,20 @@ classdef return_trj < taskTrajectory
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
             dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; return_trj.DropHeight; 0; 0];
+                    [0; 0; return_trj.DropHeight; 0; return_trj.OpenGrip];
                 
             v1 = return_trj.approachPosition(block);
             
-            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; 0];
+            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; return_trj.OpenGrip];
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2 + [50;0;0;0;0]; 
+            v2 = (v1 + v3)/2 + [50;0;0;0;return_trj.OpenGrip]; 
+                        
+            v0 = [loadBay(1:4); return_trj.OpenGrip];
             
             % place all position vectors into an array 
-            x = [dropLocation, v1, v2, v3, loadBay];
+            x = [dropLocation, v1, v2, v3, v0];
         end
         
         % Determines the approach position based on the block position
@@ -96,7 +99,7 @@ classdef return_trj < taskTrajectory
                     return_trj.ApproachP;
                 
             xApp = blockPos + [P; 0];
-            xApp = [xApp; 0];
+            xApp = [xApp; return_trj.OpenGrip];
         end
         
         %Just a z rotation, nothing to see here folks
