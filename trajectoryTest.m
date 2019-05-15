@@ -44,7 +44,7 @@ for x = 1:DOF
     for p = 1:pieces
         % shrink data
         for a = 1:4
-            DATA(p, a, x) = myShrink(Coeffs(p, a, x)/1000);
+            DATA(p, a, x) = myShrink(Coeffs(p, a, x));
         end
         DATA(p, 5:6, x) = TimeVals(p:p + 1);
     end

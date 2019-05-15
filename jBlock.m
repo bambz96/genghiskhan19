@@ -83,7 +83,6 @@ classdef jBlock < handle
             A = Pos + [obj.zRotation(obj.theta)*r_pa; 0];
         end
         
-        
     end
     
     methods (Static, Access=private)
