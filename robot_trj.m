@@ -64,6 +64,26 @@ classdef robot_trj < taskTrajectory
             xDATA = obj.DATA(:,:,coordinate);
         end
         
+        % generates some decent plots. 
+        % Sepperates end effector orientation/gripping from translation
+        function plotTrajectories(obj)
+            figure;
+            subplot(2, 1, 1); 
+            p1 = plot(obj.getTimeseries, obj.X(1:3, :));
+            title("End Effector Position");
+            xlabel("time(s)");
+            ylabel("m");
+            legend({"q1", "q2", "q3"});         
+
+            subplot(2, 1, 2);
+            p2 = plot(obj.getTimeseries, obj.X(4:5, :));
+            title("Gripping and Orientation");
+            xlabel("time(s)");
+            ylabel("radians");
+            legend("q4", "gripper");
+        
+        end
+        
     end
     
     
@@ -73,9 +93,14 @@ classdef robot_trj < taskTrajectory
         % n is number of trajectories
         function DATA = combineDATA(trajectories, n)
             % Preallocate memory 
-%             for t = 1:n 
-              
-            
+            pieces = 0;
+            for t = 1:n 
+                pieces = pieces + trajectories(t).getPieces;
+            end
+            DATA = zeros(pieces, obj.DATACOLS, DOF);
+               
+            % Combine Trajectories
+            % I think this might be easier using cat?
             for x = 1:DOF
                 for i = 1:n
                 DATA(:,:,x) = [DATA; trajectories(i).getCoordianteDATA(x)];
@@ -96,15 +121,17 @@ classdef robot_trj < taskTrajectory
 
         function DATA = robotDATA(obj)
             
-            DATA = zeros(pieces, obj.DATACOLS, obj.DOF);
+            DATA = zeros(obj.pieces, obj.DATACOLS, obj.DOF);
+            
+            TimeVals = obj.getTime;
             
             for x = 1:obj.DOF
                 % Get Coefficients for one coordinate trajectory
                 Coeffs = obj.getCoefficients;
-                for p = 1:pieces
+                for p = 1:obj.pieces
                     % shrink data
                     for a = 1:4
-                        DATA(p, a, x) = myShrink(Coeffs(p, a, x));
+                        DATA(p, a, x) = obj.myShrink(Coeffs(p, a, x));
                     end
                     DATA(p, 5:6, x) = TimeVals(p:p + 1);
                 end
@@ -113,8 +140,9 @@ classdef robot_trj < taskTrajectory
             
         end        
         
-        function val = myShrink(x)
-            if abs(x) < TruncationK
+        % Truncates values for sending to controller
+        function val = myShrink(obj, x)
+            if abs(x) < obj.TruncationK
                 val = 0;
             else
                 val = x;

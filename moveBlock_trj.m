@@ -1,4 +1,4 @@
-classdef moveBlock_trj < taskTrajectory
+classdef moveBlock_trj < robot_trj
     %{ 
     Project Group 10
     Robotics Systems MCEN90028
@@ -28,9 +28,9 @@ classdef moveBlock_trj < taskTrajectory
     
     %}
     properties(Constant)
-        DOF = 5;
-        DropHeight =    5;      % mm drop for the block 
-        LiftHeight =    20;     % mm height of via above loading bay
+
+        DropHeight =    0.005;      % m drop for the block 
+        LiftHeight =    0.02;     % m height of via above loading bay
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
@@ -42,7 +42,7 @@ classdef moveBlock_trj < taskTrajectory
     end
     
     methods 
-        function obj = moveBlock_trj(loadBay, t0, ts, length, block)
+        function obj = moveBlock_trj(loadBay, t0, length, block)
             
             % times at all locations
             t = moveBlock_trj.simpleTime(t0, length);
@@ -50,7 +50,7 @@ classdef moveBlock_trj < taskTrajectory
             % input all x locations
             x = moveBlock_trj.simplePosition(loadBay, block);
             
-            obj = obj@taskTrajectory(x, t, ts, moveBlock_trj.DOF);
+            obj = obj@robot_trj(x, t);
             obj.block = block;
         end
    
@@ -72,14 +72,14 @@ classdef moveBlock_trj < taskTrajectory
             v1 = loadBay + ...
                 [0; 0; moveBlock_trj.LiftHeight; 0; moveBlock_trj.Gripped];
             
-            dropLocation = block.dropLocation;
+            dropLocation = [block.dropLocation; moveBlock_trj.Gripped];
             
             v3 = moveBlock_trj.approachPosition(block);
             
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2 + [50;0;0;0;moveBlock_trj.Gripped]; 
+            v2 = (v1 + v3)/2;
             v0 = [loadBay(1:4); moveBlock_trj.Gripped];
             % place all position vectors into an array 
             x = [v0, v1, v2, v3, dropLocation];
