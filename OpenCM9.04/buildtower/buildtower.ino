@@ -51,10 +51,10 @@
 #define Q5_SCALE                            1.0
 #define Q6_SCALE                            1.0
 
-#define Q1_OFFSET                           3.15
-#define Q2_OFFSET                           0 //-5.7145
-#define Q3_OFFSET                           0 //-3.3825
-#define Q4_OFFSET                           0
+#define Q1_OFFSET                           2.65
+#define Q2_OFFSET                           -3.8236666//-3.870333333
+#define Q3_OFFSET                           -0.77973//-0.9364
+#define Q4_OFFSET                           -4.583636364
 #define Q5_OFFSET                           0
 #define Q6_OFFSET                           0
           
