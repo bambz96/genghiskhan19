@@ -55,7 +55,9 @@
 #define Q2_OFFSET                           -3.8236666//-3.870333333
 #define Q3_OFFSET                           -0.77973//-0.9364
 #define Q4_OFFSET                           -4.583636364
-#define Q5_OFFSET                           0
+#define Q5_OFFSET                           -1.39625
+
+
 #define Q6_OFFSET                           0
           
 //#define DXL1_OFFSET                         5.5 //motor unit offset
