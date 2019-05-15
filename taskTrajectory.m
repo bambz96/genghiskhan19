@@ -1,4 +1,4 @@
-classdef taskTrajectory
+classdef taskTrajectory 
     %{
         Assignment Gropup 20
         Trajecotry class: stores a timeseries and trajectory 

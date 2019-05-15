@@ -1,4 +1,4 @@
-classdef robot_trj < taskTrajectory
+classdef robot_trj < taskTrajectory 
     %{ 
     Project Group 10
     Robotics Systems MCEN90028

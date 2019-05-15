@@ -27,13 +27,15 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-Greg = grip
+Greg = grip_trj(LoadingBay, 0);
 Mark = moveBlock_trj(LoadingBay, 0, 5, FirstBlock);
 
 
+Greg.plotTrajectories;
 Mark.plotTrajectories;
 
-Mark.getDATA
+
+robot_trj.combineDATA([Greg, Mark], 2)
 
 
 
