@@ -32,7 +32,7 @@ classdef return_trj < taskTrajectory
     properties(Constant)
         DOF = 5;
         DropHeight =    5;      % mm drop for the block 
-        LiftHeight =    20;     % mm height of via above loading bay
+        LiftHeight =    20;     % mm height of via above loading bay perhaps change this...
         ApproachTime =  0.5;    % time to "Approach" the new block (vf from v3)
         WithdrawTime =  0.5;    % time to "withdraw from" the tower (v1 from drop location)
         
@@ -72,13 +72,12 @@ classdef return_trj < taskTrajectory
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            v1 = loadBay + [0; 0; return_trj.LiftHeight; 0; 0];
-            
             dropLocation = [block.getPosition; 0] + ...
                     [0; 0; return_trj.DropHeight; 0; 0];
+                
+            v1 = return_trj.approachPosition(block);
             
-            v3 = return_trj.approachPosition(block);
-            
+            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; 0];
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
