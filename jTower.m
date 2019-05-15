@@ -61,8 +61,8 @@ classdef jTower
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    P = obj.blockPosition(layer,pos); 
-                    tower = [tower, jBlock(P(1), P(2), P(3), P(4))]; 
+                    P = obj.blockPosition(layer, pos); 
+                    tower = [tower, jBlock(P(1), P(2), P(3), P(4), pos)]; 
                 end
             end
         end
@@ -91,7 +91,7 @@ classdef jTower
             bTheta = bTheta + obj.theta;
             
             % return column vector
-            P = [P; bTheta, layerPos];
+            P = [P; bTheta];
 
         end
     end
@@ -99,8 +99,8 @@ classdef jTower
     methods(Static, Access = private)
         %Just a z rotation, nothing to see here folks
         function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
+            R = [cosd(theta) -sind(theta) 0;
+                 sind(theta) cosd(theta) 0;
                  0           0           1];
         end
     

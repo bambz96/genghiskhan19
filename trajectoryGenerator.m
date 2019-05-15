@@ -22,7 +22,7 @@ yOffset = 0;
 LoadingBay = [37.5; -187.5+yOffset; -1.4; -90; 0];
 
 % Create the tower
-Tower = jTower(200, 0, 0);
+Tower = jTower(0.200, 0, 0);
 
 % Generate a block to be delivered
 FirstBlock = Tower.nextBlock;

@@ -79,18 +79,22 @@ classdef jBlock < handle
         function A = calculateApproach(obj)
             Pos = obj.getPosition;
             offset = (obj.approachOffset-obj.layerPos)*(obj.Width);
-            r_pa = [-offset, 0, obj.Height, 0];
-            A = Pos + zRotation(obj.theta)*r_pa;
+            r_pa = [0; -offset; obj.Height];
+            A = Pos + [obj.zRotation(obj.theta)*r_pa; 0];
         end
         
         
+    end
+    
+    methods (Static, Access=private)
         % Just a z rotation, nothing to see here folks
         % takes input in radians
         function R = zRotation(theta)
-            R = [cos(theta) sin(theta) 0;
-                -sin(theta) cos(theta) 0;
-                 0           0           1];
+            R = [cos(theta) -sin(theta) 0;
+                 sin(theta) cos(theta) 0;
+                 0           0         1];
         end
+    end
 end
 
 
