@@ -81,7 +81,7 @@ classdef moveBlock_trj < taskTrajectory
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2; 
+            v2 = (v1 + v3)/2 + [50;0;0;0;0]; 
             
             % place all position vectors into an array 
             x = [loadBay, v1, v2, v3, dropLocation];
