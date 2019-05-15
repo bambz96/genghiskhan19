@@ -5,9 +5,9 @@ serial = serial('COM3','BAUD',57600);
 openTime = 1; % seconds paused after serial opened
 
 % This is filth...
-if ~(exists('Mark', 'Var'))
-    trajectoryGenerator;
-end
+% if ~(exists('DATA', 'Var'))
+%     trajectoryGenerator;
+% end
 
 
 %% pause to make sure it's opened
