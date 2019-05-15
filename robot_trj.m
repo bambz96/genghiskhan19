@@ -27,7 +27,7 @@ classdef robot_trj < taskTrajectory
         OpenGrip = 0.422257077;     % Radians
         ClosedGrip = 1.015976119;   % Radians
         
-        Truncation = 1e-5           % Threshold for truncation of data
+        TruncationK = 1e-5           % Threshold for truncation of data
         
         % Note: Probably a couple more that should be added    
     end
@@ -41,8 +41,9 @@ classdef robot_trj < taskTrajectory
     end
         
     
-%     Constructor
+
     methods 
+        %     Constructor
         function obj = robot_trj(x, t)
                         
             obj = obj@taskTrajectory(x, t, robot_trj.TS, robot_trj.DOF);
@@ -51,16 +52,38 @@ classdef robot_trj < taskTrajectory
             
         end
         
+        %Accessors
         % returns trajectories for all degrees of freedom. 
         function DATA = getDATA(obj)
             DATA = obj.DATA;
         end
+        
         
         % Returns data for one DOF
         function xDATA = getCoordinateDATA(obj, coordinate)
             xDATA = obj.DATA(:,:,coordinate);
         end
         
+    end
+    
+    
+    methods (Static)
+        % takes an array of robot_trj 
+        % returns combined data from all trajectories
+        % n is number of trajectories
+        function DATA = combineDATA(trajectories, n)
+            % Preallocate memory 
+%             for t = 1:n 
+              
+            
+            for x = 1:DOF
+                for i = 1:n
+                DATA(:,:,x) = [DATA; trajectories(i).getCoordianteDATA(x)];
+                end
+                
+            end
+                    
+        end
         
     end
     
@@ -91,7 +114,7 @@ classdef robot_trj < taskTrajectory
         end        
         
         function val = myShrink(x)
-            if abs(x) < 1e-5
+            if abs(x) < TruncationK
                 val = 0;
             else
                 val = x;
