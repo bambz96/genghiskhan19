@@ -16,7 +16,7 @@ classdef release_trj < taskTrajectory
         Gripper = 5;        % Coordinate corresponding to gripper
         OpenGrip = 0.422257077;       % Placeholder value only!!!
         ClosedGrip = 1.015976119;     % Placeholder value only!!!
-        ReleaseTime = 0.2;  % time to open gripper
+        ReleaseTime = 1;  % time to open gripper
     end
     
     methods 

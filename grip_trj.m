@@ -15,7 +15,7 @@ classdef grip_trj < taskTrajectory
         Gripper = 5;    % Coordinate corresponding to gripper
         OpenGrip = 0.422257077;       % Placeholder value only!!!
         ClosedGrip = 1.015976119;     % Placeholder value only!!!
-        GripTime = 0.5; % time to close gripper
+        GripTime = 1; % time to close gripper
         % currently using a very conservative value
     end
     

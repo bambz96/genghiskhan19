@@ -12,12 +12,12 @@
     %}
 
 DOF = 5;
-pieces = 4;
+pieces = 1;
 
 DATA = zeros(pieces, 6, DOF);
 
 % Define the loading bay coordinates
-LoadingBay = [37.5; 187.5; -3; 90; 0];
+LoadingBay = [37.5; 187.5; 20; 90; 0];
 
 % Create the tower
 Tower = jTower(200, 0, 0);
@@ -27,7 +27,8 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
+%Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
+Mark = release_trj(LoadingBay, 0, SampleTime); 
 
 plot(Mark.getTimeseries, Mark.getPosition);  
 
@@ -50,17 +51,28 @@ for x = 1:3
     end
 end
 
-for x = 4:5
-    % Get Coefficients for one coordinate trajectory
-    Coeffs = Mark.getCoefficients;
-    for p = 1:pieces
-        % shrink data
-        for a = 1:4
-            DATA(p, a, x) = myShrink(Coeffs(p, a, x)*pi/180);
-        end
-        DATA(p, 5:6, x) = TimeVals(p:p + 1);
+x = 4;
+% Get Coefficients for one coordinate trajectory
+Coeffs = Mark.getCoefficients;
+for p = 1:pieces
+    % shrink data
+    for a = 1:4
+        DATA(p, a, x) = myShrink(Coeffs(p, a, x)*pi/180);
     end
+    DATA(p, 5:6, x) = TimeVals(p:p + 1);
 end
+
+x = 5; 
+% Get Coefficients for one coordinate trajectory
+Coeffs = Mark.getCoefficients;
+for p = 1:pieces
+    % shrink data
+    for a = 1:4
+        DATA(p, a, x) = myShrink(Coeffs(p, a, x));
+    end
+    DATA(p, 5:6, x) = TimeVals(p:p + 1);
+end
+
     
 
 
