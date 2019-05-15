@@ -38,7 +38,7 @@ classdef return_trj < taskTrajectory
         
         % A very basic "approach position" in the frame of the block
         ApproachP = [0; 0; jBlock.Height;]
-        OpenGrip = 0.422257077; 
+        GripPosition = 0.422257077; 
         
     end 
     properties(Access = private)
@@ -74,40 +74,29 @@ classdef return_trj < taskTrajectory
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
             dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; return_trj.DropHeight; 0; return_trj.OpenGrip];
+                    [0; 0; return_trj.DropHeight; 0; return_trj.GripPosition];
                 
             v1 = return_trj.approachPosition(block);
             
-            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; return_trj.OpenGrip];
+            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; return_trj.GripPosition];
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2 + [50;0;0;0;return_trj.OpenGrip]; 
+            v2 = (v1 + v3)/2 + [50;0;0;0;return_trj.GripPosition]; 
                         
-            v0 = [loadBay(1:4); return_trj.OpenGrip];
+            v0 = [loadBay(1:4); return_trj.GripPosition];
             
             % place all position vectors into an array 
             x = [dropLocation, v1, v2, v3, v0];
         end
         
-        % Determines the approach position based on the block position
-        % And orientation
-        function xApp = approachPosition(block)
-            blockPos = block.getPosition;
-            % rotate offset for block orientation
-            P = return_trj.zRotation(blockPos(4))*...
-                    return_trj.ApproachP;
-                
-            xApp = blockPos + [P; 0];
-            xApp = [xApp; return_trj.OpenGrip];
+        % Augments the block approach position with a gripper position
+        function xW = withdrawPosition(block)
+            withdrawP = block.approachPosition;
+
+            xW = [withdrawP; return_trj.GripPosition];
         end
         
-        %Just a z rotation, nothing to see here folks
-        function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
-                 0           0           1];
-        end
     end
     
 end

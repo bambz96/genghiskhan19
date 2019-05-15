@@ -34,9 +34,6 @@ classdef moveBlock_trj < taskTrajectory
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
-        % A very basic "approach position" in the frame of the block
-%         ApproachP = [-jBlock.Length; 0; jBlock.Height;];
-        ApproachP = [0; 0; jBlock.Height;];
         Gripped = 1.015976119;
         
     end 
@@ -72,10 +69,10 @@ classdef moveBlock_trj < taskTrajectory
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            v1 = loadBay + [0; 0; moveBlock_trj.LiftHeight; 0; moveBlock_trj.Gripped];
+            v1 = loadBay + ...
+                [0; 0; moveBlock_trj.LiftHeight; 0; moveBlock_trj.Gripped];
             
-            dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; moveBlock_trj.DropHeight; 0; moveBlock_trj.Gripped];
+            dropLocation = block.dropLocation;
             
             v3 = moveBlock_trj.approachPosition(block);
             
@@ -88,24 +85,13 @@ classdef moveBlock_trj < taskTrajectory
             x = [v0, v1, v2, v3, dropLocation];
         end
         
-        % Determines the approach position based on the block position
-        % And orientation
+        % Augments the block approach position with a gripper position
         function xApp = approachPosition(block)
-            blockPos = block.getPosition;
-            % rotate offset for block orientation
-            P = moveBlock_trj.zRotation(blockPos(4))*...
-                    moveBlock_trj.ApproachP;
-                
-            xApp = blockPos + [P; 0];
-            xApp = [xApp; moveBlock_trj.Gripped];
+            Approach = block.approachPosition;
+
+            xApp = [Approach; moveBlock_trj.Gripped];
         end
         
-        %Just a z rotation, nothing to see here folks
-        function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
-                 0           0           1];
-        end
     end
     
 end

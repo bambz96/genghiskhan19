@@ -17,10 +17,10 @@ pieces = 4;
 DATA = zeros(pieces, 6, DOF);
 
 % Define the loading bay coordinates
-LoadingBay = [37.5; 187.5; -3; 90; 0];
+LoadingBay = [0.0375; 0.1875; -0.003; pi/2; 0];
 
 % Create the tower
-Tower = jTower(200, 0, 0);
+Tower = jTower(0.2, 0, 0);
 
 % Generate a block to be delivered
 FirstBlock = Tower.nextBlock;
