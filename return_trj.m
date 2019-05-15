@@ -1,11 +1,15 @@
-classdef moveBlock_trj < taskTrajectory
+classdef return_trj < taskTrajectory
     %{ 
     Project Group 10
     Robotics Systems MCEN90028
     
     Very basic trajecory implementation
-    Defines a trajectory from the Loading bay (taken as input)
-    Delivers the block to the drop location determined from the block.
+    Defines a trajectory from the previoius block drop location
+    Back to the loading bay
+    
+    At thi spoint this trajectory is pretty much exactly the same as the
+    block movement but in reverse
+    Should be reworked a little...
     
     NOTE: All coordinates in column vectors
     
@@ -14,44 +18,42 @@ classdef moveBlock_trj < taskTrajectory
     t0:         start time of trajectory
     ts:         sampling time
     length:     total trajectory time 
-    block:      jblock to be delivered
+    block:      jblock that has just been delivered
+    
     
     % Things to improve:
-        - potentially change the approach strategy: using a shorter
-        approach for second and third blocks, (with an appropriately
-        shorter time. 
+        - potentially change the approach/withdrawal strategies
         - integrate with the return, grip, drop, and pause commands
         for a continuous trajectory for an entire pick and place. 
         - add optimisation for time of major trajectory segmentss
         - path optimisation, possibly via gradient descent
-        - assess the necessity of via 2 => yes. V Necessary
-    
+        - assess the necessity of via 2 => yes. V Necessary    
     %}
     properties(Constant)
         DOF = 5;
         DropHeight =    5;      % mm drop for the block 
         LiftHeight =    20;     % mm height of via above loading bay
-        LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
-        ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
+        ApproachTime =  0.5;    % time to "Approach" the new block (vf from v3)
+        WithdrawTime =  0.5;    % time to "withdraw from" the tower (v1 from drop location)
         
         % A very basic "approach position" in the frame of the block
         ApproachP = [-jBlock.Length; 0; jBlock.Height;];
         
     end 
     properties(Access = private)
-        block           % defines the block to be placed in the tower 
+        block           % defines the block that has just been placed in the tower
     end
     
     methods 
-        function obj = moveBlock_trj(loadBay, t0, ts, length, block)
+        function obj = return_trj(loadBay, t0, ts, length, block)
             
             % times at all locations
-            t = moveBlock_trj.simpleTime(t0, length);
+            t = return_trj.simpleTime(t0, length);
             
             % input all x locations
-            x = moveBlock_trj.simplePosition(loadBay, block);
+            x = return_trj.simplePosition(loadBay, block);
             
-            obj = obj@taskTrajectory(x, t, ts, moveBlock_trj.DOF);
+            obj = obj@taskTrajectory(x, t, ts, return_trj.DOF);
             obj.block = block;
         end
    
@@ -61,21 +63,21 @@ classdef moveBlock_trj < taskTrajectory
         
         % Simple determination of trajectory times
         function t = simpleTime(t0, length)
-            t1 = t0 + moveBlock_trj.LiftTime;
+            t1 = t0 + return_trj.WithdrawTime;
             tf = t0 + length;
-            t3 = tf - moveBlock_trj.ApproachTime;
+            t3 = tf - return_trj.ApproachTime;
             t2 = (t1 + t3)/2;        % midpoint
             t = [t0, t1, t2, t3, tf];
         end
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            v1 = loadBay + [0; 0; moveBlock_trj.LiftHeight; 0; 0];
+            v1 = loadBay + [0; 0; return_trj.LiftHeight; 0; 0];
             
             dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; moveBlock_trj.DropHeight; 0; 0];
+                    [0; 0; return_trj.DropHeight; 0; 0];
             
-            v3 = moveBlock_trj.approachPosition(block);
+            v3 = return_trj.approachPosition(block);
             
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
@@ -83,7 +85,7 @@ classdef moveBlock_trj < taskTrajectory
             v2 = (v1 + v3)/2; 
             
             % place all position vectors into an array 
-            x = [loadBay, v1, v2, v3, dropLocation];
+            x = [dropLocation, v1, v2, v3, loadBay];
         end
         
         % Determines the approach position based on the block position
@@ -91,8 +93,8 @@ classdef moveBlock_trj < taskTrajectory
         function xApp = approachPosition(block)
             blockPos = block.getPosition;
             % rotate offset for block orientation
-            P = moveBlock_trj.zRotation(blockPos(4))*...
-                    moveBlock_trj.ApproachP;
+            P = return_trj.zRotation(blockPos(4))*...
+                    return_trj.ApproachP;
                 
             xApp = blockPos + [P; 0];
             xApp = [xApp; 0];
@@ -107,4 +109,3 @@ classdef moveBlock_trj < taskTrajectory
     end
     
 end
-    
