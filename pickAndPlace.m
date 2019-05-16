@@ -21,22 +21,23 @@ function DATA = pickAndPlace()
     Block = Tower.nextBlock;
 
     Grip = grip_trj(LoadingBay, T);
-    Grip.plotTrajectories;
+%     Grip.plotTrajectories;
     T = T + 1;
     Move = moveBlock_trj(LoadingBay, T, 5, Block);
-    Move.plotTrajectories;
+%     Move.plotTrajectories;
     T = T + 5;
     Release = release_trj(Block, T);
-    Release.plotTrajectories;
+%     Release.plotTrajectories;
     T = T + 1;
     Return = return_trj(LoadingBay, T, 5, Block);
-    Return.plotTrajectories;
+%     Return.plotTrajectories;
     T = T + 5;
 
     Block.placeBlock;
 
 
     AllTraj = [AllTraj, Grip, Move, Release, Return];
+    
         
     
     DATA = robot_trj.combineDATA(AllTraj, 4);
