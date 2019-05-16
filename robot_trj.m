@@ -92,20 +92,11 @@ classdef robot_trj < taskTrajectory
         % returns combined data from all trajectories
         % n is number of trajectories
         function DATA = combineDATA(trajectories, n)
-            % Preallocate memory 
-            pieces = 0;
-            for t = 1:n 
-                pieces = pieces + trajectories(t).getPieces;
-            end
-            DATA = zeros(pieces, obj.DATACOLS, DOF);
-               
+              DATA = [];
             % Combine Trajectories
             % I think this might be easier using cat?
-            for x = 1:DOF
-                for i = 1:n
-                DATA(:,:,x) = [DATA; trajectories(i).getCoordianteDATA(x)];
-                end
-                
+            for i = 1:n
+            DATA = cat(1, DATA, trajectories(i).getDATA);
             end
                     
         end

@@ -6,7 +6,7 @@
     
     Currently testing the basic moveBlock_trj
 
-    Now trying to change this to output the required format 
+    Now trying to change this to output the required for mat 
     to send to the robot
     Deffinitely need to improve on this...
     %}
@@ -29,17 +29,18 @@ SampleTime = 0.1;
 
 Greg = grip_trj(LoadingBay, 0);
 Mark = moveBlock_trj(LoadingBay, 0, 5, FirstBlock);
+Marv = moveBlock_trj(LoadingBay, 0, 5, FirstBlock);
 
-
-Greg.plotTrajectories;
-Mark.plotTrajectories;
+% Greg.plotTrajectories;
+% Mark.plotTrajectories;
 
 
 robot_trj.combineDATA([Greg, Mark], 2)
-
-
-
-
+% 
+% DATA1 =  Mark.getDATA;
+% DATA2 = Marv.getDATA;
+% 
+% cat(1, DATA1, DATA2)
 
 
 

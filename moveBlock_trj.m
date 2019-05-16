@@ -29,8 +29,8 @@ classdef moveBlock_trj < robot_trj
     %}
     properties(Constant)
 
-        DropHeight =    0.005;      % m drop for the block 
-        LiftHeight =    0.02;     % m height of via above loading bay
+        DropHeight =    0.005;  % m drop for the block 
+        LiftHeight =    0.02;   % m height of via above loading bay
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
