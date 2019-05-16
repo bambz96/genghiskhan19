@@ -1,5 +1,11 @@
 clear serial % remove any serial that is hanging around and fucking shit up
 close all
+%% init
+xsent = 0;
+ysent = 0;
+zsent = 0;
+thsent = 0;
+gripsent = 0;
 %% select serial port
 disp('Available COM ports:')
 disp(join(seriallist))
@@ -13,7 +19,7 @@ disp('Connected to COM'+string(i)+'.')
 running = 1;
 while running
     disp('1 - send trajectory to position from current')
-    disp('2 - send test trajectories')
+    disp('2 - select a trajectory to send')
     disp('3 - plot all trajectories stored on device')
     disp('5 - run position control on stored trajectories')
     disp('6 - run velocity control on stored trajectories')
@@ -26,9 +32,9 @@ while running
         disp('Send trajectory to position from current...')
         disp('Not implemented!')
     elseif user == 2
-        sendTrajectories(serial, DATA);
+        [xsent, ysent, zsent, thsent, gripsent] = sendTrajectories(serial);
     elseif user == 3
-        plotStoredTrajectories(serial);
+        plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent);
     elseif user == 5
         runPositionControl(serial);
     elseif user == 6
@@ -46,15 +52,21 @@ while running
 end
 return
 %% functions
-function sendTrajectories(serial, data)
-    disp('Send build tower trajectories now...')
-    % [length, xdata, ydata, zdata, thdata, gripdata] = tower_paths();
-    xdata = data(:,:,1);
-    ydata = data(:,:,2);
-    zdata = data(:,:,3);
-    thdata = data(:,:,4);
-    gripdata = data(:,:,5);
-    [length, ~, ~] = size(data);
+function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectories(serial)
+    disp('Select a trajectory to send:')
+    disp('1 - test trajectory')
+    disp('2 - build tower')
+    select = input('>');
+    if select == 1
+        [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory();
+    elseif select == 2
+        [length, data] = create_all_tower_paths();
+        xdata = data(:,:,1);
+        ydata = data(:,:,2);
+        zdata = data(:,:,3);
+        thdata = data(:,:,4);
+        gripdata = data(:,:,5);
+    end
     %% send command
     fprintf(serial, 'N');
     reply = strtrim(fscanf(serial));
@@ -92,7 +104,7 @@ function sendTrajectories(serial, data)
     toc
 end
 
-function plotStoredTrajectories(serial)
+function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     disp('Plot all trajectories stored on device...')
     %% send command, device will respond with path res
     fprintf(serial, 'P');
@@ -117,20 +129,73 @@ function plotStoredTrajectories(serial)
     disp('Received theta trajectory.')
     [tgrip, grip] = readRow(serial, n_path, path_res);
     disp('Received grip trajectory.')
-    subplot(121)
+    %% generate trajectories from sent to validate against received trajectories
+    [tx2, x2] = generate(xsent, 1);
+    [ty2, y2] = generate(ysent, 1);
+    [tz2, z2] = generate(zsent, 1);
+    [tth2, th2] = generate(thsent, 1);
+    [tgrip2, grip2] = generate(gripsent, 1);
+    %% plot
+    az = 15;
+    el = 15;
+    
+    subplot(221)
     hold on
+    % received
     plot(tx, x)
     plot(ty, y)
     plot(tz, z)
     plot(tth, th)
     plot(tgrip,grip)
+    % generated from what was sent
+    plot(tx2, x2, 'o')
+    plot(ty2, y2, 'o')
+    plot(tz2, z2, 'o')
+    plot(tth2, th2, 'o')
+    plot(tgrip2,grip2, 'o')
     legend('x', 'y', 'z', 'theta','grip')
     xlabel('Time (s)')
-    subplot(122)
+    title('Received Trajectories')
+    
+    subplot(222)
+    axis square
+    hold on
+    grid on
+    view(az,el)
     plot3(x,y,z)
+    plot3(x2,y2,z2, 'o')
     xlabel('x')
     ylabel('y')
     zlabel('z')
+    title('Received Trajectories')
+    legend('Received', 'Planned')
+    
+    subplot(223)
+    hold on
+    [tx2, x2] = generate(xsent, 50);
+    [ty2, y2] = generate(ysent, 50);
+    [tz2, z2] = generate(zsent, 50);
+    [tth2, th2] = generate(thsent, 50);
+    [tgrip2, grip2] = generate(gripsent, 50);
+    plot(tx2, x2, '-.')
+    plot(ty2, y2, '-.')
+    plot(tz2, z2, '-.')
+    plot(tth2, th2, '-.')
+    plot(tgrip2,grip2, '-.')
+    title('Planned Trajectories')
+    legend('x', 'y', 'z', 'theta','grip')
+    xlabel('Time (s)')
+    
+    subplot(224)
+    axis square
+    hold on
+    grid on
+    view(az,el)
+    plot3(x2,y2,z2, ':')
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    title('Planned Trajectories')
 end
 
 function runPositionControl(serial)
@@ -209,95 +274,24 @@ function [t, d] = readRow(serial, length, path_res)
     end
 end
 
-function [length, xdata, ydata, zdata, thdata, gripdata] = tower_paths()
-
-grip = 1.015976119;
-ungrip = 0.422257077;
-
-% metres, degrees, degrees, ?, seconds
-% x y z theta grip duration
-delay = 5;
-p = [
-    0.2 0 0.3 0 ungrip 2;
-    0.15 -0.2 0.01 0 ungrip delay;
-    0.15 -0.2 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.125 0.25 0.01 0 ungrip delay;
-    0.125 0.25 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.15 -0.2 0.01 0 ungrip delay;
-    0.15 -0.2 0.01 0 ungrip 1;
-    0.2 0 0.01 0 ungrip delay;
-    0.2 0 0.01 0 ungrip 1;
-    0.2 0 0.3 0 ungrip 2
-];
-% tower corner
-% x0 = 0.2;
-% y0 = -0.2;
-% % home pos
-% xh = 0.0375;
-% yh = -0.1875;
-% zh = 0.003; % -0.003
-% thetah = -90;
-%
-% p = [];
-% nblocks = 3;
-% i = 1; % number of loops
-% n = 1; % up to block
-% while n <= nblocks
-%     if mod(i,2) == 0 % i = 2, 4, 6...
-%         [x, y, z, theta] = block_pos(n,x0,y0);
-%         n = n + 1;
-%         % move to above target holding block
-%         p = [p; x y z+0.05 theta grip 2];
-%         % lower
-%         p = [p; x y z+0.005 theta grip 1];
-%         % stay at point and release block
-%         p = [p; x y z+0.005 theta ungrip 0.3];
-%         % raise again
-%         p = [p; x y z+0.005 theta ungrip 1];
-%     else
-%         % move to above block pick up
-%         p = [p; xh yh zh+0.05 thetah ungrip 2];
-%         % move down
-%         p = [p; xh yh zh thetah ungrip 2];
-%         % nudge forwards to fit block precisely and pick up
-%         p = [p; xh+0.001 yh zh thetah grip 0.3];
-%         % move up
-%         p = [p; xh yh zh+0.05 thetah grip 1];
-%     end
-%     i = i + 1;
-% end
-% p = [p; xh yh zh+0.05 thetah ungrip 2];
-
-disp(p)
-
-[length, ~] = size(p);
-length = length - 1;
-
-xdata = zeros(length, 5);
-ydata = zeros(length, 5);
-zdata = zeros(length, 5);
-thdata = zeros(length, 5);
-gripdata = zeros(length, 5);
-
-%  current to p(1), the first pose, in 3 seconds
-
-for i = 1:length
-    x0 = p(i,1); xf = p(i+1,1);
-    y0 = p(i,2); yf = p(i+1,2);
-    z0 = p(i,3); zf = p(i+1,3);
-    th0 = p(i,4)*pi/180; thf = p(i+1,4)*pi/180;
-    gr0 = p(i,5); grf = p(i+1,5);
-    tf = p(i,6);
-    xdata(i,:) = cubic_coeffs(x0, 0, xf, 0, tf);
-    ydata(i,:) = cubic_coeffs(y0, 0, yf, 0, tf);
-    zdata(i,:) = cubic_coeffs(z0, 0, zf, 0, tf);
-    thdata(i,:) = cubic_coeffs(th0, 0, thf, 0, tf);
-    gripdata(i,:) = cubic_coeffs(gr0, 0, grf, 0, tf);
-end
-
-
+function [tx, x] = generate(data, samples)
+    % data has 6 cols: a3 a2 a1 a0 ts tf
+    % data rows are all the polys sent
+    [length, ~] = size(data);
+    x = zeros(1, length*samples);
+    tx = zeros(1, length*samples);
+    for i = 1:length
+        a3 = data(i,1);
+        a2 = data(i,2);
+        a1 = data(i,3);
+        a0 = data(i,4);
+        ts = data(i,5);
+        tf = data(i,6);
+        for j = 1:samples
+            idx = (i-1)*samples + j;
+            t = j/samples*(tf-ts) + ts;
+            x(idx) = a3*t.^3 + a2*t.^2 + a1*t + a0;
+            tx(idx) = t;
+        end
+    end
 end
