@@ -4,6 +4,11 @@ classdef jTower
         Tower Class, represents the jenga tower to be built, generates and
         stores blocks. 
     
+        Required improvements
+        - Add functionality to change tower build orientation
+        - depending on the potition.
+        
+    
     %}
     
     %% Properties
