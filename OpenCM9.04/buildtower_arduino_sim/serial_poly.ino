@@ -1,5 +1,5 @@
 void readData(struct Cubic *poly) {
-  // "a3 a2 a1 a0 tf" has been sent, parse it in, create a new Cubic struct
+  // "a3 a2 a1 a0 t0 tf" has been sent, parse it in, create a new Cubic struct
   // and add it to the array provided
   if (Serial.available() > 0)
   {

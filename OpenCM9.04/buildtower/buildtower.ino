@@ -1,5 +1,5 @@
 #define MAX_CUBICS 25
-#define PLOTTED_PATH_RES 50
+#define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -280,7 +280,13 @@ while (1) {
         Serial.println("VC");
         state = VELOCITY_CONTROL;
       } else if (command == "R") {
-        // passive read, no torques enabled
+        // passive read, disable torques to enable movement
+        disableTorque430(DXL1_ID, portHandler, packetHandler);
+        disableTorque430(DXL2_ID, portHandler, packetHandler);
+        disableTorque430(DXL3_ID, portHandler, packetHandler);
+        disableTorque320(DXL4_ID, portHandler, packetHandler);
+        disableTorque320(DXL5_ID, portHandler, packetHandler);
+        disableTorque320(DXL6_ID, portHandler, packetHandler);
         state = PASSIVE_READ;
       }
     }
@@ -350,7 +356,6 @@ while (1) {
         // duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
         unsigned int t0 = xpoly[count].t0;
         unsigned int tf = xpoly[count].tf;
-
 
         // complete current path
         while (dt < tf) {

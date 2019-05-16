@@ -1,5 +1,5 @@
 #define MAX_CUBICS 25
-#define PLOTTED_PATH_RES 50
+#define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
 #define WAITING 0			// listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1		// receive polynomial coefficients for all N cubic path segments x(t)
@@ -154,7 +154,7 @@ float L2 = 0.2;
 float L3 = 0.2;
 float L4 = 0.1;
 
-float piOverTwo = M_PI / 2;
+float piOverTwo = M_PI/2;
 
 void setup()
 {
