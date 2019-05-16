@@ -85,6 +85,25 @@ classdef moveBlock_trj < robot_trj
             x = [v0, v1, v2, v3, dropLocation];
         end
         
+        % Calculates a path via (v3) from two endpoint vias v1 and v3
+        % Essentially calulates the via as an average in cylindrical
+        % coordinates...
+        function v2 = pathVia(v1, v3)
+            % calculate radii
+            rad1 = norm(v1(1:2));
+            rad3 = norm(v3(1:2));
+            rad2 = (rad1 + rad3)/2;
+            
+            %calculate angles
+            theta1 = atan(v1(2), v1(1));
+            theta3 = atan(v3(2), v3(1));
+            theta2 = (theta1 + theta3)/2;
+            
+         
+        end
+        
+        
+        
         % Augments the block approach position with a gripper position
         function xApp = approachPosition(block)
             Approach = block.approachPosition;
