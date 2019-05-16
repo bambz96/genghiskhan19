@@ -7,10 +7,10 @@ zsent = 0;
 thsent = 0;
 gripsent = 0;
 %% select serial port
-disp('Available COM ports:')
-disp(join(seriallist))
-i = input('COM number:');
-serial = serial('COM'+string(i),'BAUD',57600);
+% disp('Available COM ports:')
+% disp(join(seriallist))
+%i = input('COM number:');
+serial = serial('/dev/cu.usbmodem14201','BAUD',57600);
 %% pause to make sure it's opened
 fopen(serial);
 pause(1);
