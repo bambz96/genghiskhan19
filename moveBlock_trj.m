@@ -16,6 +16,9 @@ classdef moveBlock_trj < taskTrajectory
     length:     total trajectory time 
     block:      jblock to be delivered
     
+    Note: change class to output in meters and radians
+    
+    
     % Things to improve:
         - potentially change the approach strategy: using a shorter
         approach for second and third blocks, (with an appropriately

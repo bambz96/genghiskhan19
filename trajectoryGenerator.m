@@ -4,17 +4,12 @@
     
     A simple script that generates trajectories for testing
     
-    Currently testing the basic moveBlock_trj
+    Going to have a crack at combining some trajectories now...
 
-    Now trying to change this to output the required format 
-    to send to the robot
-    Deffinitely need to improve on this...
     %}
 
 DOF = 5;
-pieces = 4;
-
-DATA = zeros(pieces, 6, DOF);
+SampleTime = 0.1;
 
 % Define the loading bay coordinates
 LoadingBay = [37.5; 187.5; 20; 90; 0];
@@ -25,15 +20,34 @@ Tower = jTower(200, 0, 0);
 % Generate a block to be delivered
 FirstBlock = Tower.nextBlock;
 
-SampleTime = 0.1;
+%% Find Drop location for Ronda
+dropLocation = [FirstBlock.getPosition; 0] + ...
+        [0; 0; moveBlock_trj.DropHeight; 0; 0];
 
-Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
-% Mark = release_trj(LoadingBay, 0, SampleTime); 
-% Mark = return_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
+    
 
-plot(Mark.getTimeseries, Mark.getPosition);  
+%% Calculate a set of trajectories
+Greg = grip_trj(LoadingBay, 0, SampleTime);
+Mark = moveBlock_trj(LoadingBay, 1, SampleTime, 2, FirstBlock);
+Ronda = release_trj(dropLocation, 3, SampleTime); 
+Ricky = return_trj(LoadingBay, 4, SampleTime, 2, FirstBlock);
 
-TimeVals = Mark.getTime;
+
+
+% Combine TimeVals
+TimeVals = [Greg.getTime, Mark.getTime, Ronda.getTime, Ricky.getTime];
+
+
+%% Combine Trajectories
+%initialise data to correct size
+pieces = Greg.getPieces + Mark.getPieces + Ronda.getPieces + Ricky.getPieces;
+DATA = zeros(pieces, 6, DOF);
+
+
+
+
+
+%% Process data into form for Robot
 
 % NOTES: for data structure
 % rows: pieces
@@ -42,12 +56,25 @@ TimeVals = Mark.getTime;
 
 for x = 1:3
     % Get Coefficients for one coordinate trajectory
-    Coeffs = Mark.getCoefficients;
-    for p = 1:pieces
-        % shrink data
+    
+    for p = 1:(Mark.getPieces)
+        Coeffs = Mark.getCoefficients;
         for a = 1:4
             DATA(p, a, x) = myShrink(Coeffs(p, a, x)/1000);
         end
+    end
+    
+    for p = 1:(Ricky.getPieces)
+        Coeffs = Ricky.getCoefficients;
+        for a = 1:4
+            DATA(p, a, x) = myShrink(Coeffs(p, a, x)/1000);
+        end
+    end
+        
+  % this is a bit of a mess... hmmm...
+        
+        
+        
         DATA(p, 5:6, x) = TimeVals(p:p + 1);
     end
 end

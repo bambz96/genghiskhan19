@@ -105,6 +105,10 @@ classdef taskTrajectory
             ts = obj.ts;
         end
         
+        function P = getPieces(obj)
+            P = obj.pieces;
+        end
+        
         
         
         %% Accessors for individual variable trajectories etc.
