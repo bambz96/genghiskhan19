@@ -24,7 +24,7 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-Ronda = moveBlock_trj(LoadingBay, 0, SampleTime, 5, FirstBlock);
+Ronda = return_trj(LoadingBay, 0, SampleTime, 5, FirstBlock);
 
 plot(Ronda.getTimeseries, Ronda.getPosition);  
 
