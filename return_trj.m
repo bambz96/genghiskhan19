@@ -1,4 +1,4 @@
-classdef return_trj < taskTrajectory
+classdef return_trj < robot_trj
     %{ 
     Project Group 10
     Robotics Systems MCEN90028
@@ -46,7 +46,7 @@ classdef return_trj < taskTrajectory
     end
     
     methods 
-        function obj = return_trj(loadBay, t0, ts, length, block)
+        function obj = return_trj(loadBay, t0, length, block)
             
             % times at all locations
             t = return_trj.simpleTime(t0, length);
@@ -54,7 +54,7 @@ classdef return_trj < taskTrajectory
             % input all x locations
             x = return_trj.simplePosition(loadBay, block);
             
-            obj = obj@taskTrajectory(x, t, ts, return_trj.DOF);
+            obj = obj@robot_trj(x, t);
             obj.block = block;
         end
    
