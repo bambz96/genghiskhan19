@@ -16,14 +16,15 @@ classdef jTower
         NumBlocks = 54;     % Total blocks in tower
         BPerLayer = 3;      % Blocks Per Layer
         Layers    = 18;     
-        Width     = 75;
-        Height    = 270;  
+        Width     = 0.075;  % m
+        Height    = 0.270;  % m
+        CrossAngle = pi/2   % radians
     end
     
     properties (Access = private)
         x_loc       % x coordinate of centre of tower
         y_loc       % y coordinate of centre of tower
-        theta       % z coordinate of centre of tower
+        theta       % angle of tower in radians
         complete    % Boolean, to check if the tower is complete
         
         towerBlocks % Array to contain all blocks in the tower
@@ -48,7 +49,7 @@ classdef jTower
         
         function B = nextBlock(obj)
             block = 1;
-            while obj.towerBlocks(block).isPlaced;
+            while obj.towerBlocks(block).isPlaced
                 block = block + 1;
             end
             B = obj.towerBlocks(block);
@@ -65,8 +66,8 @@ classdef jTower
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    P = obj.blockPosition(layer,pos); 
-                    tower = [tower, jBlock(P(1), P(2), P(3), P(4))]; 
+                    P = obj.blockPosition(layer, pos); 
+                    tower = [tower, jBlock(P(1), P(2), P(3), P(4), pos)]; 
                 end
             end
         end
@@ -78,12 +79,12 @@ classdef jTower
                 % datum is in centre of brick
                 x = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
                 y = 0;
-                theta = 90; %even layers are cross-lay
+                bTheta = -obj.CrossAngle; %odd layers are cross-lay
             else
-                %datum i sin centre of block
+                %datum is in centre of block
                 y = (layerPos - obj.BPerLayer/2 -0.5)*jBlock.Width;
                 x = 0;
-                theta = 0; 
+                bTheta = 0; 
             end
 
             % z dayum is on lower surface
@@ -92,10 +93,10 @@ classdef jTower
             % Compensate for tower position
             P = obj.zRotation(obj.theta)*[x; y; z];
             P = P + [obj.x_loc; obj.y_loc; 0];
-            theta = theta + obj.theta;
+            bTheta = bTheta + obj.theta;
             
             % return column vector
-            P = [P; theta];
+            P = [P; bTheta];
 
         end
     end
@@ -103,8 +104,8 @@ classdef jTower
     methods(Static, Access = private)
         %Just a z rotation, nothing to see here folks
         function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
+            R = [cosd(theta) -sind(theta) 0;
+                 sind(theta) cosd(theta) 0;
                  0           0           1];
         end
     

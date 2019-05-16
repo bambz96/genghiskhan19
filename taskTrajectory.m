@@ -1,4 +1,4 @@
-classdef taskTrajectory
+classdef taskTrajectory < matlab.mixin.Heterogeneous
     %{
         Assignment Gropup 20
         Trajecotry class: stores a timeseries and trajectory 
@@ -105,10 +105,6 @@ classdef taskTrajectory
             ts = obj.ts;
         end
         
-        function P = getPieces(obj)
-            P = obj.pieces;
-        end
-        
         
         
         %% Accessors for individual variable trajectories etc.
@@ -132,6 +128,7 @@ classdef taskTrajectory
         function c = getOneCoefs(obj, degree)
             c = obj.Coefs(:, :, degree);
         end
+        
         
         
     end

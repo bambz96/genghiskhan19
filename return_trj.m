@@ -1,4 +1,4 @@
-classdef return_trj < taskTrajectory
+classdef return_trj < robot_trj
     %{ 
     Project Group 10
     Robotics Systems MCEN90028
@@ -30,14 +30,14 @@ classdef return_trj < taskTrajectory
         - assess the necessity of via 2 => yes. V Necessary    
     %}
     properties(Constant)
-        DOF = 5;
-        DropHeight =    5;      % mm drop for the block 
-        LiftHeight =    20;     % mm height of via above loading bay perhaps change this...
+        DropHeight =    0.005;  % m drop for the block 
+        LiftHeight =    0.020;  % m height of via above loading bay perhaps change this...
         ApproachTime =  0.5;    % time to "Approach" the new block (vf from v3)
         WithdrawTime =  0.5;    % time to "withdraw from" the tower (v1 from drop location)
         
         % A very basic "approach position" in the frame of the block
         ApproachP = [0; 0; jBlock.Height;]
+        GripPosition = 0.422257077; 
         
     end 
     properties(Access = private)
@@ -45,7 +45,7 @@ classdef return_trj < taskTrajectory
     end
     
     methods 
-        function obj = return_trj(loadBay, t0, ts, length, block)
+        function obj = return_trj(loadBay, t0, length, block)
             
             % times at all locations
             t = return_trj.simpleTime(t0, length);
@@ -53,7 +53,7 @@ classdef return_trj < taskTrajectory
             % input all x locations
             x = return_trj.simplePosition(loadBay, block);
             
-            obj = obj@taskTrajectory(x, t, ts, return_trj.DOF);
+            obj = obj@robot_trj(x, t);
             obj.block = block;
         end
    
@@ -73,38 +73,30 @@ classdef return_trj < taskTrajectory
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
             dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; return_trj.DropHeight; 0; 0];
+                    [0; 0; return_trj.DropHeight; 0; return_trj.GripPosition];
                 
-            v1 = return_trj.approachPosition(block);
+            v1 = return_trj.withdrawPosition(block);
             
-            v3 = loadBay + [0; 0; return_trj.LiftHeight; 0; 0];
+            v3 = loadBay + ...
+                [0; 0; return_trj.LiftHeight; 0; robot_trj.ClosedGrip];
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2 + [50;0;0;0;0]; 
+            v2 = (v1 + v3)/2 ;
+                        
+            v0 = [loadBay(1:4); robot_trj.ClosedGrip];
             
             % place all position vectors into an array 
-            x = [dropLocation, v1, v2, v3, loadBay];
+            x = [dropLocation, v1, v2, v3, v0];
         end
         
-        % Determines the approach position based on the block position
-        % And orientation
-        function xApp = approachPosition(block)
-            blockPos = block.getPosition;
-            % rotate offset for block orientation
-            P = return_trj.zRotation(blockPos(4))*...
-                    return_trj.ApproachP;
-                
-            xApp = blockPos + [P; 0];
-            xApp = [xApp; 0];
+        % Augments the block approach position with a gripper position
+        function xW = withdrawPosition(block)
+            withdrawP = block.approachPosition;
+
+            xW = [withdrawP; return_trj.GripPosition];
         end
         
-        %Just a z rotation, nothing to see here folks
-        function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
-                 0           0           1];
-        end
     end
     
 end

@@ -1,4 +1,4 @@
-classdef moveBlock_trj < taskTrajectory
+classdef moveBlock_trj < robot_trj
     %{ 
     Project Group 10
     Robotics Systems MCEN90028
@@ -31,15 +31,13 @@ classdef moveBlock_trj < taskTrajectory
     
     %}
     properties(Constant)
-        DOF = 5;
-        DropHeight =    5;      % mm drop for the block 
-        LiftHeight =    20;     % mm height of via above loading bay
+
+        DropHeight =    0.005;  % m drop for the block 
+        LiftHeight =    0.02;   % m height of via above loading bay
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
-        % A very basic "approach position" in the frame of the block
-%         ApproachP = [-jBlock.Length; 0; jBlock.Height;];
-        ApproachP = [0; 0; jBlock.Height;];
+        Gripped = 1.015976119;
         
     end 
     properties(Access = private)
@@ -47,7 +45,7 @@ classdef moveBlock_trj < taskTrajectory
     end
     
     methods 
-        function obj = moveBlock_trj(loadBay, t0, ts, length, block)
+        function obj = moveBlock_trj(loadBay, t0, length, block)
             
             % times at all locations
             t = moveBlock_trj.simpleTime(t0, length);
@@ -55,7 +53,7 @@ classdef moveBlock_trj < taskTrajectory
             % input all x locations
             x = moveBlock_trj.simplePosition(loadBay, block);
             
-            obj = obj@taskTrajectory(x, t, ts, moveBlock_trj.DOF);
+            obj = obj@robot_trj(x, t);
             obj.block = block;
         end
    
@@ -74,40 +72,48 @@ classdef moveBlock_trj < taskTrajectory
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            v1 = loadBay + [0; 0; moveBlock_trj.LiftHeight; 0; 0];
+            v1 = loadBay + ...
+                [0; 0; moveBlock_trj.LiftHeight; 0; moveBlock_trj.Gripped];
             
-            dropLocation = [block.getPosition; 0] + ...
-                    [0; 0; moveBlock_trj.DropHeight; 0; 0];
+            dropLocation = [block.dropLocation; moveBlock_trj.Gripped];
             
             v3 = moveBlock_trj.approachPosition(block);
             
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = (v1 + v3)/2 + [50;0;0;0;0]; 
-            
+            v2 = (v1 + v3)/2;
+            v0 = [loadBay(1:4); moveBlock_trj.Gripped];
             % place all position vectors into an array 
-            x = [loadBay, v1, v2, v3, dropLocation];
+            x = [v0, v1, v2, v3, dropLocation];
         end
         
-        % Determines the approach position based on the block position
-        % And orientation
+        % Calculates a path via (v3) from two endpoint vias v1 and v3
+        % Essentially calulates the via as an average in cylindrical
+        % coordinates...
+        function v2 = pathVia(v1, v3)
+            % calculate radii
+            rad1 = norm(v1(1:2));
+            rad3 = norm(v3(1:2));
+            rad2 = (rad1 + rad3)/2;
+            
+            %calculate angles
+            theta1 = atan(v1(2), v1(1));
+            theta3 = atan(v3(2), v3(1));
+            theta2 = (theta1 + theta3)/2;
+            
+         
+        end
+        
+        
+        
+        % Augments the block approach position with a gripper position
         function xApp = approachPosition(block)
-            blockPos = block.getPosition;
-            % rotate offset for block orientation
-            P = moveBlock_trj.zRotation(blockPos(4))*...
-                    moveBlock_trj.ApproachP;
-                
-            xApp = blockPos + [P; 0];
-            xApp = [xApp; 0];
+            Approach = block.approachPosition;
+
+            xApp = [Approach; moveBlock_trj.Gripped];
         end
         
-        %Just a z rotation, nothing to see here folks
-        function R = zRotation(theta)
-            R = [cosd(theta) sind(theta) 0;
-                -sind(theta) cosd(theta) 0;
-                 0           0           1];
-        end
     end
     
 end

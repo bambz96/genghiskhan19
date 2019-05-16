@@ -9,13 +9,21 @@
     %}
 
 DOF = 5;
+
 SampleTime = 0.1;
 
+pieces = 1;
+
+DATA = zeros(pieces, 6, DOF);
+
+
 % Define the loading bay coordinates
-LoadingBay = [37.5; 187.5; 20; 90; 0];
+
+yOffset = 0; 
+LoadingBay = [37.5; -187.5+yOffset; -1.4; -90; 0];
 
 % Create the tower
-Tower = jTower(200, 0, 0);
+Tower = jTower(0.200, 0, 0);
 
 % Generate a block to be delivered
 FirstBlock = Tower.nextBlock;
@@ -44,6 +52,11 @@ pieces = Greg.getPieces + Mark.getPieces + Ronda.getPieces + Ricky.getPieces;
 DATA = zeros(pieces, 6, DOF);
 
 
+
+% Mark = moveBlock_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
+% Mark = grip_trj(LoadingBay, 0, SampleTime); 
+Mark = release_trj(FirstBlock, 0, SampleTime); 
+% Mark = return_trj(LoadingBay, 0, SampleTime, 2, FirstBlock);
 
 
 
