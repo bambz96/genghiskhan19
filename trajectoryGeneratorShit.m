@@ -29,7 +29,13 @@ FirstBlock = Tower.nextBlock;
 
 SampleTime = 0.1;
 
-select = input('Choose a trajectory type');
+disp('Choose a trajectory type')
+disp('1 - grip')
+disp('2 - move block')
+disp('3 - release')
+disp('4 - return')
+
+select = input('>');
 
 switch select
     case 1
