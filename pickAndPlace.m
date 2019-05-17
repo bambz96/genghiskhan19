@@ -1,7 +1,11 @@
 function [Pieces, DATA] = pickAndPlace()
     RIGHT = 1;
+    BLOCK = 54;
     
-    BLOCK = 6;
+    GRIPTIME = 0.5;
+    UNGRIPTIME = 0.5;
+    MOVETIME = 2;
+    RETURNTIME = 3;
     
     
     
@@ -16,12 +20,12 @@ function [Pieces, DATA] = pickAndPlace()
     % Set up loading Bay, starting Position and times
 
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
-    InitalPosition = LoadingBay;
+
     
     % Array storinng all trajectories
     AllTraj = [];
     
-    Tower = jTower(0.2, 0, 0, RIGHT);
+    Tower = jTower(0.2, -0.05, 0, RIGHT);
     
     T = 0; % initialise time 
     
@@ -36,18 +40,18 @@ function [Pieces, DATA] = pickAndPlace()
 
     close all;
     
-    Grip = grip_trj(LoadingBay, T);
+    Grip = grip_trj(LoadingBay, T, GRIPTIME);
 %     Grip.plotTrajectories;
-    T = T + 1;
-    Move = moveBlock_trj(LoadingBay, T, 5, Block);
-    Move.plotTrajectories;
-    T = T + 5;
-    Release = release_trj(Block, T);
+    T = T + GRIPTIME;
+    Move = moveBlock_trj(LoadingBay, T, MOVETIME, Block);
+%     Move.plotTrajectories;
+    T = T + MOVETIME;
+    Release = release_trj(Block, T, UNGRIPTIME);
 %     Release.plotTrajectories;
-    T = T + 1;
-    Return = return_trj(LoadingBay, T, 5, Block);
-    Return.plotTrajectories;
-    T = T + 5;
+    T = T + UNGRIPTIME;
+    Return = return_trj(LoadingBay, T, RETURNTIME, Block);
+%     Return.plotTrajectories;
+    T = T + RETURNTIME;
 
     Block.placeBlock;
 
