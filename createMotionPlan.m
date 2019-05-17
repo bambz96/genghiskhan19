@@ -13,7 +13,7 @@ function [nchunks, chunks] = createMotionPlan()
     
     GRIPTIME = 0.2;
     UNGRIPTIME = 0.2;
-    MOVETIME = 1.5;
+    MOVETIME = 2;
     RETURNTIME = 2;
     
 

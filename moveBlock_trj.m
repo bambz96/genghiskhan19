@@ -33,8 +33,8 @@ classdef moveBlock_trj < robot_trj
     properties(Constant)
 
         LiftHeight =    0.02;   % m height of via above loading bay
-        LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
-        ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
+        LiftTime =      0.2;    % time to "pick up" the block (v1 from LB)
+        ApproachTime =  0.3;    % time to "approach" the tower (v3 from v2)
         
         MinPathRadius = 0.22;    % minimum Radius for path via
         

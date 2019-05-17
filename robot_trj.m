@@ -24,6 +24,7 @@ classdef robot_trj < taskTrajectory
         TS = 0.01;                   % Sample Time         
         
         Gripper = 5;                % Coordinate corresponding to gripper
+        ClearGrip = 0.06            % Radians
         OpenGrip = 0.422257077;     % Radians
         ClosedGrip = 1.015976119;   % Radians
         

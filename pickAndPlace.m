@@ -1,11 +1,11 @@
 function [Pieces, DATA] = pickAndPlace()
     RIGHT = 1;
-    BLOCK = 54;
+    BLOCK = 1;
     
-    GRIPTIME = 0.5;
-    UNGRIPTIME = 0.5;
+    GRIPTIME = 0.2;
+    UNGRIPTIME = 0.2;
     MOVETIME = 2;
-    RETURNTIME = 3;
+    RETURNTIME = 2;
     
     
     
@@ -41,16 +41,16 @@ function [Pieces, DATA] = pickAndPlace()
     close all;
     
     Grip = grip_trj(LoadingBay, T, GRIPTIME);
-%     Grip.plotTrajectories;
+    Grip.plotTrajectories;
     T = T + GRIPTIME;
     Move = moveBlock_trj(LoadingBay, T, MOVETIME, Block);
-%     Move.plotTrajectories;
+    Move.plotTrajectories;
     T = T + MOVETIME;
     Release = release_trj(Block, T, UNGRIPTIME);
-%     Release.plotTrajectories;
+    Release.plotTrajectories;
     T = T + UNGRIPTIME;
     Return = return_trj(LoadingBay, T, RETURNTIME, Block);
-%     Return.plotTrajectories;
+    Return.plotTrajectories;
     T = T + RETURNTIME;
 
     Block.placeBlock;
