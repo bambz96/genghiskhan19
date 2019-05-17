@@ -11,10 +11,10 @@ function [nchunks, chunks] = createMotionPlan()
     STARTBLOCK = 1;
     NBLOCKS = 54;
     
-    GRIPTIME = 0.5;
-    UNGRIPTIME = 0.5;
-    MOVETIME = 2;
-    RETURNTIME = 3;
+    GRIPTIME = 0.2;
+    UNGRIPTIME = 0.2;
+    MOVETIME = 1.5;
+    RETURNTIME = 2;
     
 
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];

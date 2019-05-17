@@ -513,7 +513,7 @@ void setup()
           inverse_kinematics(&Qc430, &Qc320, &Xref);
 
           //Calculate velocity control for motors 1,2,3
-          inverse_jacobian(&Qd430, Xe, Q430, Q320);
+          inverse_jacobian(&Qd430, Xc, Q430, Q320);
 
           //write motors
           writeQd(&Qd430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
@@ -554,6 +554,7 @@ void setup()
       Serial.print("Q3: "); Serial.print(Q430.q3 * 180 / PI); Serial.print(", ");
       Serial.print("Q4: "); Serial.print(Q320.q4 * 180 / PI); Serial.print(", ");
       Serial.print("Q5: "); Serial.print(Q320.q5 * 180 / PI); Serial.print(", ");
+      Serial.print("Q6: "); Serial.print(Q320.q6); Serial.print(", ");
       Serial.print("X: "); Serial.print(1000 * X.x); Serial.print(", ");
       Serial.print("Y: "); Serial.print(1000 * X.y); Serial.print(", ");
       Serial.print("Z: "); Serial.print(1000 * X.z); Serial.print(", ");

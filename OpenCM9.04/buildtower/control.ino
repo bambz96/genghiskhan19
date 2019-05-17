@@ -20,7 +20,7 @@ X_t velocityFeedback(X_t Xdref, X_t Xref, X_t X){
   return Xke;
 }
 
-X_t velocityControl(X_t Xdref, X_t Xref, X_t Xc) {
+X_t velocityControl(X_t Xdref, X_t Xref, X_t Xke) {
   X_t Xc;
   Xc.x = Xdref.x + Xke.x;
   Xc.y = Xdref.y + Xke.y;
