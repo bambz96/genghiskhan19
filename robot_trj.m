@@ -21,7 +21,7 @@ classdef robot_trj < taskTrajectory
         
         % Sampling time not actually passed to robot. 
         % This is just for simulation/plotting
-        TS = 0.1;                   % Sample Time         
+        TS = 0.01;                   % Sample Time         
         
         Gripper = 5;                % Coordinate corresponding to gripper
         OpenGrip = 0.422257077;     % Radians

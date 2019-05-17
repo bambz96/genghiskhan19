@@ -9,17 +9,17 @@ function [nchunks, chunks] = createMotionPlan()
     RIGHT = 1;
 
     STARTBLOCK = 1;
-    NBLOCKS = 4;
+    NBLOCKS = 54;
     
-    GRIPTIME = 1;
-    UNGRIPTIME = 1;
-    MOVETIME = 5;
-    RETURNTIME = 5;
+    GRIPTIME = 0.5;
+    UNGRIPTIME = 0.5;
+    MOVETIME = 2;
+    RETURNTIME = 3;
     
 
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
     
-    Tower = jTower(0.2, 0, 0, RIGHT);
+    Tower = jTower(0.2, -0.05, 0, RIGHT);
     
         
     

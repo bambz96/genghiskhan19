@@ -32,7 +32,10 @@ classdef return_trj < robot_trj
     properties(Constant)
         LiftHeight =    0.020;  % m height of via above loading bay 
         LoadTime =  0.5;        % time to "Approach" the new block (vf from v3)
-        WithdrawTime =  0.5;    % time to "withdraw from" the tower (v1 from drop location)
+        
+        WithdrawTime = 0.6      % time to "withdraw from" the tower 
+        ClearBTime =  0.2;      % time to clear the block
+        
         
         loadY = -0.025;         % offset for loading position in bay frame    
         loadZ = 0.025;          % offset for loading position in bay frame
@@ -63,26 +66,30 @@ classdef return_trj < robot_trj
         
         % Simple determination of trajectory times
         function t = simpleTime(t0, length)
-            t1 = t0 + return_trj.WithdrawTime;
+            t1 = t0 + return_trj.ClearBTime;
+            t2 = t0 + return_trj.WithdrawTime;
             tf = t0 + length;
-            t3 = tf - return_trj.LoadTime;
-            t2 = (t1 + t3)/2;        % midpoint
-            t = [t0, t1, t2, t3, tf];
+            t4 = tf - return_trj.LoadTime;
+            t3 = (t2 + t4)/2;        % midpoint
+            t = [t0, t1, t2, t3, t4, tf];
         end
         
         % Simple determination of via locations
         function x = simplePosition(loadingBay, block)
             dropLocation = [block.dropLocation; robot_trj.OpenGrip];
-                
-            v1 = return_trj.withdrawPosition(block);
             
-            v3 = return_trj.loadingPosition(loadingBay);
+            v1 = dropLocation + [0; 0; jBlock.Height; 0; 0];
+            
+            v2 = return_trj.withdrawPosition(block);
+            
+            v4 = return_trj.loadingPosition(loadingBay);
+            
             
                         
             v0 = [loadingBay(1:4); robot_trj.OpenGrip];
-            v2 = return_trj.pathVia(v1, v3);
+            v3 = return_trj.pathVia(v4, v2);
             % place all position vectors into an array 
-            x = [dropLocation, v1, v2, v3, v0];
+            x = [dropLocation, v1, v2, v3, v4, v0];
         end
         
         
@@ -111,8 +118,11 @@ classdef return_trj < robot_trj
             Vp(1) = radius*cos(theta2);
             Vp(2) = radius*sin(theta2);
             
+            % z position is the same as v2
+            Vp(3) = v2(3);
+            
             % average other values
-            Vp(3:5) = (v1(3:5) + v2(3:5))/2;
+            Vp(4:5) = (v1(4:5) + v2(4:5))/2;
          
         end
         

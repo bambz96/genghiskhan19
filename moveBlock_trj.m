@@ -113,8 +113,11 @@ classdef moveBlock_trj < robot_trj
             Vp(1) = radius*cos(theta2);
             Vp(2) = radius*sin(theta2);
             
+            % Z position is the same as second via
+            Vp(3) = v2(3);
+            
             % average other values
-            Vp(3:5) = (v1(3:5) + v2(3:5))/2;
+            Vp(4:5) = (v1(4:5) + v2(4:5))/2;
          
         end
         
