@@ -1,13 +1,14 @@
-function DATA = createMotionPlan()
+function [Pieces, DATA] = createMotionPlan()
     %{
         Assignment Gropup 20
         Create a full tower build sequence and output in an appropriate
         form to feed to the Great Jenghis Khan
     
-    %}
+    %}    
+
     % Set up loading Bay, starting Position and times
 
-    LoadingBay = [0.0375; 0.1875; -0.003; pi/2; 0];
+    LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
     InitalPosition = LoadingBay;
     
     % Array storinng all trajectories
@@ -17,7 +18,7 @@ function DATA = createMotionPlan()
     
     T = 0; % initialise time 
     
-    for cycle = 1:Tower.NumBlocks
+    for cycle = 1:2
         Block = Tower.nextBlock;
         
         Grip = grip_trj(LoadingBay, T);
@@ -40,6 +41,6 @@ function DATA = createMotionPlan()
         
     end
     
-    DATA = robot_trj.combineDATA(AllTraj, 4*Tower.NumBlocks);
-    
+    DATA = robot_trj.combineDATA(AllTraj, 8);
+    [Pieces, ~, ~] = size(DATA);
 end

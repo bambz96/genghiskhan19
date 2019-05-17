@@ -1,4 +1,5 @@
-function DATA = pickAndPlace()
+function [Pieces, DATA] = pickAndPlace()
+    AllTraj = [];
     %{
         Assignment Gropup 20
         Create a full tower build sequence and output in an appropriate
@@ -7,7 +8,7 @@ function DATA = pickAndPlace()
     %}
     % Set up loading Bay, starting Position and times
 
-    LoadingBay = [0.0375; 0.1875; -0.003; pi/2; 0];
+    LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
     InitalPosition = LoadingBay;
     
     % Array storinng all trajectories
@@ -19,18 +20,26 @@ function DATA = pickAndPlace()
     
 
     Block = Tower.nextBlock;
+    Block.placeBlock;
+    Block = Tower.nextBlock;
+    Block.placeBlock;
+    Block = Tower.nextBlock;
+    Block.placeBlock;
+    Block = Tower.nextBlock;
 
+    close all;
+    
     Grip = grip_trj(LoadingBay, T);
 %     Grip.plotTrajectories;
     T = T + 1;
     Move = moveBlock_trj(LoadingBay, T, 5, Block);
-%     Move.plotTrajectories;
+    Move.plotTrajectories;
     T = T + 5;
     Release = release_trj(Block, T);
 %     Release.plotTrajectories;
     T = T + 1;
     Return = return_trj(LoadingBay, T, 5, Block);
-%     Return.plotTrajectories;
+    Return.plotTrajectories;
     T = T + 5;
 
     Block.placeBlock;
@@ -41,5 +50,6 @@ function DATA = pickAndPlace()
         
     
     DATA = robot_trj.combineDATA(AllTraj, 4);
+    [Pieces, ~, ~] = size(DATA);
     
 end

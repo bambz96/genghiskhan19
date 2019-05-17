@@ -32,7 +32,7 @@ classdef moveBlock_trj < robot_trj
     %}
     properties(Constant)
 
-        DropHeight =    0.005;  % m drop for the block 
+        DropHeight =    0.018;  % m drop for the block 
         LiftHeight =    0.02;   % m height of via above loading bay
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
@@ -72,19 +72,18 @@ classdef moveBlock_trj < robot_trj
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            v1 = loadBay + ...
-                [0; 0; moveBlock_trj.LiftHeight; 0; moveBlock_trj.Gripped];
+            v0 = [loadBay(1:4); robot_trj.ClosedGrip];
             
-            dropLocation = [block.dropLocation; moveBlock_trj.Gripped];
+            v1 = loadBay + ...
+                [0; 0; moveBlock_trj.LiftHeight; 0; robot_trj.ClosedGrip];
+            
+            dropLocation = [block.dropLocation; robot_trj.ClosedGrip];
             
             v3 = moveBlock_trj.approachPosition(block);
             
-            % Just picking halfway for now.
-            % This via point can be used for path optimisation.
-            % Also useful for avoiding collision
-            v2 = moveBlock_trj.pathVia(v1, v3);
+            % Now using drop location and pickup average
+            v2 = moveBlock_trj.pathVia(v1, dropLocation) + [0.050; -0.050; 0; 0; 0];
             
-            v0 = [loadBay(1:4); moveBlock_trj.Gripped];
             % place all position vectors into an array 
             x = [v0, v1, v2, v3, dropLocation];
         end

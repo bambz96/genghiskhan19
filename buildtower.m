@@ -10,7 +10,8 @@ gripsent = 0;
 disp('Available COM ports:')
 disp(join(seriallist))
 i = input('COM number:');
-serial = serial('COM'+string(i),'BAUD',57600);
+% serial = serial('COM'+string(i),'BAUD',57600);
+serial = serial('/dev/ttyACM0', 'BAUD', 57600); % For Wills computer
 %% pause to make sure it's opened
 fopen(serial);
 pause(1);
@@ -60,7 +61,7 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectories(serial)
     if select == 1
         [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory();
     elseif select == 2
-        [length, data] = create_all_tower_paths();
+        [length, data] = createMotionPlan();
         xdata = data(:,:,1);
         ydata = data(:,:,2);
         zdata = data(:,:,3);
