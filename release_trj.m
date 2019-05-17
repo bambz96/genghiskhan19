@@ -12,12 +12,13 @@ classdef release_trj < robot_trj
 
     %}
     properties(Constant)
-        ReleaseTime = 1;  % time to open gripper
+        ReleaseTime = 1;  % time to open gripper NO LONGER USED
+        % this is now supplied as a constructor argument
     end
     
     methods 
-        function obj = release_trj(block, t)
-            tRelease = [t, t + release_trj.ReleaseTime];
+        function obj = release_trj(block, t, T)
+            tRelease = [t, t + T];
             
             dropLocation = block.dropLocation;
             

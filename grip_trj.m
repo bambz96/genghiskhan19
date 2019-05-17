@@ -11,13 +11,14 @@ classdef grip_trj < robot_trj
 
     %}
     properties(Constant)
-        GripTime = 1; % time to close gripper
+        GripTime = 1; % time to close gripper NO LONGER USED
+        % this is now supplied as a constructor argument
         % currently using a very conservative value
     end
     
     methods 
-        function obj = grip_trj(x, t)
-            tGrip = [t, t + grip_trj.GripTime];
+        function obj = grip_trj(x, t, T)
+            tGrip = [t, t + T];
             xOpenGrip = x;
             xClosedGrip = x;
             xOpenGrip(grip_trj.Gripper) = grip_trj.OpenGrip;

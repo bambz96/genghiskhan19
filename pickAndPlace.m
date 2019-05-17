@@ -1,4 +1,11 @@
 function [Pieces, DATA] = pickAndPlace()
+    RIGHT = 1;
+    
+    BLOCK = 6;
+    
+    
+    
+    
     AllTraj = [];
     %{
         Assignment Gropup 20
@@ -14,18 +21,18 @@ function [Pieces, DATA] = pickAndPlace()
     % Array storinng all trajectories
     AllTraj = [];
     
-    Tower = jTower(0.2, 0, 0);
+    Tower = jTower(0.2, 0, 0, RIGHT);
     
     T = 0; % initialise time 
     
 
     Block = Tower.nextBlock;
-    Block.placeBlock;
-    Block = Tower.nextBlock;
-    Block.placeBlock;
-    Block = Tower.nextBlock;
-    Block.placeBlock;
-    Block = Tower.nextBlock;
+    
+    % Iterate to desired block
+    for i = 2:BLOCK
+        Block.placeBlock;
+        Block = Tower.nextBlock;
+    end
 
     close all;
     

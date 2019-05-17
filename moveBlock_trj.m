@@ -32,12 +32,12 @@ classdef moveBlock_trj < robot_trj
     %}
     properties(Constant)
 
-        DropHeight =    0.018;  % m drop for the block 
         LiftHeight =    0.02;   % m height of via above loading bay
         LiftTime =      0.5;    % time to "pick up" the block (v1 from LB)
         ApproachTime =  0.5;    % time to "approach" the tower (v3 from v2)
         
-        Gripped = 1.015976119;
+        MinPathRadius = 0.22;    % minimum Radius for path via
+        
         
     end 
     properties(Access = private)
@@ -82,7 +82,7 @@ classdef moveBlock_trj < robot_trj
             v3 = moveBlock_trj.approachPosition(block);
             
             % Now using drop location and pickup average
-            v2 = moveBlock_trj.pathVia(v1, dropLocation) + [0.050; -0.050; 0; 0; 0];
+            v2 = moveBlock_trj.pathVia(v1, v3);
             
             % place all position vectors into an array 
             x = [v0, v1, v2, v3, dropLocation];
@@ -91,25 +91,30 @@ classdef moveBlock_trj < robot_trj
         % Calculates a path via (v3) from two endpoint vias v1 and v3
         % Essentially calulates the via as an average in cylindrical
         % coordinates...
-        function v2 = pathVia(v1, v3)
+        function Vp = pathVia(v1, v2)
             % calculate radii
             rad1 = norm(v1(1:2));
-            rad3 = norm(v3(1:2));
-            rad2 = (rad1 + rad3)/2;
+            radius = norm(v2(1:2));
+            radius = (rad1 + radius)/2;
+            
+            % ensure path via radius is greater than minimum
+            if radius < moveBlock_trj.MinPathRadius
+                radius = moveBlock_trj.MinPathRadius;
+            end
             
             % calculate angles
             theta1 = atan2(v1(2), v1(1));
-            theta3 = atan2(v3(2), v3(1));
+            theta3 = atan2(v2(2), v2(1));
             theta2 = (theta1 + theta3)/2;
             
             % initialize v2
-            v2 = zeros(5,1);
+            Vp = zeros(5,1);
             % calculate x and y
-            v2(1) = rad2*cos(theta2);
-            v2(2) = rad2*sin(theta2);
+            Vp(1) = radius*cos(theta2);
+            Vp(2) = radius*sin(theta2);
             
             % average other values
-            v2(3:5) = (v1(3:5) + v3(3:5))/2;
+            Vp(3:5) = (v1(3:5) + v2(3:5))/2;
          
         end
         
@@ -119,7 +124,7 @@ classdef moveBlock_trj < robot_trj
         function xApp = approachPosition(block)
             Approach = block.approachPosition;
 
-            xApp = [Approach; moveBlock_trj.Gripped];
+            xApp = [Approach; robot_trj.ClosedGrip];
         end
         
     end
