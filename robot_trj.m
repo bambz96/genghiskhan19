@@ -73,14 +73,14 @@ classdef robot_trj < taskTrajectory
             title("End Effector Position");
             xlabel("time(s)");
             ylabel("m");
-            legend({"q1", "q2", "q3"});         
+            legend({"x", "y", "z"});         
 
             subplot(2, 1, 2);
             p2 = plot(obj.getTimeseries, obj.X(4:5, :));
             title("Gripping and Orientation");
             xlabel("time(s)");
             ylabel("radians");
-            legend("q4", "gripper");
+            legend("theta", "gripper");
         
         end
         

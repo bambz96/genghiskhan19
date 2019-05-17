@@ -60,7 +60,7 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectories(serial)
     if select == 1
         [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory();
     elseif select == 2
-        [length, data] = create_all_tower_paths();
+        [length, data] = createMotionPlan();
         xdata = data(:,:,1);
         ydata = data(:,:,2);
         zdata = data(:,:,3);

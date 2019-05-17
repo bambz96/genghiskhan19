@@ -30,15 +30,12 @@ classdef return_trj < robot_trj
         - assess the necessity of via 2 => yes. V Necessary    
     %}
     properties(Constant)
-        DropHeight =    0.005;  % m drop for the block 
+        DropHeight =    0.018;  % m drop for the block 
         LiftHeight =    0.020;  % m height of via above loading bay perhaps change this...
         ApproachTime =  0.5;    % time to "Approach" the new block (vf from v3)
         WithdrawTime =  0.5;    % time to "withdraw from" the tower (v1 from drop location)
         
-        % A very basic "approach position" in the frame of the block
-        ApproachP = [0; 0; jBlock.Height;]
-        GripPosition = 0.422257077; 
-        
+
     end 
     properties(Access = private)
         block     % defines the block that has just been placed in the tower
@@ -72,20 +69,19 @@ classdef return_trj < robot_trj
         
         % Simple determination of via locations
         function x = simplePosition(loadBay, block)
-            dropLocation = [block.getPosition; 0] + ...
-                [0; 0; return_trj.DropHeight; 0; return_trj.GripPosition];
+            dropLocation = [block.dropLocation; robot_trj.OpenGrip];
                 
             v1 = return_trj.withdrawPosition(block);
             
             v3 = loadBay + ...
-                [0; 0; return_trj.LiftHeight; 0; robot_trj.ClosedGrip];
+                [-.025; 0; 0.025; 0; robot_trj.OpenGrip];
             % Just picking halfway for now.
             % This via point can be used for path optimisation.
             % Also useful for avoiding collision
-            v2 = return_trj.pathVia(v1, v3);
-                        
-            v0 = [loadBay(1:4); robot_trj.ClosedGrip];
             
+                        
+            v0 = [loadBay(1:4); robot_trj.OpenGrip];
+            v2 = return_trj.pathVia(dropLocation, v3) + [0.050; -0.050; 0; 0; 0];
             % place all position vectors into an array 
             x = [dropLocation, v1, v2, v3, v0];
         end
@@ -122,7 +118,7 @@ classdef return_trj < robot_trj
         function xW = withdrawPosition(block)
             withdrawP = block.approachPosition;
 
-            xW = [withdrawP; return_trj.GripPosition];
+            xW = [withdrawP; robot_trj.OpenGrip];
         end
         
     end

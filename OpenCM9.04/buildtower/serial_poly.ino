@@ -56,6 +56,7 @@ void sendPolyAtTime(float t, struct Cubic *cubic) {
   Serial.print(t, 5); Serial.print(' ');
   Serial.print(x, 5); Serial.print(' ');
   Serial.println();
+  delay(100);
 }
 
 float cubicEvaluate(struct Cubic *cubic, float t) {
