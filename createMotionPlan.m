@@ -5,39 +5,51 @@ function [nchunks, chunks] = createMotionPlan()
         form to feed to the Great Jenghis Khan
     
     %}    
+    %% Set up loading Bay, starting Position and Testing paramters
+    RIGHT = 1;
 
-    % Set up loading Bay, starting Position and times
+    STARTBLOCK = 1;
+    NBLOCKS = 4;
+    
+    GRIPTIME = 1;
+    UNGRIPTIME = 1;
+    MOVETIME = 5;
+    RETURNTIME = 5;
+    
 
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
-    InitalPosition = LoadingBay;
     
-    % Array storinng all trajectories
-    AllTraj = [];
+    Tower = jTower(0.2, 0, 0, RIGHT);
     
-    Tower = jTower(0.2, 0, 0);
+        
     
-    nblocks = 10;
+    %% Iterate to correct starting block
+    for i = 2:STARTBLOCK
+        Block = Tower.nextBlock;
+        Block.placeBlock;
+    end
     
+    %% Create Trajectories
     % Chunks of DATA that each have t0 = 0s, and end with velocity = 0
     % Each chunk will be sent to device separately
     chunks = [];
     
-    for cycle = 1:nblocks
+    for cycle = STARTBLOCK:NBLOCKS
         T = 0; % initialise time for every chunk
         
         Block = Tower.nextBlock;
         
-        Grip = grip_trj(LoadingBay, T);
-
-        T = T + 0.1;
-        Move = moveBlock_trj(LoadingBay, T, 5, Block);
-
-        T = T + 0.1;
-        Release = release_trj(Block, T);
-
-        T = T + 0.1;
-        Return = return_trj(LoadingBay, T, 5, Block);
-        T = T + 0.1;
+        Grip = grip_trj(LoadingBay, T, GRIPTIME);
+        T = T + GRIPTIME;
+        
+        Move = moveBlock_trj(LoadingBay, T, MOVETIME, Block);
+        T = T + MOVETIME;
+        
+        Release = release_trj(Block, T, UNGRIPTIME);
+        T = T + UNGRIPTIME;
+        
+        Return = return_trj(LoadingBay, T, RETURNTIME, Block);
+        T = T + RETURNTIME;
         
         % changes the block state, so that a new block can be generated
         Block.placeBlock;
