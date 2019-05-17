@@ -29,8 +29,8 @@
 #define ADDRESS_PROFILE_VELOCITY_430        112
 #define ADDRESS_PROFILE_ACCELERATION_430    108
 
-#define VELOCITY_LIMIT_430                  500 //encoder units per second
-#define ACCELERATION_LIMIT_430              30000
+#define VELOCITY_LIMIT_430                  500 // 500 encoder units per second
+#define ACCELERATION_LIMIT_430              1500 // 1500
 
 // Control table 320
 #define ADDRESS_TORQUE_ENABLE_320           24
@@ -477,9 +477,6 @@ void setup()
         unsigned int tf = xpoly[count].tf;
         // complete current path
         while (dt < tf) {
-          //find task space from measured joint space.
-          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          forward_kinematics(&X, Q430, Q320);
           
           //Calculate Xref
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
@@ -494,17 +491,21 @@ void setup()
           Xref.grip = grip;
 
           // Calculate Xdref
-          x = quadEvaluate(&xpoly[count], dt / 1000.0);
-          y = quadEvaluate(&ypoly[count], dt / 1000.0);
-          z = quadEvaluate(&zpoly[count], dt / 1000.0);
-          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
-          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-          Xdref.x = x;
-          Xdref.y = y;
-          Xdref.z = z;
-          Xdref.theta = theta;
-          Xdref.grip = grip;
-
+          float xd = quadEvaluate(&xpoly[count], dt / 1000.0);
+          float yd = quadEvaluate(&ypoly[count], dt / 1000.0);
+          float zd = quadEvaluate(&zpoly[count], dt / 1000.0);
+          float thetad = quadEvaluate(&thpoly[count], dt / 1000.0);
+          float gripd = cubicEvaluate(&grippoly[count], dt / 1000.0);
+          Xdref.x = xd;
+          Xdref.y = yd;
+          Xdref.z = zd;
+          Xdref.theta = thetad;
+          Xdref.grip = gripd;
+          
+          //find task space from measured joint space.
+          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+          forward_kinematics(&X, Q430, Q320);
+          
           //Calculate control effort
           X_t Xke = velocityFeedback(Xdref, Xref, X);
           X_t Xc = velocityControl(Xdref, Xref, Xke);
@@ -520,15 +521,18 @@ void setup()
 
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');
-            Serial.print(x, 5); Serial.print(' ');
-            Serial.print(y, 5); Serial.print(' ');
-            Serial.print(z, 5); Serial.print(' ');
-            Serial.print(Xprev.x, 5); Serial.print(' ');
-            Serial.print(Xprev.y, 5); Serial.print(' ');
-            Serial.print(Xprev.z, 5); Serial.print(' ');
+            Serial.print(Xref.x, 5); Serial.print(' ');
+            Serial.print(Xref.y, 5); Serial.print(' ');
+            Serial.print(Xref.z, 5); Serial.print(' ');
+            Serial.print(X.x, 5); Serial.print(' ');
+            Serial.print(X.y, 5); Serial.print(' ');
+            Serial.print(X.z, 5); Serial.print(' ');
             Serial.print(Xke.x, 5); Serial.print(' ');
             Serial.print(Xke.y, 5); Serial.print(' ');
             Serial.print(Xke.z, 5); Serial.print(' ');
+            Serial.print(Xc.x, 5); Serial.print(' ');
+            Serial.print(Xc.y, 5); Serial.print(' ');
+            Serial.print(Xc.z, 5); Serial.print(' ');
             Serial.println();
           }
 

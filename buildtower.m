@@ -26,6 +26,9 @@ global vc_zm; vc_zm = [];
 global vc_xe; vc_xe = [];
 global vc_ye; vc_ye = [];
 global vc_ze; vc_ze = [];
+global vc_xdr; vc_xdr = [];
+global vc_ydr; vc_ydr = [];
+global vc_zdr; vc_zdr = [];
 
 global debugging; debugging = 1; % debugging mode on by default
 %% select serial port
@@ -401,6 +404,9 @@ function readVelocityControlDebugging(serial)
     global vc_xe
     global vc_ye
     global vc_ze
+    global vc_xdr
+    global vc_ydr
+    global vc_zdr
     done = 0;
     while ~done
         data = strtrim(fscanf(serial));
@@ -416,6 +422,9 @@ function readVelocityControlDebugging(serial)
             xe = data(8);
             ye = data(9);
             ze = data(10);
+            xdr = data(11);
+            ydr = data(12);
+            zdr = data(13);
             vc_time = [vc_time t];
             vc_xr = [vc_xr xr];
             vc_yr = [vc_yr yr];
@@ -426,6 +435,9 @@ function readVelocityControlDebugging(serial)
             vc_xe = [vc_xe xe];
             vc_ye = [vc_ye ye];
             vc_ze = [vc_ze ze];
+            vc_xdr = [vc_xdr xdr];
+            vc_ydr = [vc_ydr ydr];
+            vc_zdr = [vc_zdr zdr];
         else
             return
         end
@@ -473,6 +485,9 @@ function plotDebugData()
     global vc_xe
     global vc_ye
     global vc_ze
+    global vc_xdr
+    global vc_ydr
+    global vc_zdr
     if ~isempty(pc_time)
         % position control plots
         pc_f = 1/mean(diff(pc_time));
@@ -492,8 +507,8 @@ function plotDebugData()
         hold on
         grid on
         view(15,15)
-        plot3(pc_xr, pc_yr, pc_zr)
-        plot3(pc_xm, pc_ym, pc_zm, ':')
+        plot3(pc_xr, pc_yr, pc_zr, ':')
+        plot3(pc_xm, pc_ym, pc_zm)
         title('Trajectory')
         legend('Reference', 'Measured')
         xlabel('x')
@@ -507,11 +522,11 @@ function plotDebugData()
         figure
         subplot(221)
         hold on
-        plot(vc_time, vc_xr)
-        plot(vc_time, vc_yr)
-        plot(vc_time, vc_zr)
-        title('Velocity Control, f='+string(vc_f)+'Hz')
-        legend('x', 'y', 'z')
+        plot(vc_time, vc_xdr)
+        plot(vc_time, vc_ydr)
+        plot(vc_time, vc_zdr)
+        title('Velocity Reference, f='+string(vc_f)+'Hz')
+        legend('xd', 'yd', 'zd')
         xlabel('Time (s)')
 
         subplot(222)
@@ -519,7 +534,7 @@ function plotDebugData()
         hold on
         grid on
         view(15,15)
-        plot3(vc_xr, vc_yr, vc_zr)
+        plot3(vc_xr, vc_yr, vc_zr, ':')
         plot3(vc_xm, vc_ym, vc_zm)
         title('Trajectory')
         legend('Reference', 'Measured')

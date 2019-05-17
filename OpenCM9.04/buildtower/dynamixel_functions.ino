@@ -200,7 +200,10 @@ void writeQd(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWr
 
   // Syncwrite goal position
   dxl_comm_result = groupSyncWriteVelocity430->txPacket();
-  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
+  if (dxl_comm_result != COMM_SUCCESS){ 
+    Serial.println(dxl_comm_result);
+    packetHandler->getTxRxResult(dxl_comm_result);
+    }
   dxl_comm_result = groupSyncWrite320->txPacket();
   if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
 

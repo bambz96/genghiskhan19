@@ -103,7 +103,7 @@ void inverse_jacobian_calculator(float inv_jacobian[5][5], Q430_t Q430, Q320_t Q
 ////  Xd->wx = j[3][1] * Qd430.q2 + j[3][2] * Qd430.q3 + j[3][3] * Qd.q4 + j[3][4] * Qd.q5; 
 ////  Xd->wy = j[4][1] * Qd430.q2 + j[4][2] * Qd430.q3 + j[4][3] * Qd.q4 + j[4][4] * Qd.q5; 
 ////  //Xd->wy = 0;
-//  Xd->theta = j[5][0] * Qd430.q1 + j[5][4] * Qd.q5;  
+//  Xd->theta = j[5][0] * Qd430.q1 + j[5][4] * Qd.q5;
 //}
 //
 //void jacobian_calculator(float jacobian[6][5], Q430_t Q430, Q320_t Q320) {
