@@ -31,9 +31,13 @@ void readData(struct Cubic *poly) {
   }
 }
 
-float poly(float t, float a0, float a1, float a2, float a3) {
+float cubicPoly(float t, float a0, float a1, float a2, float a3) {
   // evaluate the given cubic polynomial at time t
-  return a3*t*t*t + a2*t*t + a1*t + a0;
+  return a3 * t * t * t + a2 * t * t + a1 * t + a0;
+}
+
+float quadPoly(float t, float a1, float a2, float a3) {
+  return 3 * a3 * t * t + 2 * a2 * t + a1;
 }
 
 void sendNPoly(int n, struct Cubic cubic[MAX_CUBICS]) {
@@ -55,11 +59,29 @@ void sendPolyAtTime(float t, struct Cubic *cubic) {
   delay(100);
 }
 
+float cubicEvaluate(struct Cubic *cubic, float t) {
+  // evaluate the given cubic at time t
+  float a0 = cubic->coef[0];
+  float a1 = cubic->coef[1];
+  float a2 = cubic->coef[2];
+  float a3 = cubic->coef[3];
+  return cubicPoly(t, a0, a1, a2, a3);
+}
+
+float quadEvaluate(struct Cubic *cubic, float t) {
+  // evaluate the given cubic at time t
+  float a0 = cubic->coef[0];
+  float a1 = cubic->coef[1];
+  float a2 = cubic->coef[2];
+  float a3 = cubic->coef[3];
+  return quadPoly(t, a1, a2, a3);
+}
+
 float evaluate(struct Cubic *cubic, float t) {
   // evaluate the given cubic at time t
   float a0 = cubic->coef[0];
   float a1 = cubic->coef[1];
   float a2 = cubic->coef[2];
   float a3 = cubic->coef[3];
-  return poly(t, a0, a1, a2, a3);
+  return cubicPoly(t, a0, a1, a2, a3);
 }

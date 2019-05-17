@@ -106,6 +106,8 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
+boolean debugging = false; // set on by Matlab if desired, will print additional info during operation
+
 int nPolys;		// number of polynomials sent by Matlab and stored for operation
 int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
 
@@ -389,8 +391,13 @@ while (1) {
       }
 
       // all paths done, return to WAITING
+      Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
+
+      // all paths done, return to WAITING
+      Serial.println("DONE");
+      state = WAITING;
     } else if (state == PASSIVE_READ) {
 //      readQ(&Q, &groupSyncRead430, &groupSyncRead320,  packetHandler);
       forward_kinematics(&X, Q);
