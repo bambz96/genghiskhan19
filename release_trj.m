@@ -24,7 +24,7 @@ classdef release_trj < robot_trj
             
             xGripped = [dropLocation; robot_trj.ClosedGrip];
             
-            xDropped = [dropLocation; robot_trj.OpenGrip];
+            xDropped = [dropLocation; robot_trj.ClearGrip];
             
             xRelease = [xGripped, xDropped];
             

@@ -31,9 +31,9 @@ classdef return_trj < robot_trj
     %}
     properties(Constant)
         LiftHeight =    0.020;  % m height of via above loading bay 
-        LoadTime =  0.5;        % time to "Approach" the new block (vf from v3)
+        LoadTime =  0.3;        % time to "Approach" the new block (vf from v3)
         
-        WithdrawTime = 0.6      % time to "withdraw from" the tower 
+        WithdrawTime = 0.5      % time to "withdraw from" the tower 
         ClearBTime =  0.2;      % time to clear the block
         
         
@@ -76,7 +76,7 @@ classdef return_trj < robot_trj
         
         % Simple determination of via locations
         function x = simplePosition(loadingBay, block)
-            dropLocation = [block.dropLocation; robot_trj.OpenGrip];
+            dropLocation = [block.dropLocation; robot_trj.ClearGrip];
             
             v1 = dropLocation + [0; 0; jBlock.Height; 0; 0];
             
@@ -136,7 +136,7 @@ classdef return_trj < robot_trj
         function xW = withdrawPosition(block)
             withdrawP = block.approachPosition;
 
-            xW = [withdrawP; robot_trj.OpenGrip];
+            xW = [withdrawP; robot_trj.ClearGrip];
         end
         
     end
