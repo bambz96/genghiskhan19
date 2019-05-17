@@ -13,8 +13,9 @@ classdef jBlock < handle
         Width = 0.025;     % m
         Height = 0.015;    % m
         
-        approachOffset = 4; % used in calculating approach (block widths)
-        dropHeight = 0.018; % height to drop the block from
+        approachX = 4; % used in calculating approach (block widths)
+        approachZ = 2; % used in calculating approach (block hieghts)
+        dropHeight = 0.017; % height to drop the block from
     end
     
     properties(Access = private)
@@ -78,8 +79,9 @@ classdef jBlock < handle
         % returns coordinate [x, y, z, theta]
         function A = calculateApproach(obj)
             Pos = obj.getPosition;
-            offset = (obj.approachOffset-obj.layerPos)*(obj.Width);
-            r_pa = [0; -offset; obj.Height];
+            XClearance = (obj.approachX-obj.layerPos)*(obj.Width);
+            ZClearance = obj.approachZ*obj.Height;
+            r_pa = [0; -XClearance; ZClearance];
             A = Pos + [obj.zRotation(obj.theta)*r_pa; 0];
         end
         

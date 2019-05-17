@@ -73,7 +73,7 @@ classdef robot_trj < taskTrajectory
             title("End Effector Position");
             xlabel("time(s)");
             ylabel("m");
-            legend({"x", "y", "z"});         
+            legend("x", "y", "z");         
 
             subplot(2, 1, 2);
             p2 = plot(obj.getTimeseries, obj.X(4:5, :));

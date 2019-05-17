@@ -34,12 +34,12 @@ classdef jTower
     %% Public Methods  
     methods
         % Constructor
-        function obj = jTower(x, y, theta)
+        function obj = jTower(x, y, theta, bay)
             obj.x_loc = x;
             obj.y_loc = y;
             obj.theta = theta;
             
-            obj.towerBlocks = obj.constructTowerBlocks;
+            obj.towerBlocks = obj.constructTowerBlocks(bay);
             obj.complete = false; %tower not yet built
         end
         
@@ -62,7 +62,7 @@ classdef jTower
     methods(Access = private)
         
         % Adds all blocks to the tower
-        function tower = constructTowerBlocks(obj)
+        function tower = constructTowerBlocks(obj, bay)
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
@@ -72,9 +72,10 @@ classdef jTower
             end
         end
 
+        
         % calculates coordiantes of a block from it's place in the tower
         % output matches jBlock constructor
-        function P = blockPosition(obj, layer, layerPos)
+        function P = blockPosition(obj, layer, layerPos, bay)
             if mod(layer, 2) % odd layer
                 % datum is in centre of brick
                 x = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
@@ -99,7 +100,22 @@ classdef jTower
             P = [P; bTheta];
 
         end
+        
+        % calculates the block offset from the centre of the centre of the
+        % tower from it's position in the layer, and the leading buid edge
+        % positiveLead = 1 if leading edge is positive
+        function bOffset = blockOffset(layerPos, positiveLead)
+            if (positiveLead)
+                bOffset = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
+            else 
+                bOffset = -(obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
+            end
+        end
+        
+        
     end
+    
+    
     
     methods(Static, Access = private)
         %Just a z rotation, nothing to see here folks
