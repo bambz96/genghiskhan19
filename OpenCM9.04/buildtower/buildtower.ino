@@ -436,6 +436,7 @@ void setup()
       }
 
       // all paths done, return to WAITING
+      Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
       // Set to velocity mode;
@@ -520,7 +521,10 @@ void setup()
           dt = millis() - tstart;
         }
         count++;
-        }
+      }
+        // all paths done, return to WAITING
+      Serial.println("DONE");
+      state = WAITING;
     } else if (state == PASSIVE_READ) {
       readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
       forward_kinematics(&X, Q430, Q320);
@@ -537,10 +541,10 @@ void setup()
       Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
       Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
       Serial.println();
-      //      if(Serial.available()>0) {
-      //        Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
-      //        state = WAITING;
-      //        }
+      if(Serial.available()>0) {
+        Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
+        state = WAITING;
+        }
     } 
     else if (state == PASSIVE_VELOCITY) {
       

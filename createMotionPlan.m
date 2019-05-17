@@ -1,4 +1,4 @@
-function [Pieces, DATA] = createMotionPlan()
+function [nchunks, chunks] = createMotionPlan()
     %{
         Assignment Gropup 20
         Create a full tower build sequence and output in an appropriate
@@ -16,31 +16,38 @@ function [Pieces, DATA] = createMotionPlan()
     
     Tower = jTower(0.2, 0, 0);
     
-    T = 0; % initialise time 
+    nblocks = 10;
     
-    for cycle = 1:2
+    % Chunks of DATA that each have t0 = 0s, and end with velocity = 0
+    % Each chunk will be sent to device separately
+    chunks = [];
+    
+    for cycle = 1:nblocks
+        T = 0; % initialise time for every chunk
+        
         Block = Tower.nextBlock;
         
         Grip = grip_trj(LoadingBay, T);
 
-        T = T + 1;
+        T = T + 0.1;
         Move = moveBlock_trj(LoadingBay, T, 5, Block);
 
-        T = T + 5;
+        T = T + 0.1;
         Release = release_trj(Block, T);
 
-        T = T + 1;
+        T = T + 0.1;
         Return = return_trj(LoadingBay, T, 5, Block);
-        T = T + 5;
+        T = T + 0.1;
         
         % changes the block state, so that a new block can be generated
         Block.placeBlock;
         
-        
-        AllTraj = [AllTraj, Grip, Move, Release, Return];
+        AllTraj = [Grip, Move, Release, Return];
+        DATA = robot_trj.combineDATA(AllTraj, 4);
+        chunks(:,:,:,cycle) = DATA;
         
     end
     
-    DATA = robot_trj.combineDATA(AllTraj, 8);
-    [Pieces, ~, ~] = size(DATA);
+    [~,~,~,nchunks] = size(chunks);
+
 end

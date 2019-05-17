@@ -7,20 +7,26 @@ zsent = 0;
 thsent = 0;
 gripsent = 0;
 %% select serial port
-% disp('Available COM ports:')
-% disp(join(seriallist))
-%i = input('COM number:');
-serial = serial('/dev/cu.usbmodem14201','BAUD',57600);
+disp('Available COM ports:')
+ports = seriallist();
+options = string(zeros(1, length(ports)));
+for i = 1:length(ports)
+    options(i) = string(i) +':' + ports(i);
+end
+disp(join(options))
+i = input('Select option:');
+serial = serial(ports(i),'BAUD',57600);
 %% pause to make sure it's opened
 fopen(serial);
 pause(1);
-disp('Connected to COM'+string(i)+'.')
+disp('Connected to '+ports(i))
 %% main loop
 running = 1;
 while running
     disp('1 - send trajectory to position from current')
     disp('2 - select a trajectory to send')
     disp('3 - plot all trajectories stored on device')
+    disp('4 - send multiple trajectories and run position control')
     disp('5 - run position control on stored trajectories')
     disp('6 - run velocity control on stored trajectories')
     disp('7 - passively read joints and EE position')
@@ -32,9 +38,11 @@ while running
         disp('Send trajectory to position from current...')
         disp('Not implemented!')
     elseif user == 2
-        [xsent, ysent, zsent, thsent, gripsent] = sendTrajectories(serial);
+        [xsent, ysent, zsent, thsent, gripsent] = chooseAndSendTrajectory(serial);
     elseif user == 3
         plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent);
+    elseif user == 4
+        multipleTrajectories(serial);
     elseif user == 5
         runPositionControl(serial);
     elseif user == 6
@@ -52,22 +60,26 @@ while running
 end
 return
 %% functions
-function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectories(serial)
+function [xdata, ydata, zdata, thdata, gripdata] = chooseAndSendTrajectory(serial)
     disp('Select a trajectory to send:')
     disp('1 - test trajectory')
-    disp('2 - build tower')
+    disp('2 - pick and place first block')
     select = input('>');
     if select == 1
         [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory();
     elseif select == 2
-        [length, data] = createMotionPlan();
+        [length, data] = pickAndPlace();
         xdata = data(:,:,1);
         ydata = data(:,:,2);
         zdata = data(:,:,3);
         thdata = data(:,:,4);
         gripdata = data(:,:,5);
     end
-    %% send command
+    sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata)
+end
+
+function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata)
+    %% send command N, indicating about to send N polys
     fprintf(serial, 'N');
     reply = strtrim(fscanf(serial));
     if ~strcmp(join(string(reply)), 'N')
@@ -78,7 +90,7 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectories(serial)
     else
         disp('Device agreed to receive trajectories.')
     end
-    %% send number of rows about to be sent
+    %% send number of polys/row about to be sent
     fprintf(serial, string(length));
     reply = strtrim(fscanf(serial));
     if ~strcmp(join(string(reply)), string(length))
@@ -198,7 +210,41 @@ function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     title('Planned Trajectories')
 end
 
-function runPositionControl(serial)
+function multipleTrajectories(serial)
+    disp('Send multiple trajectories and run position control...')
+    
+    disp('Select a motion plan to send:')
+    disp('1 - build tower')
+    select = input('>');
+    if select == 1
+        [nchunks, chunks] = createMotionPlan();
+    end
+    
+    start_time = tic;
+    
+    for i = 1:nchunks
+        data = chunks(:,:,:,i);
+        xdata = data(:,:,1);
+        ydata = data(:,:,2);
+        zdata = data(:,:,3);
+        thdata = data(:,:,4);
+        gripdata = data(:,:,5);
+        [length,~,~] = size(data);
+        
+        sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata);
+        
+        disp('Chunk '+string(i)+' of '+string(nchunks)+' sent.')
+        success = runPositionControl(serial, i);   
+        if ~success
+            return
+        end
+    end
+    
+    end_time = toc(start_time);
+    disp('Duration of motion plan: '+string(end_time)+'s');
+end
+
+function success = runPositionControl(serial, chunk_i)
     disp('Run position control on stored trajectories...')
     fprintf(serial, "PC");
     received = strtrim(fscanf(serial));
@@ -207,9 +253,27 @@ function runPositionControl(serial)
     else
         disp('Device did not respond correctly: ' + received)
     end
+    % wait for device to confirm position control completed planned trajectories
+    while get(serial, 'BytesAvailable') == 0
+    end
+    
+    % assume success, set false (0) if 
+    success = 1;
+    
+    received = strtrim(fscanf(serial));
+    if strcmp(received, "DONE")
+        if nargin == 1 % no chunk_i input
+            disp('Path completed.')
+        elseif nargin == 2
+            disp('Chunk '+string(chunk_i)+' completed.')
+        end
+    else
+        disp('Device did not respond correctly: ' + received)
+        disp('Stopping operation.')
+    end
 end
 
-function runVelocityControl(serial)
+function success = runVelocityControl(serial, chunk_i)
     disp('Run velocity control on stored trajectories...')
     fprintf(serial, "VC");
     received = strtrim(fscanf(serial));
@@ -217,6 +281,21 @@ function runVelocityControl(serial)
         disp('Beginning velocity control.')
     else
         disp('Device did not respond correctly: ' + received)
+    end
+    
+    % assume success, set false (0) if 
+    success = 1;
+    
+    received = strtrim(fscanf(serial));
+    if strcmp(received, "DONE")
+        if nargin == 1 % no chunk_i input
+            disp('Path completed.')
+        elseif nargin == 2
+            disp('Chunk '+string(chunk_i)+' completed.')
+        end
+    else
+        disp('Device did not respond correctly: ' + received)
+        disp('Stopping operation.')
     end
 end
 
@@ -229,20 +308,6 @@ function readJoints(serial)
         i = i + 1;
     end
     fprintf(serial, 'x'); % send anything to interrupt
-
-    % todo with GUI, will be able to send anything over serial and
-    % return to WAITING state, atm have to use Arduino's Serial Monitor
-
-    % simple GUI used to interrupt loop and view joint angles
-%     ButtonHandle = uicontrol('Style', 'PushButton', 'String', 'Stop read', 'Callback', 'delete(gcbf)');
-%     textHandle = uicontrol('Style', 'text', 'String', 'q1 q2 q3 q4 q5', 'Position', [150, 150, 300, 15]);
-%     while 1
-%         if ~ishandle(ButtonHandle)
-%             disp('Ended passive reading.');
-%             break;
-%         end
-%         textHandle.String = fgetl(serial);
-%     end
 end
 
 function sendRow(serial, data)
