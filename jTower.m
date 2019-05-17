@@ -19,6 +19,9 @@ classdef jTower
         Width     = 0.075;  % m
         Height    = 0.270;  % m
         CrossAngle = pi/2   % radians
+        
+        % if build radius < inversion radius, build from in to out
+        InversionRadius = 0.2; 
     end
     
     properties (Access = private)
@@ -66,7 +69,7 @@ classdef jTower
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    P = obj.blockPosition(layer, pos); 
+                    P = obj.blockPosition(layer, pos, bay); 
                     tower = [tower, jBlock(P(1), P(2), P(3), P(4), pos)]; 
                 end
             end
@@ -75,15 +78,15 @@ classdef jTower
         
         % calculates coordiantes of a block from it's place in the tower
         % output matches jBlock constructor
-        function P = blockPosition(obj, layer, layerPos, bay)
+        function P = blockPosition(obj, layer, Pos, bay)
             if mod(layer, 2) % odd layer
                 % datum is in centre of brick
-                x = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
+                x = obj.blockOffset(Pos, obj.x_loc >= obj.InversionRadius);
                 y = 0;
                 bTheta = -obj.CrossAngle; %odd layers are cross-lay
             else
                 %datum is in centre of block
-                y = (layerPos - obj.BPerLayer/2 -0.5)*jBlock.Width;
+                y = obj.blockOffset(Pos, bay);
                 x = 0;
                 bTheta = 0; 
             end
@@ -104,7 +107,7 @@ classdef jTower
         % calculates the block offset from the centre of the centre of the
         % tower from it's position in the layer, and the leading buid edge
         % positiveLead = 1 if leading edge is positive
-        function bOffset = blockOffset(layerPos, positiveLead)
+        function bOffset = blockOffset(obj, layerPos, positiveLead)
             if (positiveLead)
                 bOffset = (obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
             else 
