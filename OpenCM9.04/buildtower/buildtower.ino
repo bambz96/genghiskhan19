@@ -65,16 +65,7 @@
 #define Q3_OFFSET                           -0.77973//-0.9364
 #define Q4_OFFSET                           -4.583636364
 #define Q5_OFFSET                           -1.39625
-
-
 #define Q6_OFFSET                           0
-
-//#define DXL1_OFFSET                         5.5 //motor unit offset
-//#define DXL2_OFFSET                         -23.5
-//#define DXL3_OFFSET                         -31.5
-//#define DXL4_OFFSET                         5.5
-//#define DXL5_OFFSET                         0
-//#define DXL6_OFFSET                         0
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
@@ -114,6 +105,8 @@ bool dxl_addparam_result;                // addParam result
 int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
+
+boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
 
 int nPolys;		// number of polynomials sent by Matlab and stored for operation
 int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
@@ -314,7 +307,10 @@ void setup()
           disableTorque320(DXL5_ID, portHandler, packetHandler);
           disableTorque320(DXL6_ID, portHandler, packetHandler);
           state = PASSIVE_READ;
-        }
+        } else if (command == "D") {
+        Serial.println("D");
+        debugging = !debugging;
+      }
       }
     } else if (state == RECEIVING_X) {
       readData(xpoly);
@@ -373,8 +369,6 @@ void setup()
       unsigned int tstart = millis();
 
       count = 0;
-      readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-      forward_kinematics(&Xprev, Q430, Q320);
       while (count < nPolys) {
         // delay before each new segment
         //delay(500);
@@ -385,8 +379,6 @@ void setup()
 
         // complete current path
         while (dt < tf) {
-
-
           // get task space coordinates and assign to X
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
           float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
@@ -399,6 +391,8 @@ void setup()
           Xref.theta = theta;
           Xref.grip = grip;
 
+          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+          forward_kinematics(&Xprev, Q430, Q320);
           //Calculate feedback from measured task space, reference task space and previous measured task space
           //          X_t ex = feedback(Xprev, Xref, X);
 
@@ -408,26 +402,37 @@ void setup()
           // write joint space Qc to servos
           writeQ(&Qc430, &Qc320, &groupSyncWrite430, &groupSyncWrite320,  packetHandler);
 
-          //velocity calculations test
-          x = quadEvaluate(&xpoly[count], dt / 1000.0);
-          y = quadEvaluate(&ypoly[count], dt / 1000.0);
-          z = quadEvaluate(&zpoly[count], dt / 1000.0);
-          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
-          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-          Xdref.x = x;
-          Xdref.y = y;
-          Xdref.z = z;
-          Xdref.theta = theta;
-          Xdref.grip = grip;
-          //calculate Qd430
-          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
+          if (debugging) {
+            Serial.print(millis()); Serial.print(' ');
+            Serial.print(x, 5); Serial.print(' ');
+            Serial.print(y, 5); Serial.print(' ');
+            Serial.print(z, 5); Serial.print(' ');
+            Serial.print(Xprev.x, 5); Serial.print(' ');
+            Serial.print(Xprev.y, 5); Serial.print(' ');
+            Serial.print(Xprev.z, 5); Serial.print(' ');
+            Serial.println();
+          }
           
-          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
-          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
-          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
-          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
-          Serial.println();
+          //velocity calculations test
+//          x = quadEvaluate(&xpoly[count], dt / 1000.0);
+//          y = quadEvaluate(&ypoly[count], dt / 1000.0);
+//          z = quadEvaluate(&zpoly[count], dt / 1000.0);
+//          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
+//          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
+//          Xdref.x = x;
+//          Xdref.y = y;
+//          Xdref.z = z;
+//          Xdref.theta = theta;
+//          Xdref.grip = grip;
+          //calculate Qd430
+//          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+//          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
+          
+//          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
+//          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
+//          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
+//          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
+//          Serial.println();
 
           dt = millis() - tstart;
         }
@@ -439,7 +444,7 @@ void setup()
       Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
-      // Set to velocity mode;
+      // Set to velocity mode
       velocityMode430(DXL1_ID, portHandler, packetHandler);
       velocityMode430(DXL2_ID, portHandler, packetHandler);
       velocityMode430(DXL3_ID, portHandler, packetHandler);
@@ -447,7 +452,6 @@ void setup()
       velocityLimit430(DXL1_ID, portHandler, packetHandler);
       velocityLimit430(DXL2_ID, portHandler, packetHandler);
       velocityLimit430(DXL3_ID, portHandler, packetHandler);
-
       // acceleration limits
       accelerationLimit430(DXL1_ID, portHandler, packetHandler);
       accelerationLimit430(DXL2_ID, portHandler, packetHandler);
@@ -460,6 +464,7 @@ void setup()
       enableTorque320(DXL4_ID, portHandler, packetHandler);
       enableTorque320(DXL5_ID, portHandler, packetHandler);
       enableTorque320(DXL6_ID, portHandler, packetHandler);
+      
       delay(500);
 
       unsigned int tstart = millis();
@@ -500,8 +505,9 @@ void setup()
           Xdref.theta = theta;
           Xdref.grip = grip;
 
-          //Calculate feedback loop
-          X_t Xe = velocityFeedback(Xdref, Xref, X);
+          //Calculate control effort
+          X_t Xke = velocityFeedback(Xdref, Xref, X);
+          X_t Xc = velocityControl(Xdref, Xref, Xke);
 
           //Calculate position control for motors 4,5,6
           inverse_kinematics(&Qc430, &Qc320, &Xref);
@@ -512,11 +518,25 @@ void setup()
           //write motors
           writeQd(&Qd430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
 
-          Serial.print("Q1_d: "); Serial.print(Qd430.q1 * 180/M_PI); Serial.print(", ");
-          Serial.print("Q2_d: "); Serial.print(Qd430.q2 * 180/M_PI); Serial.print(", ");
-          Serial.print("Q3_d: "); Serial.print(Qd430.q3 * 180/M_PI); Serial.print(", ");
-          Serial.print("Time: "); Serial.print(dt, 6); Serial.print(", ");
-          Serial.println();
+          if (debugging) {
+            Serial.print(millis()); Serial.print(' ');
+            Serial.print(x, 5); Serial.print(' ');
+            Serial.print(y, 5); Serial.print(' ');
+            Serial.print(z, 5); Serial.print(' ');
+            Serial.print(Xprev.x, 5); Serial.print(' ');
+            Serial.print(Xprev.y, 5); Serial.print(' ');
+            Serial.print(Xprev.z, 5); Serial.print(' ');
+            Serial.print(Xke.x, 5); Serial.print(' ');
+            Serial.print(Xke.y, 5); Serial.print(' ');
+            Serial.print(Xke.z, 5); Serial.print(' ');
+            Serial.println();
+          }
+
+//          Serial.print("Q1_d: "); Serial.print(Qd430.q1 * 180/M_PI); Serial.print(", ");
+//          Serial.print("Q2_d: "); Serial.print(Qd430.q2 * 180/M_PI); Serial.print(", ");
+//          Serial.print("Q3_d: "); Serial.print(Qd430.q3 * 180/M_PI); Serial.print(", ");
+//          Serial.print("Time: "); Serial.print(dt, 6); Serial.print(", ");
+//          Serial.println();
 
           dt = millis() - tstart;
         }

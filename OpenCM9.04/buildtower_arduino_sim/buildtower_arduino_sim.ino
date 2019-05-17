@@ -106,7 +106,7 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
-boolean debugging = false; // set on by Matlab if desired, will print additional info during operation
+boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
 
 int nPolys;		// number of polynomials sent by Matlab and stored for operation
 int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
@@ -284,6 +284,9 @@ while (1) {
       } else if (command == "R") {
         // passive read, no torques enabled
         state = PASSIVE_READ;
+      } else if (command == "D") {
+        Serial.println("D");
+        debugging = !debugging;
       }
     }
   } else if (state == RECEIVING_X) {
@@ -384,6 +387,20 @@ while (1) {
 
           Xprev = Xref;
 
+          if (debugging) {
+            float xa = x + random(10)/100;
+            float ya = y + random(10)/100;
+            float za = z + random(10)/100;
+            Serial.print(millis()); Serial.print(' ');
+            Serial.print(x, 5); Serial.print(' ');
+            Serial.print(y, 5); Serial.print(' ');
+            Serial.print(z, 5); Serial.print(' ');
+            Serial.print(xa, 5); Serial.print(' ');
+            Serial.print(ya, 5); Serial.print(' ');
+            Serial.print(za, 5); Serial.print(' ');
+            Serial.println();
+          }
+
           dt = millis() - tstart;
         }
         // current path finished
@@ -394,7 +411,7 @@ while (1) {
       Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
-
+    
       // all paths done, return to WAITING
       Serial.println("DONE");
       state = WAITING;

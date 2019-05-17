@@ -6,21 +6,22 @@ ungrip = 0.422257077;
 
 % metres, degrees, degrees, ?, seconds
 % x y z theta grip ts
+s = 0.1; % speed up
 p = [
-    0.2 0 0.3 0 ungrip 0;
-    0.15 -0.2 0.01 0 ungrip 2;
-    0.15 -0.2 0.01 0 ungrip 7;
-    0.2 0 0.05 0 ungrip 8;
-    0.2 0 0.05 0 ungrip 13;
-    0.125 0.25 0.05 0 ungrip 14;
-    0.125 0.25 0.05 0 ungrip 19;
-    0.2 0 0.05 0 ungrip 20;
-    0.2 0 0.05 0 ungrip 25;
-    0.15 -0.2 0.05 0 ungrip 30;
-    0.15 -0.2 0.05 0 ungrip 35;
-    0.2 0 0.05 0 ungrip 36;
-    0.2 0 0.05 0 ungrip 41;
-    0.2 0 0.3 0 ungrip 43
+    0.2 0 0.3 0 ungrip 0*s;
+    0.15 -0.2 0.05 0 ungrip 2*s;
+    0.15 -0.2 0.05 0 ungrip 7*s;
+    0.2 0 0.05 0 ungrip 8*s;
+    0.2 0 0.05 0 ungrip 13*s;
+    0.125 0.25 0.05 0 ungrip 14*s;
+    0.125 0.25 0.05 0 ungrip 19*s;
+    0.2 0 0.05 0 ungrip 20*s;
+    0.2 0 0.05 0 ungrip 25*s;
+    0.15 -0.2 0.05 0 ungrip 30*s;
+    0.15 -0.2 0.05 0 ungrip 35*s;
+    0.2 0 0.05 0 ungrip 36*s;
+    0.2 0 0.05 0 ungrip 41*s;
+    0.2 0 0.3 0 ungrip 43*s
 ];
 
 disp(p)

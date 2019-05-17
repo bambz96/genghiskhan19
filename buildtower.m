@@ -6,6 +6,28 @@ ysent = 0;
 zsent = 0;
 thsent = 0;
 gripsent = 0;
+
+% position control debugging
+global pc_time; pc_time = [];
+global pc_xr; pc_xr = [];
+global pc_yr; pc_yr = [];
+global pc_zr; pc_zr = [];
+global pc_xm; pc_xm = [];
+global pc_ym; pc_ym = [];
+global pc_zm; pc_zm = [];
+% velocity control debugging
+global vc_time; vc_time = [];
+global vc_xr; vc_xr = [];
+global vc_yr; vc_yr = [];
+global vc_zr; vc_zr = [];
+global vc_xm; vc_xm = [];
+global vc_ym; vc_ym = [];
+global vc_zm; vc_zm = [];
+global vc_xe; vc_xe = [];
+global vc_ye; vc_ye = [];
+global vc_ze; vc_ze = [];
+
+global debugging; debugging = 1; % debugging mode on by default
 %% select serial port
 disp('Available COM ports:')
 ports = seriallist();
@@ -30,6 +52,8 @@ while running
     disp('5 - run position control on stored trajectories')
     disp('6 - run velocity control on stored trajectories')
     disp('7 - passively read joints and EE position')
+    disp('8 - toggle debugging (on by default)')
+    disp('9 - plot saved debug data')
     disp('0 - quit')
 
     user = input('>');
@@ -44,11 +68,15 @@ while running
     elseif user == 4
         multipleTrajectories(serial);
     elseif user == 5
-        runPositionControl(serial);
+        runControl(serial, "PC");
     elseif user == 6
-        runVelocityControl(serial);
+        runControl(serial, "VC");
     elseif user == 7
         readJoints(serial);
+    elseif user == 8
+        toggleDebugging(serial);
+    elseif user == 9
+        plotDebugData();
     elseif user == 0
         disp('Quitting')
         fclose(serial);
@@ -234,7 +262,7 @@ function multipleTrajectories(serial)
         sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata);
         
         disp('Chunk '+string(i)+' of '+string(nchunks)+' sent.')
-        success = runPositionControl(serial, i);   
+        success = runControl(serial, "PC", i);   
         if ~success
             return
         end
@@ -244,59 +272,49 @@ function multipleTrajectories(serial)
     disp('Duration of motion plan: '+string(end_time)+'s');
 end
 
-function success = runPositionControl(serial, chunk_i)
-    disp('Run position control on stored trajectories...')
-    fprintf(serial, "PC");
+function success = runControl(serial, type, chunk_i)
+    % type is "PC" or "VC"
+    disp('Run control on stored trajectories...')
+    fprintf(serial, type);
     received = strtrim(fscanf(serial));
-    if strcmp(received, "PC")
-        disp('Beginning position control.')
+    if strcmp(received, type)
+        if strcmp(type, "PC")
+            disp('Beginning position control.')
+        elseif strcmp(type, "VC")
+            disp('Beginning velocity control.')
+        end
     else
-        disp('Device did not respond correctly: ' + received)
-    end
-    % wait for device to confirm position control completed planned trajectories
-    while get(serial, 'BytesAvailable') == 0
+        disp('Device did not respond correctly: ' + join(string(received)))
     end
     
     % assume success, set false (0) if 
     success = 1;
     
-    received = strtrim(fscanf(serial));
-    if strcmp(received, "DONE")
-        if nargin == 1 % no chunk_i input
-            disp('Path completed.')
-        elseif nargin == 2
-            disp('Chunk '+string(chunk_i)+' completed.')
+    global debugging
+    if debugging
+        % will read debug output until receives "DONE" from device
+        if strcmp(type, "PC")
+            readPositionControlDebugging(serial)
+        elseif strcmp(type, "VC")
+            readVelocityControlDebugging(serial)
         end
     else
-        disp('Device did not respond correctly: ' + received)
-        disp('Stopping operation.')
-    end
-end
-
-function success = runVelocityControl(serial, chunk_i)
-    disp('Run velocity control on stored trajectories...')
-    fprintf(serial, "VC");
-    received = strtrim(fscanf(serial));
-    if strcmp(received, "VC")
-        disp('Beginning velocity control.')
-    else
-        disp('Device did not respond correctly: ' + received)
-    end
-    
-    % assume success, set false (0) if 
-    success = 1;
-    
-    received = strtrim(fscanf(serial));
-    if strcmp(received, "DONE")
-        if nargin == 1 % no chunk_i input
-            disp('Path completed.')
-        elseif nargin == 2
-            disp('Chunk '+string(chunk_i)+' completed.')
+        % wait for device to confirm position control completed planned trajectories
+        while get(serial, 'BytesAvailable') == 0
         end
-    else
-        disp('Device did not respond correctly: ' + received)
-        disp('Stopping operation.')
-    end
+        
+        received = strtrim(fscanf(serial));
+        if strcmp(received, "DONE")
+            if nargin == 2 % no chunk_i input
+                disp('Path completed.')
+            elseif nargin == 3
+                disp('Chunk '+string(chunk_i)+' completed.')
+            end
+        else
+            disp('Device did not respond correctly: ' + received)
+            disp('Stopping operation.')
+        end
+    end    
 end
 
 function readJoints(serial)
@@ -339,6 +357,82 @@ function [t, d] = readRow(serial, length, path_res)
     end
 end
 
+function readPositionControlDebugging(serial)
+    global pc_time
+    global pc_xr
+    global pc_yr
+    global pc_zr
+    global pc_xm
+    global pc_ym
+    global pc_zm
+    done = 0;
+    while ~done
+        data = strtrim(fscanf(serial));
+        if ~strcmp(data, "DONE")
+            data = sscanf(data, '%f');
+            t = data(1)/1000;
+            xr = data(2);
+            yr = data(3);
+            zr = data(4);
+            xm = data(5);
+            ym = data(6);
+            zm = data(7);
+            pc_time = [pc_time t];
+            pc_xr = [pc_xr xr];
+            pc_yr = [pc_yr yr];
+            pc_zr = [pc_zr zr];
+            pc_xm = [pc_xm xm];
+            pc_ym = [pc_ym ym];
+            pc_zm = [pc_zm zm];
+        else
+            return
+        end
+    end
+end
+
+function readVelocityControlDebugging(serial)
+    global vc_time
+    global vc_xr
+    global vc_yr
+    global vc_zr
+    global vc_xm
+    global vc_ym
+    global vc_zm
+    global vc_xe
+    global vc_ye
+    global vc_ze
+    done = 0;
+    while ~done
+        data = strtrim(fscanf(serial));
+        if ~strcmp(data, "DONE")
+            data = sscanf(data, '%f');
+            t = data(1)/1000;
+            xr = data(2);
+            yr = data(3);
+            zr = data(4);
+            xm = data(5);
+            ym = data(6);
+            zm = data(7);
+            xe = data(8);
+            ye = data(9);
+            ze = data(10);
+            vc_time = [vc_time t];
+            vc_xr = [vc_xr xr];
+            vc_yr = [vc_yr yr];
+            vc_zr = [vc_zr zr];
+            vc_xm = [vc_xm xm];
+            vc_ym = [vc_ym ym];
+            vc_zm = [vc_zm zm];
+            vc_xe = [vc_xe xe];
+            vc_ye = [vc_ye ye];
+            vc_ze = [vc_ze ze];
+        else
+            return
+        end
+    end
+end
+    
+
 function [tx, x] = generate(data, samples)
     % data has 6 cols: a3 a2 a1 a0 ts tf
     % data rows are all the polys sent
@@ -358,5 +452,100 @@ function [tx, x] = generate(data, samples)
             x(idx) = a3*t.^3 + a2*t.^2 + a1*t + a0;
             tx(idx) = t;
         end
+    end
+end
+
+function plotDebugData()
+    global pc_time
+    global pc_xr
+    global pc_yr
+    global pc_zr
+    global pc_xm
+    global pc_ym
+    global pc_zm
+    global vc_time
+    global vc_xr
+    global vc_yr
+    global vc_zr
+    global vc_xm
+    global vc_ym
+    global vc_zm
+    global vc_xe
+    global vc_ye
+    global vc_ze
+    if ~isempty(pc_time)
+        % position control plots
+        pc_f = 1/mean(diff(pc_time));
+
+        figure
+        subplot(121)
+        hold on
+        plot(pc_time, pc_xr)
+        plot(pc_time, pc_yr)
+        plot(pc_time, pc_zr)
+        title('Position Control, f='+string(pc_f)+'Hz')
+        legend('x', 'y', 'z')
+        xlabel('Time (s)')
+
+        subplot(122)
+        axis square
+        hold on
+        grid on
+        view(15,15)
+        plot3(pc_xr, pc_yr, pc_zr)
+        plot3(pc_xm, pc_ym, pc_zm, ':')
+        title('Trajectory')
+        legend('Reference', 'Measured')
+        xlabel('x')
+        ylabel('y')
+        zlabel('z')
+    end
+    if ~isempty(vc_time)
+        % velocity control plots
+        vc_f = 1/mean(diff(vc_time));
+
+        figure
+        subplot(221)
+        hold on
+        plot(vc_time, vc_xr)
+        plot(vc_time, vc_yr)
+        plot(vc_time, vc_zr)
+        title('Velocity Control, f='+string(vc_f)+'Hz')
+        legend('x', 'y', 'z')
+        xlabel('Time (s)')
+
+        subplot(222)
+        axis square
+        hold on
+        grid on
+        view(15,15)
+        plot3(vc_xr, vc_yr, vc_zr)
+        plot3(vc_xm, vc_ym, vc_zm)
+        title('Trajectory')
+        legend('Reference', 'Measured')
+        xlabel('x')
+        ylabel('y')
+        zlabel('z')
+
+        subplot(223)
+        hold on
+        plot(vc_time, vc_xe)
+        plot(vc_time, vc_ye)
+        plot(vc_time, vc_ze)
+        title('Position Error, f='+string(vc_f)+'Hz')
+        legend('xe', 'ye', 'ze')
+        xlabel('Time (s)')
+    end
+end
+
+function toggleDebugging(serial)
+    global debugging
+    fprintf(serial, "D");
+    received = strtrim(fscanf(serial));
+    if strcmp(received, "D")
+        debugging = ~debugging;
+        disp('Toggled debugging, current state: '+debugging)
+    else
+        disp('Device did not respond correctly: '+received)
     end
 end

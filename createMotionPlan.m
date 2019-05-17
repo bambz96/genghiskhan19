@@ -16,7 +16,7 @@ function [nchunks, chunks] = createMotionPlan()
     
     Tower = jTower(0.2, 0, 0);
     
-    nblocks = 10;
+    nblocks = 2;
     
     % Chunks of DATA that each have t0 = 0s, and end with velocity = 0
     % Each chunk will be sent to device separately
