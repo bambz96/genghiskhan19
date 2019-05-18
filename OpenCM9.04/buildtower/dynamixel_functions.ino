@@ -45,6 +45,18 @@ int velocityMode430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_430, VELOCITY_MODE, &dxl_error);
 }
 
+int setIntegralVelocity430(int DXL_ID, int KVI, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_INTEGRAL_VELOCITY_430, KVI, &dxl_error);
+}
+
+int setProportionalVelocity430(int DXL_ID, int KVP, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_PROPORTIONAL_VELOCITY_430, KVP, &dxl_error);
+}
+
+int setGoalVelocity430(int DXL_ID, int goalVelocity, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDRESS_GOAL_VELOCITY_430, goalVelocity, &dxl_error);
+}
+
 void readQd(Q430_t *Qd430, dynamixel::GroupSyncRead *groupSyncReadVelocity430, dynamixel::PacketHandler *packetHandler) {
   dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
 
@@ -57,33 +69,6 @@ void readQd(Q430_t *Qd430, dynamixel::GroupSyncRead *groupSyncReadVelocity430, d
   Qd430->q3 = convertToRadiansPerSecond(qd3_encoder, true);
 
 }
-
-void readPWM(Q430_t *PWM430, dynamixel::GroupSyncRead *groupSyncReadPWM430, dynamixel::PacketHandler *packetHandler) {
-  dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
-
-  int pwm1_encoder = groupSyncReadPWM430->getData(DXL1_ID, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
-  int pwm2_encoder = groupSyncReadPWM430->getData(DXL2_ID, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
-  int pwm3_encoder = groupSyncReadPWM430->getData(DXL3_ID, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
-
-  PWM430->q1 = pwm1_encoder*PWM_TO_PERCENTAGE;
-  PWM430->q2 = pwm2_encoder*PWM_TO_PERCENTAGE;
-  PWM430->q3 = pwm3_encoder*PWM_TO_PERCENTAGE;
-
-}
-
-void readI(Q430_t *I430, dynamixel::GroupSyncRead *groupSyncReadI430, dynamixel::PacketHandler *packetHandler) {
-  dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
-
-  int i1_encoder = groupSyncReadI430->getData(DXL1_ID, ADDRESS_PRESENT_I_430, LENGTH_PRESENT_I_430);
-  int i2_encoder = groupSyncReadI430->getData(DXL2_ID, ADDRESS_PRESENT_I_430, LENGTH_PRESENT_I_430);
-  int i3_encoder = groupSyncReadI430->getData(DXL3_ID, ADDRESS_PRESENT_I_430, LENGTH_PRESENT_I_430);
-
-  I430->q1 = i1_encoder*UNITS_TO_MA;
-  I430->q2 = i2_encoder*UNITS_TO_MA;
-  I430->q3 = i3_encoder*UNITS_TO_MA;
-
-}
-
 void readQ(Q430_t *Q430, Q320_t *Q320, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupSyncRead *groupSyncRead320, dynamixel::PacketHandler *packetHandler) {
   dxl_comm_result = groupSyncRead430->txRxPacket();
   dxl_comm_result = groupSyncRead320->txRxPacket();
@@ -101,6 +86,12 @@ void readQ(Q430_t *Q430, Q320_t *Q320, dynamixel::GroupSyncRead *groupSyncRead43
   Q320->q4 = convertToRadians320(q4_encoder, false, Q4_SCALE, Q4_OFFSET);
   Q320->q5 = convertToRadians320(q5_encoder, false, Q5_SCALE, Q5_OFFSET);
   Q320->q6 = convertToRadians320(q6_encoder, false, Q6_SCALE, Q6_OFFSET);
+  //  Q->q1 = -Q1_OFFSET*PI/180 - PI + Q1_SCALE*ANGLE_CONVERSION_CONSTANT_430*(groupSyncRead430->getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430));
+  //  Q->q2 = Q2_OFFSET*PI/180 + PI - ANGLE_CONVERSION_CONSTANT_430*(groupSyncRead430->getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430));
+  //  Q->q3 = Q3_OFFSET*PI/180 + PI - ANGLE_CONVERSION_CONSTANT_430*(groupSyncRead430->getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430));
+  //  Q->q4 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320));
+  //  Q->q5 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320));
+  //  Q->q6 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320));
 }
 
 float convertToRadiansPerSecond(int qe, boolean flip){
@@ -173,6 +164,7 @@ void writeQ(Q430_t *Q430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWrit
   dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
 
+
   // Syncwrite goal position
   dxl_comm_result = groupSyncWrite430->txPacket();
   if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
@@ -212,20 +204,54 @@ void writeQd(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWr
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL1_ID, q1_ba);
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL2_ID, q2_ba);
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL3_ID, q3_ba);
-  
+
   dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
 
-  // Syncwrite goal velociy for 430's
+  // Syncwrite goal position
   dxl_comm_result = groupSyncWriteVelocity430->txPacket();
   if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-  // SyncWrite goal position for 320's
   dxl_comm_result = groupSyncWrite320->txPacket();
   if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
 
   // Clear syncwrite parameter storage
   groupSyncWriteVelocity430->clearParam();
+  groupSyncWrite320->clearParam();
+
+}
+
+void writeQdNo430Sync(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
+
+  int q1 = convertToVelocityCommand430(Qd430->q1, false);
+  int q2 = convertToVelocityCommand430(Qd430->q2, true);
+  int q3 = convertToVelocityCommand430(Qd430->q3, true);
+
+  int q4 = convertToPositionCommand320(Q320->q4, false, Q4_SCALE, Q4_OFFSET);
+  int q5 = convertToPositionCommand320(Q320->q5, false, Q5_SCALE, Q5_OFFSET);
+  int q6 = convertToPositionCommand320(Q320->q6, false, Q6_SCALE, Q6_OFFSET);
+
+  uint8_t q4_ba[4];
+  uint8_t q5_ba[4];
+  uint8_t q6_ba[4];
+
+  convertToByteArray(q4_ba, q4);
+  convertToByteArray(q5_ba, q5);
+  convertToByteArray(q6_ba, q6);
+
+  setGoalVelocity430(DXL1_ID, q1, portHandler, packetHandler);
+  setGoalVelocity430(DXL2_ID, q2, portHandler, packetHandler);
+  setGoalVelocity430(DXL3_ID, q3, portHandler, packetHandler);
+
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
+  dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
+
+  // Syncwrite goal position
+  dxl_comm_result = groupSyncWrite320->txPacket();
+  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
+
+  // Clear syncwrite parameter storage
   groupSyncWrite320->clearParam();
 
 }

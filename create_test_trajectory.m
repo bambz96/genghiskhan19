@@ -1,4 +1,4 @@
-function [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory()
+function [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory(n)
 
 % grip and ungrip motor angles in radians
 grip = 1.015976119;
@@ -7,7 +7,7 @@ ungrip = 0.422257077;
 % metres, degrees, degrees, ?, seconds
 % x y z theta grip ts
 s = 1; % speed up
-p = [
+p1 = [
     0.2 0 0.3 0 ungrip 0*s;
     0.15 -0.2 0.05 0 ungrip 2*s;
     0.15 -0.2 0.05 0 ungrip 7*s;
@@ -20,9 +20,22 @@ p = [
     0.15 -0.2 0.05 0 ungrip 30*s;
     0.15 -0.2 0.05 0 ungrip 35*s;
     0.2 0 0.05 0 ungrip 36*s;
-    0.2 0 0.05 0 ungrip 41*s;
-    0.2 0 0.3 0 ungrip 43*s
+    0.2 0 0.05 0 ungrip 41*s
+%     0.2 0 0.3 0 ungrip 43*s
 ];
+p2 = [
+    0.2 0 0.3 0 ungrip 0*s;
+    0.15 -0.2 0.05 0 ungrip 1.5*s;
+    0.15 -0.2 0.05 0 ungrip 2*s;
+    0.2 0 0.05 0 ungrip 3.5*s;
+    0.2 0 0.05 0 ungrip 7*s
+];
+
+if n == 1
+    p = p1;
+elseif n == 2
+    p = p2;
+end
 
 disp(p)
 

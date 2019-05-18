@@ -1,9 +1,11 @@
 void forward_kinematics(X_t *X, Q430_t Q430, Q320_t Q320) {
-  X->x = cos(Q430.q1) * (L3 * cos(Q430.q2 + Q430.q3) - L2 * sin(Q430.q2));
-  X->y = sin(Q430.q1) * (L3 * cos(Q430.q2 + Q430.q3) - L2 * sin(Q430.q2));
-  X->z = L3 * sin(Q430.q2 + Q430.q3) + L2 * cos(Q430.q2) - L4 + L1;
-  X->theta = Q430.q1 - Q320.q5;
-}
+  X->x = cos(Q430.q1) * (L3 * cos(Q430.q2 + Q430.q3) - L2 * sin(Q430.q2) + L4 * sin(Q430.q2 + Q430.q3 + Q320.q4));
+  X->y = sin(Q430.q1) * (L3 * cos(Q430.q2 + Q430.q3) - L2 * sin(Q430.q2) + L4 * sin(Q430.q2 + Q430.q3 + Q320.q4));
+  X->z = L3 * sin(Q430.q2 + Q430.q3) + L2 * cos(Q430.q2) - L4 * cos(Q430.q2 + Q430.q3 + Q320.q4) + L1;
+  X->wx = atan2(-sin(Q430.q2 + Q430.q3 + Q320.q4)*sin(Q320.q5), -cos(Q430.q2 + Q430.q3 + Q320.q4));
+  X->wy = atan2(-sin(Q430.q2 + Q430.q3 + Q320.q4)*cos(Q320.q5), sqrt(cos(Q430.q2 + Q430.q3 + Q320.q4) * cos(Q430.q2 + Q430.q3 + Q320.q4) + sin(Q430.q2 + Q430.q3 + Q320.q4)*sin(Q430.q2 + Q430.q3 + Q320.q4)*sin(Q320.q5)*sin(Q320.q5)));
+  X->wz = atan2(cos(Q320.q5)*sin(Q430.q1) - sin(Q320.q5)*(cos(Q430.q1 + Q430.q2 + Q430.q3 + Q320.q4)/2 + cos(Q430.q2 - Q430.q1 + Q430.q3 + Q320.q4)/2),sin(Q430.q1)*sin(Q320.q5) + cos(Q320.q5)*(cos(Q430.q1 + Q430.q2 + Q430.q3 + Q320.q4)/2 + cos(Q430.q2 - Q430.q1 + Q430.q3 + Q320.q4)/2));
+  }
 
 void inverse_kinematics(Q430_t *Q430, Q320_t *Q320, X_t *X) {
   Q430->q1 =  atan2(X->y, X->x);
@@ -17,7 +19,7 @@ void inverse_kinematics(Q430_t *Q430, Q320_t *Q320, X_t *X) {
 
   Q320->q4 = -(Q430->q2 + Q430->q3);
 
-  Q320->q5 = Q430->q1 - X->theta;
+  Q320->q5 = Q430->q1 - X->wz;
 
   Q320->q6 = X->grip;
 }
@@ -37,12 +39,12 @@ void inverse_jacobian(Q430_t *Qd430, X_t Xd, Q430_t Q430, Q320_t Q320) {
   //Currently making a copy, for efficiency change original struct...
   X_t Xd1 = rotation(Q430, Xd);
   //Removed Xd1.wx from joint velocity calculation as per method 2
-  Qd430->q1 = iJ[0][0] * Xd1.x + iJ[0][1] * Xd1.y + iJ[0][2] * Xd1.z + iJ[0][4] * Xd1.theta; //+ iJ[0][3] * Xd1.wy + iJ[0][4] * Xd1.wz;
-  Qd430->q2 = iJ[1][0] * Xd1.x + iJ[1][1] * Xd1.y + iJ[1][2] * Xd1.z + iJ[1][4] * Xd1.theta; //+ iJ[1][3] * Xd1.wy + iJ[1][4] * Xd1.wz;
-  Qd430->q3 = iJ[2][0] * Xd1.x + iJ[2][1] * Xd1.y + iJ[2][2] * Xd1.z + iJ[2][4] * Xd1.theta; //+ iJ[2][3] * Xd1.wy + iJ[2][4] * Xd1.wz;
+  Qd430->q1 = iJ[0][0] * Xd1.x + iJ[0][1] * Xd1.y + iJ[0][2] * Xd1.z + iJ[0][3] * Xd1.wy + iJ[0][4] * Xd1.wz;
+  Qd430->q2 = iJ[1][0] * Xd1.x + iJ[1][1] * Xd1.y + iJ[1][2] * Xd1.z +  iJ[1][3] * Xd1.wy + iJ[1][4] * Xd1.wz;
+  Qd430->q3 = iJ[2][0] * Xd1.x + iJ[2][1] * Xd1.y + iJ[2][2] * Xd1.z + + iJ[2][3] * Xd1.wy + iJ[2][4] * Xd1.wz;
   //  Qd->q4 = iJ[3][0] * Xd1.x + iJ[3][1] * Xd1.y + iJ[3][2] * Xd1.z + iJ[3][3] * Xd1.wy + iJ[3][4] * Xd1.wz;
   //  Qd->q5 = iJ[4][0] * Xd1.x + iJ[4][1] * Xd1.y + iJ[4][2] * Xd1.z + iJ[4][3] * Xd1.wy + iJ[4][4] * Xd1.wz;
-  
+
 }
 
 // Helper function to rotate task space velocities to frame {1}.
@@ -57,10 +59,9 @@ X_t rotation(Q430_t Q430, X_t Xd) {
   Xd1.y = R01[1][0] * Xd.x +  R01[1][1]  * Xd.y;
   Xd1.z = R01[2][2] * Xd.z;
   //Can omit Xd1.wx as it is removed later in outer loop
-  //  Xd1.wx = R01[0][0] * Xd.wx +  R01[0][1] * Xd.wy;
-  //  Xd1.wy = R01[1][0] * Xd.wx +  R01[1][1] * Xd.wy;
-  //  Xd1.wz = R01[2][2] * Xd.wz;
-  Xd1.theta = R01[2][2] * Xd.theta;
+  Xd1.wx = R01[0][0] * Xd.wx +  R01[0][1] * Xd.wy;
+  Xd1.wy = R01[1][0] * Xd.wx +  R01[1][1] * Xd.wy;
+  Xd1.wz = R01[2][2] * Xd.wz;
   return Xd1;
 }
 
@@ -100,8 +101,8 @@ void inverse_jacobian_calculator(float inv_jacobian[5][5], Q430_t Q430, Q320_t Q
 //  Xd->x = j[0][0] * Qd430.q1 + j[0][1] * Qd430.q2 + j[0][2] * Qd430.q3;
 //  Xd->y = j[1][0] * Qd430.q1 + j[1][1] * Qd430.q2 + j[1][2] * Qd430.q3;
 //  Xd->z = j[2][1] * Qd430.q2 + j[2][2] * Qd430.q3;
-////  Xd->wx = j[3][1] * Qd430.q2 + j[3][2] * Qd430.q3 + j[3][3] * Qd.q4 + j[3][4] * Qd.q5; 
-////  Xd->wy = j[4][1] * Qd430.q2 + j[4][2] * Qd430.q3 + j[4][3] * Qd.q4 + j[4][4] * Qd.q5; 
+////  Xd->wx = j[3][1] * Qd430.q2 + j[3][2] * Qd430.q3 + j[3][3] * Qd.q4 + j[3][4] * Qd.q5;
+////  Xd->wy = j[4][1] * Qd430.q2 + j[4][2] * Qd430.q3 + j[4][3] * Qd.q4 + j[4][4] * Qd.q5;
 ////  //Xd->wy = 0;
 //  Xd->theta = j[5][0] * Qd430.q1 + j[5][4] * Qd.q5;
 //}

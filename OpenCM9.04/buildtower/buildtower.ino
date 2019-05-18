@@ -24,15 +24,16 @@
 #define ADDRESS_OPERATING_MODE_430          11
 #define ADDRESS_GOAL_POSITION_430           116
 #define ADDRESS_GOAL_VELOCITY_430           104
-#define ADDRESS_PRESENT_PWM_430             124
-#define ADDRESS_PRESENT_I_430               126
 #define ADDRESS_PRESENT_VELOCITY_430        128
 #define ADDRESS_PRESENT_POSITION_430        132
 #define ADDRESS_PROFILE_VELOCITY_430        112
 #define ADDRESS_PROFILE_ACCELERATION_430    108
+//Integral control addresses
+#define ADDRESS_INTEGRAL_VELOCITY_430       76
+#define ADDRESS_PROPORTIONAL_VELOCITY_430   78
 
-#define VELOCITY_LIMIT_430                  500 // rev per min
-#define ACCELERATION_LIMIT_430              30000 // rev per min^2
+#define VELOCITY_LIMIT_430                  500 // max 1000ish encoder units per second
+#define ACCELERATION_LIMIT_430              30000 // max 32000ish
 
 // Control table 320
 #define ADDRESS_TORQUE_ENABLE_320           24
@@ -46,18 +47,21 @@
 #define LENGTH_GOAL_VELOCITY_430            4
 #define LENGTH_PRESENT_POSITION_430         4
 #define LENGTH_PRESENT_VELOCITY_430         4
-#define LENGTH_PRESENT_PWM_430              4
-#define LENGTH_PRESENT_I_430                4
 
 #define LENGTH_GOAL_POSITION_320            2
 #define LENGTH_GOAL_VELOCITY_320            2
 #define LENGTH_PRESENT_POSITION_320         2
 
-#define UNITS_TO_MA                         2.69 // approximate mA per unit
-#define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
 #define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
 #define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
 #define VELOCITY_CONVERSION_CONSTANT_430    41.69998509 //rads per sec per unit
+
+#define Q1_KVI                              500 //initial value 1000, [0, 16383]
+#define Q1_KVP                              50 //initial value 100, [0, 16383]
+#define Q2_KVI                              250 //initial value 1000, [0, 16383]
+#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q3_KVP                              150 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -137,7 +141,9 @@ typedef struct {
   float x;
   float y;
   float z;
-  float theta;
+  float wx;
+  float wy;
+  float wz;
   float grip;
 } X_t;
 
@@ -157,22 +163,20 @@ typedef struct {
 
 X_t Xref; //reference position
 X_t Xm; //"measured" robot position from FK(measured angles)
-X_t Xprev = {0.2, 0, 0.3, 0, 0}; //previous robot position, initial is home
+X_t Xprev = {0.2, 0, 0.3, 0, 0, 0, 0}; //previous robot position, initial is home
 X_t Xdref; // reference velocity
 
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
 Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
+Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
 
 Q320_t Qr320 = {0, 0, 0}; //reference joint angles
 Q320_t Qm320 = {0, 0, 0}; //measured joint angles
 Q320_t Qc320 = {0, 0, 0}; //control signal, target joint angles
-
-Q430_t PWM430 = {0, 0, 0}; // measured PWM, stored as a percentage 0-100%
-Q430_t I430 = {0, 0, 0}; // measured current, in mA
 
 float L1 = 0.206;
 float L2 = 0.2;
@@ -196,27 +200,18 @@ void setup()
   // Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
   dynamixel::PacketHandler *packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 
-  // Initialize GroupSyncWrite (position) instance
+  // Initialize GroupSyncWrite instance
   dynamixel::GroupSyncWrite groupSyncWrite430(portHandler, packetHandler, ADDRESS_GOAL_POSITION_430, LENGTH_GOAL_POSITION_430);
   dynamixel::GroupSyncWrite groupSyncWrite320(portHandler, packetHandler, ADDRESS_GOAL_POSITION_320, LENGTH_GOAL_POSITION_320);
 
-  // Initialize GroupSyncRead (position) instance
-  dynamixel::GroupSyncRead groupSyncRead430(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
-  dynamixel::GroupSyncRead groupSyncRead320(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
-
-  //Initialize Velocity instance
+  //Initialize GroupSyncWriteVelocity instance
   dynamixel::GroupSyncWrite groupSyncWriteVelocity430(portHandler, packetHandler, ADDRESS_GOAL_VELOCITY_430 , LENGTH_GOAL_VELOCITY_430);
   dynamixel::GroupSyncRead groupSyncReadVelocity430(portHandler, packetHandler, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
 
-  //Initialize PWM instance
-  // if enable writing PWM, do add parameter storage
-//  dynamixel::GroupSyncWrite groupSyncWritePWM430(portHandler, packetHandler, ADDRESS_GOAL_PWM_430 , LENGTH_GOAL_PWM_430);
-  dynamixel::GroupSyncRead groupSyncReadPWM430(portHandler, packetHandler, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
+  // Initialize GroupSyncRead instance for Present Position
+  dynamixel::GroupSyncRead groupSyncRead430(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
+  dynamixel::GroupSyncRead groupSyncRead320(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
 
-  //Initialize Current (I) instance
-  // if enable writing I, do add parameter storage
-//  dynamixel::GroupSyncWrite groupSyncWriteI430(portHandler, packetHandler, ADDRESS_GOAL_I_430 , ADDRESS_GOAL_I_430);
-  dynamixel::GroupSyncRead groupSyncReadI430(portHandler, packetHandler, ADDRESS_PRESENT_I_430, LENGTH_PRESENT_I_430);
 
   int dxl_comm_result = COMM_TX_FAIL;             // Communication result
   bool dxl_addparam_result = false;                // addParam result
@@ -262,30 +257,32 @@ void setup()
   positionMode320(DXL5_ID, portHandler, packetHandler);
   positionMode320(DXL6_ID, portHandler, packetHandler);
 
+  //      //Controller gains
+      setIntegralVelocity430(DXL1_ID, Q1_KVI, portHandler, packetHandler);
+     setIntegralVelocity430(DXL2_ID, Q2_KVI, portHandler, packetHandler);
+      setIntegralVelocity430(DXL3_ID, Q3_KVI, portHandler, packetHandler);
+
+      setProportionalVelocity430(DXL1_ID, Q1_KVP, portHandler, packetHandler);
+     setProportionalVelocity430(DXL2_ID, Q2_KVP, portHandler, packetHandler);
+      setProportionalVelocity430(DXL3_ID, Q3_KVP, portHandler, packetHandler);
+
   // Set velocity limits
   velocityLimit430(DXL1_ID, portHandler, packetHandler);
   velocityLimit430(DXL2_ID, portHandler, packetHandler);
   velocityLimit430(DXL3_ID, portHandler, packetHandler);
 
-  // Add parameter for present position value
+  // Add parameter storage for Dynamixel#1 present position value
   dxl_addparam_result = groupSyncRead430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL2_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL3_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL4_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL5_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL6_ID);
-  // Add parameter for present velocity value
+
+  //add param to velocity
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL2_ID);
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL3_ID);
-  // Add parameter for present pwm value
-  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL1_ID);
-  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL2_ID);
-  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL3_ID);
-  // Add parameter for present current value
-  dxl_addparam_result = groupSyncReadI430.addParam(DXL1_ID);
-  dxl_addparam_result = groupSyncReadI430.addParam(DXL2_ID);
-  dxl_addparam_result = groupSyncReadI430.addParam(DXL3_ID);
 
   // uncomment these to test writing the pose Q, note Q is initialised above
   // Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
@@ -384,6 +381,19 @@ void setup()
       // clear polys arrays?
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
+      disableTorque430(DXL1_ID, portHandler, packetHandler);
+      disableTorque430(DXL2_ID, portHandler, packetHandler);
+      disableTorque430(DXL3_ID, portHandler, packetHandler);
+      disableTorque320(DXL4_ID, portHandler, packetHandler);
+      disableTorque320(DXL5_ID, portHandler, packetHandler);
+      disableTorque320(DXL6_ID, portHandler, packetHandler);
+      // Set to position mode;
+      positionMode430(DXL1_ID, portHandler, packetHandler);
+      positionMode430(DXL2_ID, portHandler, packetHandler);
+      positionMode430(DXL3_ID, portHandler, packetHandler);
+      positionMode320(DXL4_ID, portHandler, packetHandler);
+      positionMode320(DXL5_ID, portHandler, packetHandler);
+      positionMode320(DXL6_ID, portHandler, packetHandler);
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -417,13 +427,15 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.theta = theta;
+          Xref.wx = 0;
+          Xref.wy = 0;
+          Xref.wz = theta;
           Xref.grip = grip;
 
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           forward_kinematics(&Xprev, Qm430, Qm320);
           //Calculate feedback from measured task space, reference task space and previous measured task space
-          //          X_t ex = feedback(Xprev, Xref, X);
+//          X_t ex = feedback(Xprev, Xref, X);
 
           // get joint space control, Qc with IK, using feedback
           inverse_kinematics(&Qc430, &Qc320, &Xref);
@@ -441,27 +453,6 @@ void setup()
             Serial.print(Xprev.z, 5); Serial.print(' ');
             Serial.println();
           }
-          
-          //velocity calculations test
-//          x = quadEvaluate(&xpoly[count], dt / 1000.0);
-//          y = quadEvaluate(&ypoly[count], dt / 1000.0);
-//          z = quadEvaluate(&zpoly[count], dt / 1000.0);
-//          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
-//          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-//          Xdref.x = x;
-//          Xdref.y = y;
-//          Xdref.z = z;
-//          Xdref.theta = theta;
-//          Xdref.grip = grip;
-          //calculate Qd430
-//          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-//          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
-          
-//          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
-//          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
-//          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
-//          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
-//          Serial.println();
 
           dt = millis() - tstart;
         }
@@ -473,6 +464,12 @@ void setup()
       Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
+      disableTorque430(DXL1_ID, portHandler, packetHandler);
+      disableTorque430(DXL2_ID, portHandler, packetHandler);
+      disableTorque430(DXL3_ID, portHandler, packetHandler);
+      disableTorque320(DXL4_ID, portHandler, packetHandler);
+      disableTorque320(DXL5_ID, portHandler, packetHandler);
+      disableTorque320(DXL6_ID, portHandler, packetHandler);
       // Set to velocity mode
       velocityMode430(DXL1_ID, portHandler, packetHandler);
       velocityMode430(DXL2_ID, portHandler, packetHandler);
@@ -486,6 +483,15 @@ void setup()
       accelerationLimit430(DXL2_ID, portHandler, packetHandler);
       accelerationLimit430(DXL3_ID, portHandler, packetHandler);
 
+            //      //Controller gains
+//      setIntegralVelocity430(DXL1_ID, portHandler, packetHandler);
+      setIntegralVelocity430(DXL2_ID, portHandler, packetHandler);
+//      setIntegralVelocity430(DXL3_ID, portHandler, packetHandler);
+//
+//      setProportionalVelocity430(DXL1_ID, portHandler, packetHandler);
+      setProportionalVelocity430(DXL2_ID, portHandler, packetHandler);
+//      setProportionalVelocity430(DXL3_ID, portHandler, packetHandler);
+
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -493,7 +499,7 @@ void setup()
       enableTorque320(DXL4_ID, portHandler, packetHandler);
       enableTorque320(DXL5_ID, portHandler, packetHandler);
       enableTorque320(DXL6_ID, portHandler, packetHandler);
-      
+
       delay(500);
 
       unsigned int tstart = millis();
@@ -506,7 +512,7 @@ void setup()
         unsigned int tf = xpoly[count].tf;
         // complete current path
         while (dt < tf) {
-          
+
           //Calculate Xref
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
           float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
@@ -516,7 +522,9 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.theta = theta;
+          Xref.wx = 0;
+          Xref.wy = 0;
+          Xref.wz = theta;
           Xref.grip = grip;
 
           // Calculate Xdref
@@ -528,35 +536,35 @@ void setup()
           Xdref.x = x;
           Xdref.y = y;
           Xdref.z = z;
-          Xdref.theta = theta;
+          Xdref.wx = 0;
+          Xdref.wy = 0;
+          Xdref.wz = theta;
           Xdref.grip = grip;
 
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          readQd(&Qdm430, &groupSyncReadVelocity430, packetHandler);
-          // read current and pwm
-          readPWM(&PWM430, &groupSyncReadPWM430, packetHandler);
-          readI(&I430, &groupSyncReadI430, packetHandler);
-          
+          readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
+
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
 
           //Calculate control effort
           X_t Xke = velocityFeedback(Xdref, Xref, Xm);
-          X_t Xc = velocityControl(Xdref, Xref, Xke);
+          X_t Xdc = velocityControl(Xdref, Xref, Xke);
 
           // Calculate position control for motors 4,5,6 = Qc320, Qc430 is not used in velocity control
-          inverse_kinematics(&Qc430, &Qc320, &Xref); // or Xm?
+          inverse_kinematics(&Qc430, &Qc320, &Xm); // or Xref?
           // for DEBUGGING, find reference joint angles
           inverse_kinematics(&Qr430, &Qr320, &Xref);
 
           // Calculate velocity control for motors 1,2,3 = Qdc430
-          inverse_jacobian(&Qdc430, Xc, Qm430, Qm320);
+          inverse_jacobian(&Qdc430, Xdc, Qm430, Qm320);
           // for DEBUGGING, find reference joint velocities
-          inverse_jacobian(&Qdr430, Xm, Qr430, Qr320);
+          inverse_jacobian(&Qdr430, Xdref, Qr430, Qr320);
 
           //write motors
           writeQd(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
+//          writeQdNo430Sync(&Qdc430, &Qc320, &groupSyncWrite320, portHandler, packetHandler);
 
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');
@@ -588,14 +596,6 @@ void setup()
             Serial.print(Xm.x, 5); Serial.print(' ');
             Serial.print(Xm.y, 5); Serial.print(' ');
             Serial.print(Xm.z, 5); Serial.print(' ');
-            // PWM
-            Serial.print(PWM.q1, 5); Serial.print(' ');
-            Serial.print(PWM.q2, 5); Serial.print(' ');
-            Serial.print(PWM.q3, 5); Serial.print(' ');
-            // electrical current
-            Serial.print(I.q1, 5); Serial.print(' ');
-            Serial.print(I.q2, 5); Serial.print(' ');
-            Serial.print(I.q3, 5); Serial.print(' ');
             Serial.println();
           }
 
@@ -626,9 +626,9 @@ void setup()
         Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
         state = WAITING;
         }
-    } 
+    }
     else if (state == PASSIVE_VELOCITY) {
-      
+
     }
     else if (state == FINISHED) {
     }
