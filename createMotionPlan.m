@@ -6,7 +6,11 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
     
     %}    
     %% Set up loading Bay, starting Position and Testing paramters
-    RIGHT = 1;
+    if loadSide == 'RIGHT' 
+        RIGHT = 1;
+    elseif loadSide == LEFT
+        RIGHT = 0; 
+    end
 
     STARTBLOCK = 1;
     NBLOCKS = 54;
@@ -20,7 +24,7 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
     
 %     Tower = jTower(0.2, -0.05, 0, RIGHT);
-    Tower = jTower(x/1000, y/1000, theta/1000, loadSide);
+    Tower = jTower(x/1000, y/1000, theta*pi/180, RIGHT);
     
         
     
