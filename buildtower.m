@@ -30,6 +30,22 @@ global vc_xdr; vc_xdr = [];
 global vc_ydr; vc_ydr = [];
 global vc_zdr; vc_zdr = [];
 
+global vc_q1r; vc_q1r = [];
+global vc_q2r; vc_q2r = [];
+global vc_q3r; vc_q3r = [];
+global vc_q1dr; vc_q1dr = [];
+global vc_q2dr; vc_q2dr = [];
+global vc_q3dr; vc_q3dr = [];
+global vc_q1m; vc_q1m = [];
+global vc_q2m; vc_q2m = [];
+global vc_q3m; vc_q3m = [];
+global vc_q1dm; vc_q1dm = [];
+global vc_q2dm; vc_q2dm = [];
+global vc_q3dm; vc_q3dm = [];
+global vc_q1dc; vc_q1dc = [];
+global vc_q2dc; vc_q2dc = [];
+global vc_q3dc; vc_q3dc = [];
+
 global debugging; debugging = 1; % debugging mode on by default
 %% select serial port
 disp('Available COM ports:')
@@ -181,7 +197,7 @@ function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     %% plot
     az = 15;
     el = 15;
-    
+
     subplot(221)
     hold on
     % received
@@ -199,7 +215,7 @@ function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     legend('x', 'y', 'z', 'theta','grip')
     xlabel('Time (s)')
     title('Received Trajectories')
-    
+
     subplot(222)
     axis square
     hold on
@@ -212,7 +228,7 @@ function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     zlabel('z')
     title('Received Trajectories')
     legend('Received', 'Planned')
-    
+
     subplot(223)
     hold on
     [tx2, x2] = generate(xsent, 50);
@@ -228,7 +244,7 @@ function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
     title('Planned Trajectories')
     legend('x', 'y', 'z', 'theta','grip')
     xlabel('Time (s)')
-    
+
     subplot(224)
     axis square
     hold on
@@ -243,16 +259,16 @@ end
 
 function multipleTrajectories(serial)
     disp('Send multiple trajectories and run position control...')
-    
+
     disp('Select a motion plan to send:')
     disp('1 - build tower')
     select = input('>');
     if select == 1
         [nchunks, chunks] = createMotionPlan();
     end
-    
+
     start_time = tic;
-    
+
     for i = 1:nchunks
         data = chunks(:,:,:,i);
         xdata = data(:,:,1);
@@ -261,16 +277,16 @@ function multipleTrajectories(serial)
         thdata = data(:,:,4);
         gripdata = data(:,:,5);
         [length,~,~] = size(data);
-        
+
         sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata);
-        
+
         disp('Chunk '+string(i)+' of '+string(nchunks)+' sent.')
-        success = runControl(serial, "PC", i);   
+        success = runControl(serial, "PC", i);
         if ~success
             return
         end
     end
-    
+
     end_time = toc(start_time);
     disp('Duration of motion plan: '+string(end_time)+'s');
 end
@@ -289,10 +305,10 @@ function success = runControl(serial, type, chunk_i)
     else
         disp('Device did not respond correctly: ' + join(string(received)))
     end
-    
-    % assume success, set false (0) if 
+
+    % assume success, set false (0) if
     success = 1;
-    
+
     global debugging
     if debugging
         % will read debug output until receives "DONE" from device
@@ -305,7 +321,7 @@ function success = runControl(serial, type, chunk_i)
         % wait for device to confirm position control completed planned trajectories
         while get(serial, 'BytesAvailable') == 0
         end
-        
+
         received = strtrim(fscanf(serial));
         if strcmp(received, "DONE")
             if nargin == 2 % no chunk_i input
@@ -317,7 +333,7 @@ function success = runControl(serial, type, chunk_i)
             disp('Device did not respond correctly: ' + received)
             disp('Stopping operation.')
         end
-    end    
+    end
 end
 
 function readJoints(serial)
@@ -362,12 +378,8 @@ end
 
 function readPositionControlDebugging(serial)
     global pc_time
-    global pc_xr
-    global pc_yr
-    global pc_zr
-    global pc_xm
-    global pc_ym
-    global pc_zm
+    global pc_xr pc_yr pc_zr
+    global pc_xm pc_ym pc_zm
     done = 0;
     while ~done
         data = strtrim(fscanf(serial));
@@ -395,55 +407,70 @@ end
 
 function readVelocityControlDebugging(serial)
     global vc_time
-    global vc_xr
-    global vc_yr
-    global vc_zr
-    global vc_xm
-    global vc_ym
-    global vc_zm
-    global vc_xe
-    global vc_ye
-    global vc_ze
-    global vc_xdr
-    global vc_ydr
-    global vc_zdr
+    global vc_xr vc_yr vc_zr
+    global vc_xm vc_ym vc_zm
+%     global vc_xe vc_ye vc_ze
+%     global vc_xdr vc_ydr vc_zdr
+    global vc_q1r vc_q2r vc_q3r
+    global vc_q1dr vc_q2dr vc_q3dr
+    global vc_q1m vc_q2m vc_q3m
+    global vc_q1dm vc_q2dm vc_q3dm
+    global vc_q1dc vc_q2dc vc_q3dc
     done = 0;
     while ~done
         data = strtrim(fscanf(serial));
         if ~strcmp(data, "DONE")
             data = sscanf(data, '%f');
             t = data(1)/1000;
-            xr = data(2);
-            yr = data(3);
-            zr = data(4);
-            xm = data(5);
-            ym = data(6);
-            zm = data(7);
-            xe = data(8);
-            ye = data(9);
-            ze = data(10);
-            xdr = data(11);
-            ydr = data(12);
-            zdr = data(13);
+            q1r = data(2);
+            q2r = data(3);
+            q3r = data(4);
+            q1m = data(5);
+            q2m = data(6);
+            q3m = data(7);
+            q1dr = data(8);
+            q2dr = data(9);
+            q3dr = data(10);
+            q1dc = data(11);
+            q2dc = data(12);
+            q3dc = data(13);
+            q1dm = data(11);
+            q2dm = data(12);
+            q3dm = data(13);
+            xr = data(14);
+            yr = data(15);
+            zr = data(16);
+            xm = data(17);
+            ym = data(18);
+            zm = data(19);
             vc_time = [vc_time t];
+            vc_q1r = [vc_q1r q1r];
+            vc_q2r = [vc_q2r q2r];
+            vc_q3r = [vc_q3r q3r];
+            vc_q1m = [vc_q1m q1m];
+            vc_q2m = [vc_q2m q2m];
+            vc_q3m = [vc_q3m q3m];
+            vc_q1dr = [vc_q1dr q1dr];
+            vc_q2dr = [vc_q2dr q2dr];
+            vc_q3dr = [vc_q3dr q3dr];
+            vc_q1dc = [vc_q1dc q1dc];
+            vc_q2dc = [vc_q2dc q2dc];
+            vc_q3dc = [vc_q3dc q3dc];
+            vc_q1dm = [vc_q1dm q1dm];
+            vc_q2dm = [vc_q2dm q2dm];
+            vc_q3dm = [vc_q3dm q3dm];
             vc_xr = [vc_xr xr];
             vc_yr = [vc_yr yr];
             vc_zr = [vc_zr zr];
             vc_xm = [vc_xm xm];
             vc_ym = [vc_ym ym];
             vc_zm = [vc_zm zm];
-            vc_xe = [vc_xe xe];
-            vc_ye = [vc_ye ye];
-            vc_ze = [vc_ze ze];
-            vc_xdr = [vc_xdr xdr];
-            vc_ydr = [vc_ydr ydr];
-            vc_zdr = [vc_zdr zdr];
         else
             return
         end
     end
 end
-    
+
 
 function [tx, x] = generate(data, samples)
     % data has 6 cols: a3 a2 a1 a0 ts tf
@@ -469,25 +496,18 @@ end
 
 function plotDebugData()
     global pc_time
-    global pc_xr
-    global pc_yr
-    global pc_zr
-    global pc_xm
-    global pc_ym
-    global pc_zm
+    global pc_xr pc_yr pc_zr
+    global pc_xm pc_ym pc_zm
     global vc_time
-    global vc_xr
-    global vc_yr
-    global vc_zr
-    global vc_xm
-    global vc_ym
-    global vc_zm
-    global vc_xe
-    global vc_ye
-    global vc_ze
-    global vc_xdr
-    global vc_ydr
-    global vc_zdr
+    global vc_xr vc_yr vc_zr
+    global vc_xm vc_ym vc_zm
+    global vc_xe vc_ye vc_ze
+    global vc_xdr vc_ydr vc_zdr
+    global vc_q1r vc_q2r vc_q3r
+    global vc_q1dr vc_q2dr vc_q3dr
+    global vc_q1m vc_q2m vc_q3m
+    global vc_q1dm vc_q2dm vc_q3dm
+    global vc_q1dc vc_q2dc vc_q3dc
     if ~isempty(pc_time)
         % position control plots
         pc_f = 1/mean(diff(pc_time));
@@ -520,36 +540,41 @@ function plotDebugData()
         vc_f = 1/mean(diff(vc_time));
 
         figure
-        subplot(221)
+        subplot(311)
         hold on
-        plot(vc_time, vc_xdr)
-        plot(vc_time, vc_ydr)
-        plot(vc_time, vc_zdr)
-        title('Velocity Reference, f='+string(vc_f)+'Hz')
-        legend('xd', 'yd', 'zd')
-        xlabel('Time (s)')
+        plot(vc_time, vc_q1r, '--')
+        plot(vc_time, vc_q2r, '--')
+        plot(vc_time, vc_q3r, '--')
+        plot(vc_time, vc_q1m)
+        plot(vc_time, vc_q2m)
+        plot(vc_time, vc_q3m)
+        title('Joint Angles')
+        legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
 
-        subplot(222)
-        axis square
+        subplot(312)
         hold on
-        grid on
-        view(15,15)
-        plot3(vc_xr, vc_yr, vc_zr, ':')
-        plot3(vc_xm, vc_ym, vc_zm)
-        title('Trajectory')
-        legend('Reference', 'Measured')
-        xlabel('x')
-        ylabel('y')
-        zlabel('z')
+        plot(vc_time, vc_q1dr, '--')
+        plot(vc_time, vc_q2dr, '--')
+        plot(vc_time, vc_q3dr, '--')
+        plot(vc_time, vc_q1dc, '--', 'LineWidth', 2)
+        plot(vc_time, vc_q2dc, '--', 'LineWidth', 2)
+        plot(vc_time, vc_q3dc, '--', 'LineWidth', 2)
+        plot(vc_time, vc_q1dm)
+        plot(vc_time, vc_q2dm)
+        plot(vc_time, vc_q3dm)
+        title('Joint Velocities')
+        legend('q1dr', 'q2dr', 'q3dr', 'q1dc', 'q2dc', 'q3dc', 'q1dm', 'q2dm', 'q3dm')
 
-        subplot(223)
+        subplot(313)
         hold on
-        plot(vc_time, vc_xe)
-        plot(vc_time, vc_ye)
-        plot(vc_time, vc_ze)
-        title('Position Error, f='+string(vc_f)+'Hz')
-        legend('xe', 'ye', 'ze')
-        xlabel('Time (s)')
+        plot(vc_time, vc_xr, '--')
+        plot(vc_time, vc_yr, '--')
+        plot(vc_time, vc_zr, '--')
+        plot(vc_time, vc_xm)
+        plot(vc_time, vc_ym)
+        plot(vc_time, vc_zm)
+        title('Task Space Position')
+        legend('xr', 'yr', 'zr', 'xm', 'ym', 'zm')
     end
 end
 

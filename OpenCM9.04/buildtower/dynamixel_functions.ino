@@ -52,9 +52,9 @@ void readQd(Q430_t *Qd430, dynamixel::GroupSyncRead *groupSyncReadVelocity430, d
   int qd2_encoder = groupSyncReadVelocity430->getData(DXL2_ID, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
   int qd3_encoder = groupSyncReadVelocity430->getData(DXL3_ID, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
 
-  Qd430->q1 = convertToRadiansPerSecond(qd1_encoder, false, Q1_SCALE, Q1_OFFSET);
-  Qd430->q2 = convertToRadiansPerSecond(qd2_encoder, true, Q2_SCALE, Q2_OFFSET);
-  Qd430->q3 = convertToRadiansPerSecond(qd3_encoder, true, Q3_SCALE, Q3_OFFSET);
+  Qd430->q1 = convertToRadiansPerSecond(qd1_encoder, false);
+  Qd430->q2 = convertToRadiansPerSecond(qd2_encoder, true);
+  Qd430->q3 = convertToRadiansPerSecond(qd3_encoder, true);
 
 }
 void readQ(Q430_t *Q430, Q320_t *Q320, dynamixel::GroupSyncRead *groupSyncRead430, dynamixel::GroupSyncRead *groupSyncRead320, dynamixel::PacketHandler *packetHandler) {
@@ -82,7 +82,7 @@ void readQ(Q430_t *Q430, Q320_t *Q320, dynamixel::GroupSyncRead *groupSyncRead43
   //  Q->q6 = -(5*PI/6) + ANGLE_CONVERSION_CONSTANT_320 * (groupSyncRead320->getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320));
 }
 
-float convertToRadiansPerSecond(int qe, boolean flip, float scale, float offset){
+float convertToRadiansPerSecond(int qe, boolean flip){
   if (flip) {
     return -qe / VELOCITY_CONVERSION_CONSTANT_430;
   } else {
@@ -200,10 +200,7 @@ void writeQd(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWr
 
   // Syncwrite goal position
   dxl_comm_result = groupSyncWriteVelocity430->txPacket();
-  if (dxl_comm_result != COMM_SUCCESS){ 
-    Serial.println(dxl_comm_result);
-    packetHandler->getTxRxResult(dxl_comm_result);
-    }
+  if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
   dxl_comm_result = groupSyncWrite320->txPacket();
   if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
 
