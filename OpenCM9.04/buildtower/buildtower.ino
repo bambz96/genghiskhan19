@@ -28,9 +28,12 @@
 #define ADDRESS_PRESENT_POSITION_430        132
 #define ADDRESS_PROFILE_VELOCITY_430        112
 #define ADDRESS_PROFILE_ACCELERATION_430    108
+//Integral control addresses
+#define ADDRESS_INTEGRAL_VELOCITY_430       76
+#define ADDRESS_PROPORTIONAL_VELOCITY_430   78
 
-#define VELOCITY_LIMIT_430                  500 //encoder units per second
-#define ACCELERATION_LIMIT_430              30000
+#define VELOCITY_LIMIT_430                  500 // max 1000ish encoder units per second
+#define ACCELERATION_LIMIT_430              30000 // max 32000ish
 
 // Control table 320
 #define ADDRESS_TORQUE_ENABLE_320           24
@@ -52,6 +55,13 @@
 #define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
 #define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
 #define VELOCITY_CONVERSION_CONSTANT_430    41.69998509 //rads per sec per unit
+
+#define Q1_KVI                              500 //initial value 1000, [0, 16383]
+#define Q1_KVP                              50 //initial value 100, [0, 16383]
+#define Q2_KVI                              250 //initial value 1000, [0, 16383]
+#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q3_KVP                              150 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -243,6 +253,15 @@ void setup()
   positionMode320(DXL4_ID, portHandler, packetHandler);
   positionMode320(DXL5_ID, portHandler, packetHandler);
   positionMode320(DXL6_ID, portHandler, packetHandler);
+
+  //      //Controller gains
+      setIntegralVelocity430(DXL1_ID, Q1_KVI, portHandler, packetHandler);
+     setIntegralVelocity430(DXL2_ID, Q2_KVI, portHandler, packetHandler);
+      setIntegralVelocity430(DXL3_ID, Q3_KVI, portHandler, packetHandler);
+
+      setProportionalVelocity430(DXL1_ID, Q1_KVP, portHandler, packetHandler);
+     setProportionalVelocity430(DXL2_ID, Q2_KVP, portHandler, packetHandler);
+      setProportionalVelocity430(DXL3_ID, Q3_KVP, portHandler, packetHandler);
 
   // Set velocity limits
   velocityLimit430(DXL1_ID, portHandler, packetHandler);
@@ -534,20 +553,21 @@ void setup()
 
           //Calculate control effort
           X_t Xke = velocityFeedback(Xdref, Xref, Xm);
-          X_t Xc = velocityControl(Xdref, Xref, Xke);
+          X_t Xdc = velocityControl(Xdref, Xref, Xke);
 
           // Calculate position control for motors 4,5,6 = Qc320, Qc430 is not used in velocity control
-          inverse_kinematics(&Qc430, &Qc320, &Xref); // or Xm?
+          inverse_kinematics(&Qc430, &Qc320, &Xm);
           // for DEBUGGING, find reference joint angles
           inverse_kinematics(&Qr430, &Qr320, &Xref);
 
           // Calculate velocity control for motors 1,2,3 = Qdc430
-          inverse_jacobian(&Qdc430, Xc, Qm430, Qm320);
+          inverse_jacobian(&Qdc430, Xdc, Qm430, Qm320);
           // for DEBUGGING, find reference joint velocities
-          inverse_jacobian(&Qdr430, Xref, Qr430, Qr320);
+          inverse_jacobian(&Qdr430, Xdref, Qr430, Qr320);
 
           //write motors
           writeQd(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
+//          writeQdNo430Sync(&Qdc430, &Qc320, &groupSyncWrite320, portHandler, packetHandler);
 
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');

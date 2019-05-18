@@ -116,12 +116,15 @@ return
 %% functions
 function [xdata, ydata, zdata, thdata, gripdata] = chooseAndSendTrajectory(serial)
     disp('Select a trajectory to send:')
-    disp('1 - test trajectory')
-    disp('2 - pick and place first block')
+    disp('1 - long test trajectory')
+    disp('2 - short test trajectory')
+    disp('3 - pick and place 1st block')
     select = input('>');
     if select == 1
-        [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory();
+        [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory(1);
     elseif select == 2
+        [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory(2);
+    elseif select == 3
         [length, data] = pickAndPlace();
         xdata = data(:,:,1);
         ydata = data(:,:,2);
@@ -587,7 +590,7 @@ function plotDebugData()
         vc_f = 1/mean(diff(vc_time));
 
         figure
-        subplot(221)
+        subplot(211)
         hold on
         plot(vc_time, vc_q1r, '--')
         plot(vc_time, vc_q2r, '--')
@@ -597,22 +600,8 @@ function plotDebugData()
         plot(vc_time, vc_q3m)
         title('Joint Angles, f='+string(vc_f)+'Hz')
         legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
-
-        subplot(222)
-        hold on
-        plot(vc_time, vc_q1dr, '--')
-        plot(vc_time, vc_q2dr, '--')
-        plot(vc_time, vc_q3dr, '--')
-        plot(vc_time, vc_q1dc, '--', 'LineWidth', 2)
-        plot(vc_time, vc_q2dc, '--', 'LineWidth', 2)
-        plot(vc_time, vc_q3dc, '--', 'LineWidth', 2)
-        plot(vc_time, vc_q1dm)
-        plot(vc_time, vc_q2dm)
-        plot(vc_time, vc_q3dm)
-        title('Joint Velocities')
-        legend('q1dr', 'q2dr', 'q3dr', 'q1dc', 'q2dc', 'q3dc', 'q1dm', 'q2dm', 'q3dm')
-
-        subplot(223)
+        
+        subplot(212)
         hold on
         plot(vc_time, vc_xr, '--')
         plot(vc_time, vc_yr, '--')
@@ -623,19 +612,46 @@ function plotDebugData()
         title('Task Space Position')
         legend('xr', 'yr', 'zr', 'xm', 'ym', 'zm')
 
-        subplot(224)
-        hold on
-        plot(vc_time, vc_q1dc)
-        plot(vc_time, vc_q2dc)
-        plot(vc_time, vc_q3dc)
+%         subplot(224)
+%         hold on
+%         plot(vc_time, vc_q1dc)
+%         plot(vc_time, vc_q2dc)
+%         plot(vc_time, vc_q3dc)
 %         plot(vc_time, vc_q1pwm, ':')
 %         plot(vc_time, vc_q2pwm, ':')
 %         plot(vc_time, vc_q3pwm, ':')
 %         plot(vc_time, vc_q1i, '--')
 %         plot(vc_time, vc_q2i, '--')
 %         plot(vc_time, vc_q3i, '--')
-        title('Control and PWM')
+%         title('Control and PWM')
 %         legend('q1dc', 'q2dc', 'q3dc', 'pwm1', 'pwm2', 'pwm3', 'i1', 'i2', 'i3')
+
+        figure
+        subplot(311)
+        hold on
+        plot(vc_time, vc_q1dr, '--')
+        plot(vc_time, vc_q1dc, ':')
+        plot(vc_time, vc_q1dm)
+        title('Q1 Velocities')
+        legend('r', 'c', 'm')
+        
+        subplot(312)
+        hold on
+        plot(vc_time, vc_q2dr, '--')
+        plot(vc_time, vc_q2dc, ':')
+        plot(vc_time, vc_q2dm)
+        title('Q2 Velocities')
+        legend('r', 'c', 'm')
+        
+        subplot(313)
+        hold on
+        plot(vc_time, vc_q3dr, '--')
+        plot(vc_time, vc_q3dc, ':')
+        plot(vc_time, vc_q3dm)
+        title('Q3 Velocities')
+        legend('r', 'c', 'm')
+
+        
     end
 end
 
