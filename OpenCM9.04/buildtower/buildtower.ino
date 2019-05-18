@@ -156,6 +156,7 @@ X_t Xdref; // reference velocity
 
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
+Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
@@ -508,7 +509,7 @@ void setup()
 
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          readQd(&Qdm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+          readQd(&Qdm430, &groupSyncRead430,  packetHandler);
           
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
@@ -533,17 +534,17 @@ void setup()
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');
             // reference joint angles, Qr
-            Serial.print(Qr.q1, 5); Serial.print(' ');
-            Serial.print(Qr.q2, 5); Serial.print(' ');
-            Serial.print(Qr.q3, 5); Serial.print(' ');
+            Serial.print(Qr430.q1, 5); Serial.print(' ');
+            Serial.print(Qr430.q2, 5); Serial.print(' ');
+            Serial.print(Qr430.q3, 5); Serial.print(' ');
             // measured joint angles, Qm
-            Serial.print(Qm.q1, 5); Serial.print(' ');
-            Serial.print(Qm.q2, 5); Serial.print(' ');
-            Serial.print(Qm.q3, 5); Serial.print(' ');
+            Serial.print(Qm430.q1, 5); Serial.print(' ');
+            Serial.print(Qm430.q2, 5); Serial.print(' ');
+            Serial.print(Qm430.q3, 5); Serial.print(' ');
             // reference joint velocity, Qdr
-            Serial.print(Qdr.q1, 5); Serial.print(' ');
-            Serial.print(Qdr.q2, 5); Serial.print(' ');
-            Serial.print(Qdr.q3, 5); Serial.print(' ');
+            Serial.print(Qdr430.q1, 5); Serial.print(' ');
+            Serial.print(Qdr430.q2, 5); Serial.print(' ');
+            Serial.print(Qdr430.q3, 5); Serial.print(' ');
             // planned joint velocity, Qdc
             Serial.print(Qdc430.q1, 5); Serial.print(' ');
             Serial.print(Qdc430.q2, 5); Serial.print(' ');
