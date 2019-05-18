@@ -13,8 +13,8 @@ X_t velocityFeedback(X_t Xdref, X_t Xref, X_t X){
   X_t Xke;
 //  float K=5;
   Xke.x = 5*(Xref.x - X.x);
-  Xke.y = 10*(Xref.y - X.y);
-  Xke.z = 5*(Xref.z - X.z);
+  Xke.y = 5*(Xref.y - X.y);
+  Xke.z = 3*(Xref.z - X.z);
   Xke.theta = 0; // K*(Xprev.theta - X.theta);
   Xke.grip = 0;
   return Xke;

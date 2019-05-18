@@ -458,21 +458,21 @@ function readVelocityControlDebugging(serial)
             q1dc = data(11);
             q2dc = data(12);
             q3dc = data(13);
-            q1dm = data(11);
-            q2dm = data(12);
-            q3dm = data(13);
-            xr = data(14);
-            yr = data(15);
-            zr = data(16);
-            xm = data(17);
-            ym = data(18);
-            zm = data(19);
-            q1pwm = data(20);
-            q2pwm = data(21);
-            q3pwm = data(22);
-            q1i = data(23);
-            q2i = data(24);
-            q3i = data(25);
+            q1dm = data(14);
+            q2dm = data(15);
+            q3dm = data(16);
+            xr = data(17);
+            yr = data(18);
+            zr = data(19);
+            xm = data(20);
+            ym = data(21);
+            zm = data(22);
+%             q1pwm = data(20);
+%             q2pwm = data(21);
+%             q3pwm = data(22);
+%             q1i = data(23);
+%             q2i = data(24);
+%             q3i = data(25);
             vc_time = [vc_time t];
             vc_q1r = [vc_q1r q1r];
             vc_q2r = [vc_q2r q2r];
@@ -495,12 +495,12 @@ function readVelocityControlDebugging(serial)
             vc_xm = [vc_xm xm];
             vc_ym = [vc_ym ym];
             vc_zm = [vc_zm zm];
-            vc_q1pwm = [vc_q1pwm q1pwm];
-            vc_q2pwm = [vc_q2pwm q2pwm];
-            vc_q3pwm = [vc_q3pwm q3pwm];
-            vc_q1i = [vc_q1i q1i];
-            vc_q2i = [vc_q2i q2i];
-            vc_q3i = [vc_q3i q3i];
+%             vc_q1pwm = [vc_q1pwm q1pwm];
+%             vc_q2pwm = [vc_q2pwm q2pwm];
+%             vc_q3pwm = [vc_q3pwm q3pwm];
+%             vc_q1i = [vc_q1i q1i];
+%             vc_q2i = [vc_q2i q2i];
+%             vc_q3i = [vc_q3i q3i];
         else
             return
         end
@@ -628,14 +628,14 @@ function plotDebugData()
         plot(vc_time, vc_q1dc)
         plot(vc_time, vc_q2dc)
         plot(vc_time, vc_q3dc)
-        plot(vc_time, vc_q1pwm, ':')
-        plot(vc_time, vc_q2pwm, ':')
-        plot(vc_time, vc_q3pwm, ':')
-        plot(vc_time, vc_q1i, '--')
-        plot(vc_time, vc_q2i, '--')
-        plot(vc_time, vc_q3i, '--')
-        title('Control, PWM and Current')
-        legend('q1dc', 'q2dc', 'q3dc', 'pwm1', 'pwm2', 'pwm3', 'i1', 'i2', 'i3')
+%         plot(vc_time, vc_q1pwm, ':')
+%         plot(vc_time, vc_q2pwm, ':')
+%         plot(vc_time, vc_q3pwm, ':')
+%         plot(vc_time, vc_q1i, '--')
+%         plot(vc_time, vc_q2i, '--')
+%         plot(vc_time, vc_q3i, '--')
+        title('Control and PWM')
+%         legend('q1dc', 'q2dc', 'q3dc', 'pwm1', 'pwm2', 'pwm3', 'i1', 'i2', 'i3')
     end
 end
 
