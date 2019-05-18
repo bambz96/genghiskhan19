@@ -46,6 +46,13 @@ global vc_q1dc; vc_q1dc = [];
 global vc_q2dc; vc_q2dc = [];
 global vc_q3dc; vc_q3dc = [];
 
+global vc_q1pwm; vc_q1pwm = [];
+global vc_q2pwm; vc_q2pwm = [];
+global vc_q3pwm; vc_q3pwm = [];
+global vc_q1i; vc_q1i = [];
+global vc_q2i; vc_q2i = [];
+global vc_q3i; vc_q3i = [];
+
 global debugging; debugging = 1; % debugging mode on by default
 %% select serial port
 disp('Available COM ports:')
@@ -361,9 +368,9 @@ function errors = sendRow(serial, data)
         send = join(string(data(i, :)));
         disp("send: " + send);
         fprintf(serial, send);
-        reply = strtrim(fscanf(serial));        
+        reply = strtrim(fscanf(serial));
         disp("recv: " + reply);
-        
+
         values = sscanf(reply, '%f');
         for j = 1:6
             a = values(j);
@@ -431,6 +438,8 @@ function readVelocityControlDebugging(serial)
     global vc_q1m vc_q2m vc_q3m
     global vc_q1dm vc_q2dm vc_q3dm
     global vc_q1dc vc_q2dc vc_q3dc
+    global vc_q1pwm vc_q2pwm vc_q3pwm
+    global vc_q1i vc_q2i vc_q3i
     done = 0;
     while ~done
         data = strtrim(fscanf(serial));
@@ -458,6 +467,12 @@ function readVelocityControlDebugging(serial)
             xm = data(17);
             ym = data(18);
             zm = data(19);
+            q1pwm = data(20);
+            q2pwm = data(21);
+            q3pwm = data(22);
+            q1i = data(23);
+            q2i = data(24);
+            q3i = data(25);
             vc_time = [vc_time t];
             vc_q1r = [vc_q1r q1r];
             vc_q2r = [vc_q2r q2r];
@@ -480,6 +495,12 @@ function readVelocityControlDebugging(serial)
             vc_xm = [vc_xm xm];
             vc_ym = [vc_ym ym];
             vc_zm = [vc_zm zm];
+            vc_q1pwm = [vc_q1pwm q1pwm];
+            vc_q2pwm = [vc_q2pwm q2pwm];
+            vc_q3pwm = [vc_q3pwm q3pwm];
+            vc_q1i = [vc_q1i q1i];
+            vc_q2i = [vc_q2i q2i];
+            vc_q3i = [vc_q3i q3i];
         else
             return
         end
@@ -523,6 +544,17 @@ function plotDebugData()
     global vc_q1m vc_q2m vc_q3m
     global vc_q1dm vc_q2dm vc_q3dm
     global vc_q1dc vc_q2dc vc_q3dc
+    global vc_q1pwm vc_q2pwm vc_q3pwm
+    global vc_q1i vc_q2i vc_q3i
+
+    % default line colours
+    c1 = [0, 0.4470, 0.7410]; % blue
+    c2 = [0.8500, 0.3250, 0.0980]; % orange
+    c3 = [0.9290, 0.6940, 0.1250]; % yellow
+    c4 = [0.4940, 0.1840, 0.5560]; % purple
+    c5 = [0.4660, 0.6740, 0.1880]; % green
+    c6 = [0.6350, 0.0780, 0.1840]; % red
+
     if ~isempty(pc_time)
         % position control plots
         pc_f = 1/mean(diff(pc_time));
@@ -555,7 +587,7 @@ function plotDebugData()
         vc_f = 1/mean(diff(vc_time));
 
         figure
-        subplot(311)
+        subplot(221)
         hold on
         plot(vc_time, vc_q1r, '--')
         plot(vc_time, vc_q2r, '--')
@@ -566,7 +598,7 @@ function plotDebugData()
         title('Joint Angles, f='+string(vc_f)+'Hz')
         legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
 
-        subplot(312)
+        subplot(222)
         hold on
         plot(vc_time, vc_q1dr, '--')
         plot(vc_time, vc_q2dr, '--')
@@ -580,7 +612,7 @@ function plotDebugData()
         title('Joint Velocities')
         legend('q1dr', 'q2dr', 'q3dr', 'q1dc', 'q2dc', 'q3dc', 'q1dm', 'q2dm', 'q3dm')
 
-        subplot(313)
+        subplot(223)
         hold on
         plot(vc_time, vc_xr, '--')
         plot(vc_time, vc_yr, '--')
@@ -590,6 +622,20 @@ function plotDebugData()
         plot(vc_time, vc_zm)
         title('Task Space Position')
         legend('xr', 'yr', 'zr', 'xm', 'ym', 'zm')
+
+        subplot(224)
+        hold on
+        plot(vc_time, vc_q1dc)
+        plot(vc_time, vc_q2dc)
+        plot(vc_time, vc_q3dc)
+        plot(vc_time, vc_q1pwm, ':')
+        plot(vc_time, vc_q2pwm, ':')
+        plot(vc_time, vc_q3pwm, ':')
+        plot(vc_time, vc_q1i, '--')
+        plot(vc_time, vc_q2i, '--')
+        plot(vc_time, vc_q3i, '--')
+        title('Control, PWM and Current')
+        legend('q1dc', 'q2dc', 'q3dc', 'pwm1', 'pwm2', 'pwm3', 'i1', 'i2', 'i3')
     end
 end
 

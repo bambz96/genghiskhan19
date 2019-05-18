@@ -24,13 +24,15 @@
 #define ADDRESS_OPERATING_MODE_430          11
 #define ADDRESS_GOAL_POSITION_430           116
 #define ADDRESS_GOAL_VELOCITY_430           104
+#define ADDRESS_PRESENT_PWM_430             124
+#define ADDRESS_PRESENT_I_430               126
 #define ADDRESS_PRESENT_VELOCITY_430        128
 #define ADDRESS_PRESENT_POSITION_430        132
 #define ADDRESS_PROFILE_VELOCITY_430        112
 #define ADDRESS_PROFILE_ACCELERATION_430    108
 
-#define VELOCITY_LIMIT_430                  500 //encoder units per second
-#define ACCELERATION_LIMIT_430              30000
+#define VELOCITY_LIMIT_430                  500 // rev per min
+#define ACCELERATION_LIMIT_430              30000 // rev per min^2
 
 // Control table 320
 #define ADDRESS_TORQUE_ENABLE_320           24
@@ -44,11 +46,15 @@
 #define LENGTH_GOAL_VELOCITY_430            4
 #define LENGTH_PRESENT_POSITION_430         4
 #define LENGTH_PRESENT_VELOCITY_430         4
+#define LENGTH_PRESENT_PWM_430              4
+#define LENGTH_PRESENT_I_430                4
 
 #define LENGTH_GOAL_POSITION_320            2
 #define LENGTH_GOAL_VELOCITY_320            2
 #define LENGTH_PRESENT_POSITION_320         2
 
+#define UNITS_TO_MA                         2.69 // approximate mA per unit
+#define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
 #define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
 #define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
 #define VELOCITY_CONVERSION_CONSTANT_430    41.69998509 //rads per sec per unit
@@ -165,6 +171,9 @@ Q320_t Qr320 = {0, 0, 0}; //reference joint angles
 Q320_t Qm320 = {0, 0, 0}; //measured joint angles
 Q320_t Qc320 = {0, 0, 0}; //control signal, target joint angles
 
+Q430_t PWM430 = {0, 0, 0}; // measured PWM, stored as a percentage 0-100%
+Q430_t I430 = {0, 0, 0}; // measured current, in mA
+
 float L1 = 0.206;
 float L2 = 0.2;
 float L3 = 0.2;
@@ -187,19 +196,27 @@ void setup()
   // Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
   dynamixel::PacketHandler *packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 
-  // Initialize GroupSyncWrite instance
+  // Initialize GroupSyncWrite (position) instance
   dynamixel::GroupSyncWrite groupSyncWrite430(portHandler, packetHandler, ADDRESS_GOAL_POSITION_430, LENGTH_GOAL_POSITION_430);
   dynamixel::GroupSyncWrite groupSyncWrite320(portHandler, packetHandler, ADDRESS_GOAL_POSITION_320, LENGTH_GOAL_POSITION_320);
 
-  //Initialize GroupSyncWriteVelocity instance
-  dynamixel::GroupSyncWrite groupSyncWriteVelocity430(portHandler, packetHandler, ADDRESS_GOAL_VELOCITY_430 , LENGTH_GOAL_VELOCITY_430);
-
-  dynamixel::GroupSyncRead groupSyncReadVelocity430(portHandler, packetHandler, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
-
-  // Initialize GroupSyncRead instance for Present Position
+  // Initialize GroupSyncRead (position) instance
   dynamixel::GroupSyncRead groupSyncRead430(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
   dynamixel::GroupSyncRead groupSyncRead320(portHandler, packetHandler, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
 
+  //Initialize Velocity instance
+  dynamixel::GroupSyncWrite groupSyncWriteVelocity430(portHandler, packetHandler, ADDRESS_GOAL_VELOCITY_430 , LENGTH_GOAL_VELOCITY_430);
+  dynamixel::GroupSyncRead groupSyncReadVelocity430(portHandler, packetHandler, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
+
+  //Initialize PWM instance
+  // if enable writing PWM, do add parameter storage
+//  dynamixel::GroupSyncWrite groupSyncWritePWM430(portHandler, packetHandler, ADDRESS_GOAL_PWM_430 , LENGTH_GOAL_PWM_430);
+  dynamixel::GroupSyncRead groupSyncReadPWM430(portHandler, packetHandler, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
+
+  //Initialize Current (I) instance
+  // if enable writing I, do add parameter storage
+//  dynamixel::GroupSyncWrite groupSyncWriteI430(portHandler, packetHandler, ADDRESS_GOAL_I_430 , ADDRESS_GOAL_I_430);
+  dynamixel::GroupSyncRead groupSyncReadI430(portHandler, packetHandler, ADDRESS_PRESENT_I_430, LENGTH_PRESENT_I_430);
 
   int dxl_comm_result = COMM_TX_FAIL;             // Communication result
   bool dxl_addparam_result = false;                // addParam result
@@ -250,18 +267,25 @@ void setup()
   velocityLimit430(DXL2_ID, portHandler, packetHandler);
   velocityLimit430(DXL3_ID, portHandler, packetHandler);
 
-  // Add parameter storage for Dynamixel#1 present position value
+  // Add parameter for present position value
   dxl_addparam_result = groupSyncRead430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL2_ID);
   dxl_addparam_result = groupSyncRead430.addParam(DXL3_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL4_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL5_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL6_ID);
-
-  //add param to velocity
+  // Add parameter for present velocity value
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL1_ID);
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL2_ID);
   dxl_addparam_result = groupSyncReadVelocity430.addParam(DXL3_ID);
+  // Add parameter for present pwm value
+  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL1_ID);
+  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL2_ID);
+  dxl_addparam_result = groupSyncReadPWM430.addParam(DXL3_ID);
+  // Add parameter for present current value
+  dxl_addparam_result = groupSyncReadI430.addParam(DXL1_ID);
+  dxl_addparam_result = groupSyncReadI430.addParam(DXL2_ID);
+  dxl_addparam_result = groupSyncReadI430.addParam(DXL3_ID);
 
   // uncomment these to test writing the pose Q, note Q is initialised above
   // Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
@@ -509,7 +533,10 @@ void setup()
 
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          readQd(&Qdm430, &groupSyncRead430,  packetHandler);
+          readQd(&Qdm430, &groupSyncReadVelocity430, packetHandler);
+          // read current and pwm
+          readPWM(&PWM430, &groupSyncReadPWM430, packetHandler);
+          readI(&I430, &groupSyncReadI430, packetHandler);
           
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
@@ -561,6 +588,14 @@ void setup()
             Serial.print(Xm.x, 5); Serial.print(' ');
             Serial.print(Xm.y, 5); Serial.print(' ');
             Serial.print(Xm.z, 5); Serial.print(' ');
+            // PWM
+            Serial.print(PWM.q1, 5); Serial.print(' ');
+            Serial.print(PWM.q2, 5); Serial.print(' ');
+            Serial.print(PWM.q3, 5); Serial.print(' ');
+            // electrical current
+            Serial.print(I.q1, 5); Serial.print(' ');
+            Serial.print(I.q2, 5); Serial.print(' ');
+            Serial.print(I.q3, 5); Serial.print(' ');
             Serial.println();
           }
 
