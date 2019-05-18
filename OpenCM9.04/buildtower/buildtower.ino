@@ -165,6 +165,7 @@ X_t Xdref; // reference velocity
 
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
+Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
 Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
@@ -202,7 +203,6 @@ void setup()
 
   //Initialize GroupSyncWriteVelocity instance
   dynamixel::GroupSyncWrite groupSyncWriteVelocity430(portHandler, packetHandler, ADDRESS_GOAL_VELOCITY_430 , LENGTH_GOAL_VELOCITY_430);
-
   dynamixel::GroupSyncRead groupSyncReadVelocity430(portHandler, packetHandler, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
 
   // Initialize GroupSyncRead instance for Present Position
@@ -369,6 +369,19 @@ void setup()
       // clear polys arrays?
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
+      disableTorque430(DXL1_ID, portHandler, packetHandler);
+      disableTorque430(DXL2_ID, portHandler, packetHandler);
+      disableTorque430(DXL3_ID, portHandler, packetHandler);
+      disableTorque320(DXL4_ID, portHandler, packetHandler);
+      disableTorque320(DXL5_ID, portHandler, packetHandler);
+      disableTorque320(DXL6_ID, portHandler, packetHandler);
+      // Set to position mode;
+      positionMode430(DXL1_ID, portHandler, packetHandler);
+      positionMode430(DXL2_ID, portHandler, packetHandler);
+      positionMode430(DXL3_ID, portHandler, packetHandler);
+      positionMode320(DXL4_ID, portHandler, packetHandler);
+      positionMode320(DXL5_ID, portHandler, packetHandler);
+      positionMode320(DXL6_ID, portHandler, packetHandler);
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -439,6 +452,12 @@ void setup()
       Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
+      disableTorque430(DXL1_ID, portHandler, packetHandler);
+      disableTorque430(DXL2_ID, portHandler, packetHandler);
+      disableTorque430(DXL3_ID, portHandler, packetHandler);
+      disableTorque320(DXL4_ID, portHandler, packetHandler);
+      disableTorque320(DXL5_ID, portHandler, packetHandler);
+      disableTorque320(DXL6_ID, portHandler, packetHandler);
       // Set to velocity mode
       velocityMode430(DXL1_ID, portHandler, packetHandler);
       velocityMode430(DXL2_ID, portHandler, packetHandler);
@@ -512,7 +531,7 @@ void setup()
 
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          readQd(&Qdm430,  &groupSyncRead430,  packetHandler);
+          readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
           
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
@@ -530,7 +549,7 @@ void setup()
           inverse_jacobian(&Qdc430, Xc, Qm430, Qm320);
           
           // for DEBUGGING, find reference joint velocities
-          inverse_jacobian(&Qdr430, Xm, Qr430, Qr320);
+          inverse_jacobian(&Qdr430, Xref, Qr430, Qr320);
 
           //write motors
           writeQd(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);

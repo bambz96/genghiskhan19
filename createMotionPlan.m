@@ -1,4 +1,4 @@
-function [nchunks, chunks] = createMotionPlan()
+function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
     %{
         Assignment Gropup 20
         Create a full tower build sequence and output in an appropriate
@@ -19,7 +19,8 @@ function [nchunks, chunks] = createMotionPlan()
 
     LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
     
-    Tower = jTower(0.2, -0.05, 0, RIGHT);
+%     Tower = jTower(0.2, -0.05, 0, RIGHT);
+    Tower = jTower(x/1000, y/1000, theta/1000, loadSide);
     
         
     
