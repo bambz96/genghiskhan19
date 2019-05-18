@@ -98,11 +98,6 @@ void setup() {
   bool dxl_addparam_result = false;                // addParam result
   bool dxl_getdata_result = false;                 // GetParam result
 
- 
-  //uint8_t param_goal_velocity[3];
-  int32_t q1 = 0, q2 = 0, q3 = 0;              // Present position
-  int16_t q4 = 0, q5 = 0, q6 = 0;              // Present position
-
   // Open port
   if (portHandler->openPort())
   {
@@ -159,106 +154,10 @@ void setup() {
   dxl_addparam_result = groupSyncRead320.addParam(DXL5_ID);
   dxl_addparam_result = groupSyncRead320.addParam(DXL6_ID);
 
-  uint8_t home320[4];
-  uint8_t home430[4];
+  Q_t Q = {10*PI/180,10*PI/180,10*PI/180,20*PI/180,10*PI/180};
 
-  // Allocate goal position value into byte array
-    home320[0] = DXL_LOBYTE(DXL_LOWORD(511));
-    home320[1] = DXL_HIBYTE(DXL_LOWORD(511));
-    home320[2] = DXL_LOBYTE(DXL_HIWORD(511));
-    home320[3] = DXL_HIBYTE(DXL_HIWORD(511));
-    // Allocate goal position value into byte array
-    home430[0] = DXL_LOBYTE(DXL_LOWORD(2047));
-    home430[1] = DXL_HIBYTE(DXL_LOWORD(2047));
-    home430[2] = DXL_LOBYTE(DXL_HIWORD(2047));
-    home430[3] = DXL_HIBYTE(DXL_HIWORD(2047));
-
+  writeQ(&Q,&groupSyncWrite430, &groupSyncWrite320,  packetHandler);
   
-
-  while(millis()<10000)
-  {
-    Serial.print("Press any key to continue! (or press q to quit!)\n");
-
-    while(Serial.available()==0);
-
-    int ch;
-
-    ch = Serial.read();
-    if( ch == 'q' )
-      break;
-
-      unsigned int t0 = millis();
-
-      while(1)
-      {
-          
-        // Add goal position values to the Syncwrite storage
-
-        
-    
-        dxl_addparam_result = groupSyncWrite430.addParam(DXL1_ID, home430);
-        dxl_addparam_result = groupSyncWrite430.addParam(DXL2_ID, home430);
-        dxl_addparam_result = groupSyncWrite430.addParam(DXL3_ID, home430);
-        dxl_addparam_result = groupSyncWrite320.addParam(DXL4_ID, home320);
-        dxl_addparam_result = groupSyncWrite320.addParam(DXL5_ID, home320);
-
-        
-    
-        // Syncwrite goal position
-        dxl_comm_result = groupSyncWrite430.txPacket();
-        if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-        dxl_comm_result = groupSyncWrite320.txPacket();
-        if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-    
-        // Clear syncwrite parameter storage
-        groupSyncWrite430.clearParam();
-        groupSyncWrite320.clearParam();
-  
-        // Syncread present position
-        dxl_comm_result = groupSyncRead430.txRxPacket();
-        if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-        dxl_comm_result = groupSyncRead320.txRxPacket();
-        if (dxl_comm_result != COMM_SUCCESS) packetHandler->getTxRxResult(dxl_comm_result);
-//  
-//        // Check if groupsyncread data of Dynamixel#1 is available
-//        dxl_getdata_result = groupSyncRead.isAvailable(DXL1_ID, ADDRESS_PRESENT_POSITION, LENGTH_PRESENT_POSITION);
-//  
-//        // Check if groupsyncread data of Dynamixel#2 is available
-//        dxl_getdata_result = groupSyncRead.isAvailable(DXL2_ID, ADDRESS_PRESENT_POSITION, LENGTH_PRESENT_POSITION);
-  
-        // Get Dynamixel#1 present position value
-        q1 = groupSyncRead430.getData(DXL1_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
-        q2 = groupSyncRead430.getData(DXL2_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
-        q3 = groupSyncRead430.getData(DXL3_ID, ADDRESS_PRESENT_POSITION_430, LENGTH_PRESENT_POSITION_430);
-        q4 = groupSyncRead320.getData(DXL4_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
-        q5 = groupSyncRead320.getData(DXL5_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
-        q6 = groupSyncRead320.getData(DXL6_ID, ADDRESS_PRESENT_POSITION_320, LENGTH_PRESENT_POSITION_320);
-  
-        if(millis() % 100 == 0) {
-          Serial.print((millis()-t0)/loops); 
-           Serial.print(" [ID:");      Serial.print(DXL1_ID);
-        Serial.print(" PresPos:");  Serial.print(q1);
-        Serial.print(" [ID:");      Serial.print(DXL2_ID);
-        Serial.print(" PresPos:");  Serial.print(q2);
-        Serial.print(" [ID:");      Serial.print(DXL3_ID);
-        Serial.print(" PresPos:");  Serial.print(q3);
-        Serial.print(" [ID:");      Serial.print(DXL4_ID);
-        Serial.print(" PresPos:");  Serial.print(q4);
-        Serial.print(" [ID:");      Serial.print(DXL5_ID);
-        Serial.print(" PresPos:");  Serial.print(q5);
-        Serial.print(" [ID:");      Serial.print(DXL6_ID);
-        Serial.print(" PresPos:");  Serial.print(q6);
-        Serial.println(" ");
-          
-        }
-        loops++;
-         
-
-        
-      }
-
-    
-  }
 }
 
 void loop() {
@@ -351,10 +250,10 @@ int convertToPositionCommand430(float q, boolean flip){
 
 int convertToPositionCommand320(float q, boolean flip){
   if(flip){
-    return (-q+PI)/ANGLE_CONVERSION_CONSTANT_320;
+    return (-q+150*PI/180)/ANGLE_CONVERSION_CONSTANT_320;
     }
   else{
-    return (q+PI)/ANGLE_CONVERSION_CONSTANT_320;
+    return (q+150*PI/180)/ANGLE_CONVERSION_CONSTANT_320;
   }
 }
 
