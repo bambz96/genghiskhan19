@@ -45,6 +45,14 @@ int velocityMode430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_430, VELOCITY_MODE, &dxl_error);
 }
 
+int setIntegralVelocity430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+  return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_INTEGRAL_VELOCITY_430, VELOCITY_INTEGRAL, &dxl_error);
+}
+
+int setProportionalVelocity430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+  return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_PROPORTIONAL_VELOCITY_430, VELOCITY_PROPORTIONAL, &dxl_error);
+}
+
 void readQd(Q430_t *Qd430, dynamixel::GroupSyncRead *groupSyncReadVelocity430, dynamixel::PacketHandler *packetHandler) {
   dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
 
