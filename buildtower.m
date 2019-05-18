@@ -122,7 +122,7 @@ function [xdata, ydata, zdata, thdata, gripdata] = chooseAndSendTrajectory(seria
         thdata = data(:,:,4);
         gripdata = data(:,:,5);
     end
-    sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata)
+    sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata);
 end
 
 function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata)
@@ -150,17 +150,24 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectory(serial, length
     end
     %% send rows
     tic
+    errors = 0;
     disp('Send x')
-    sendRow(serial, xdata);
+    errors = errors + sendRow(serial, xdata);
     disp('Send y')
-    sendRow(serial, ydata);
+    errors = errors + sendRow(serial, ydata);
     disp('Send z')
-    sendRow(serial, zdata);
+    errors = errors + sendRow(serial, zdata);
     disp('Send theta')
-    sendRow(serial, thdata);
+    errors = errors + sendRow(serial, thdata);
     disp('Send grip')
-    sendRow(serial, gripdata);
+    errors = errors + sendRow(serial, gripdata);
     toc
+    if errors > 0
+        disp('*********************************************************')
+        disp('WARNING - SERIAL COMMUNICATION ERRORS')
+        disp('Number of coefficient mismatches: '+string(errors))
+        disp('*********************************************************')
+    end
 end
 
 function plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent)
@@ -347,18 +354,26 @@ function readJoints(serial)
     fprintf(serial, 'x'); % send anything to interrupt
 end
 
-function sendRow(serial, data)
+function errors = sendRow(serial, data)
     [length,~] = size(data);
+    errors = 0;
     for i = 1:length
         send = join(string(data(i, :)));
         disp("send: " + send);
         fprintf(serial, send);
-        reply = strtrim(fscanf(serial));
-        % if ~strcmp(string(i), reply)
-        %     disp(reply);
-        %    errors = errors + 1;
-        % end
+        reply = strtrim(fscanf(serial));        
         disp("recv: " + reply);
+        
+        values = sscanf(reply, '%f');
+        for j = 1:6
+            a = values(j);
+            b = data(i,j);
+            e = abs(a-b);
+            if e > 1e-3
+                errors = errors + 1;
+                disp('ERROR of '+string(e)+': '+string(a)+' '+string(b))
+            end
+        end
     end
 end
 
@@ -548,7 +563,7 @@ function plotDebugData()
         plot(vc_time, vc_q1m)
         plot(vc_time, vc_q2m)
         plot(vc_time, vc_q3m)
-        title('Joint Angles')
+        title('Joint Angles, f='+string(vc_f)+'Hz')
         legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
 
         subplot(312)
