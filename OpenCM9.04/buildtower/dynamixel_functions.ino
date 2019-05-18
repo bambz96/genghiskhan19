@@ -204,7 +204,7 @@ void writeQd(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWr
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL1_ID, q1_ba);
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL2_ID, q2_ba);
   dxl_addparam_result = groupSyncWriteVelocity430->addParam(DXL3_ID, q3_ba);
-  
+
   dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
@@ -242,7 +242,7 @@ void writeQdNo430Sync(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *gr
   setGoalVelocity430(DXL1_ID, q1, portHandler, packetHandler);
   setGoalVelocity430(DXL2_ID, q2, portHandler, packetHandler);
   setGoalVelocity430(DXL3_ID, q3, portHandler, packetHandler);
-  
+
   dxl_addparam_result = groupSyncWrite320->addParam(DXL4_ID, q4_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL5_ID, q5_ba);
   dxl_addparam_result = groupSyncWrite320->addParam(DXL6_ID, q6_ba);
