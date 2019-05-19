@@ -1,4 +1,6 @@
 function debuggingVars()
+global run;
+run = 0;
 % position control debugging
 global pc_time; pc_time = [];
 global pc_xr; pc_xr = [];
