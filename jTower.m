@@ -123,8 +123,8 @@ classdef jTower
     methods(Static, Access = private)
         %Just a z rotation, nothing to see here folks
         function R = zRotation(theta)
-            R = [cosd(theta) -sind(theta) 0;
-                 sind(theta) cosd(theta) 0;
+            R = [cos(theta) -sin(theta) 0;
+                 sin(theta) cos(theta) 0;
                  0           0           1];
         end
     
