@@ -62,7 +62,7 @@ int setGoalVelocity430(int DXL_ID, int goalVelocity, dynamixel::PortHandler *por
 }
 
 void readPWM(Q430_t *PWM430, dynamixel::GroupSyncRead *groupSyncReadPWM430, dynamixel::PacketHandler *packetHandler) {
-  dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
+  dxl_comm_result = groupSyncReadPWM430->txRxPacket();
 
   int pwm1_encoder = groupSyncReadPWM430->getData(DXL1_ID, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
   int pwm2_encoder = groupSyncReadPWM430->getData(DXL2_ID, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
@@ -74,7 +74,7 @@ void readPWM(Q430_t *PWM430, dynamixel::GroupSyncRead *groupSyncReadPWM430, dyna
 }
 
 void readLoad(Q430_t *I430, dynamixel::GroupSyncRead *groupSyncReadLoad430, dynamixel::PacketHandler *packetHandler) {
-  dxl_comm_result = groupSyncReadVelocity430->txRxPacket();
+  dxl_comm_result = groupSyncReadLoad430->txRxPacket();
 
   int i1_encoder = groupSyncReadLoad430->getData(DXL1_ID, ADDRESS_PRESENT_LOAD_430, LENGTH_PRESENT_LOAD_430);
   int i2_encoder = groupSyncReadLoad430->getData(DXL2_ID, ADDRESS_PRESENT_LOAD_430, LENGTH_PRESENT_LOAD_430);
@@ -287,7 +287,7 @@ void writeQdNo430Sync(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *gr
 
 }
 
-void writePWM(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWriteVelocity430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler) {
+void writePWM(Q430_t *Qd430, Q320_t *Q320, dynamixel::GroupSyncWrite *groupSyncWritePWM430, dynamixel::GroupSyncWrite *groupSyncWrite320,  dynamixel::PacketHandler *packetHandler) {
 
   int q1 = convertToPWMCommand430(Qd430->q1, false);
   int q2 = convertToPWMCommand430(Qd430->q2, true);

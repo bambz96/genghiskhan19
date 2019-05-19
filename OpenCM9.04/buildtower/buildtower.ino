@@ -23,6 +23,7 @@
 // Control table 430
 #define ADDRESS_TORQUE_ENABLE_430           64
 #define ADDRESS_OPERATING_MODE_430          11
+#define ADDRESS_GOAL_PWM_430                100
 #define ADDRESS_GOAL_POSITION_430           116
 #define ADDRESS_GOAL_VELOCITY_430           104
 #define ADDRESS_PRESENT_PWM_430             124
@@ -52,6 +53,7 @@
 // Data Byte Length
 #define LENGTH_GOAL_POSITION_430            4
 #define LENGTH_GOAL_VELOCITY_430            4
+#define LENGTH_GOAL_PWM_430                 4
 #define LENGTH_PRESENT_POSITION_430         4
 #define LENGTH_PRESENT_VELOCITY_430         4
 #define LENGTH_PRESENT_PWM_430              4
@@ -64,9 +66,16 @@
 #define ANGLE_CONVERSION_CONSTANT_430       0.001535889741755 //rads per unit
 #define ANGLE_CONVERSION_CONSTANT_320       0.005061454830784 //rads per unit
 #define VELOCITY_CONVERSION_CONSTANT_430    41.69998509 //rads per sec per unit
-#define PWM_CONVERSION_CONSTANT_430         1 // rads/s -> 0-100% -> pwm units      [0, max omega] -> [0, 100] -> [0, 885]
-#define LOAD_TO_PERCENTAGAGE                0.1 // -1,000 ~ 1,000, 0.1%
+#define PWM_CONVERSION_CONSTANT_430         88500 // = 885/MAX_OMEGA rads/s -> 0-100% -> pwm units      [0, max omega] -> [0, 100] -> [0, 885]
+#define LOAD_TO_PERCENTAGE                  0.1 // -1,000 ~ 1,000, 0.1%
 #define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
+
+#define Q1_KVI                              500 //initial value 1000, [0, 16383]
+#define Q1_KVP                              50 //initial value 100, [0, 16383]
+#define Q2_KVI                              250 //initial value 1000, [0, 16383]
+#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q3_KVP                              150 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -228,7 +237,7 @@ void setup()
 
     // Initialize PWM instance
   // if enable writing PWM, do add parameter storage
-//  dynamixel::GroupSyncWrite groupSyncWritePWM430(portHandler, packetHandler, ADDRESS_GOAL_PWM_430 , LENGTH_GOAL_PWM_430);
+  dynamixel::GroupSyncWrite groupSyncWritePWM430(portHandler, packetHandler, ADDRESS_GOAL_PWM_430 , LENGTH_GOAL_PWM_430);
   dynamixel::GroupSyncRead groupSyncReadPWM430(portHandler, packetHandler, ADDRESS_PRESENT_PWM_430, LENGTH_PRESENT_PWM_430);
 
   // Initialize load instance
@@ -621,7 +630,7 @@ void setup()
       disableTorque320(DXL4_ID, portHandler, packetHandler);
       disableTorque320(DXL5_ID, portHandler, packetHandler);
       disableTorque320(DXL6_ID, portHandler, packetHandler);
-      // Set to velocity mode
+      // Set to PWM mode
       PWMMode430(DXL1_ID, portHandler, packetHandler);
       PWMMode430(DXL2_ID, portHandler, packetHandler);
       PWMMode430(DXL3_ID, portHandler, packetHandler);
@@ -677,15 +686,12 @@ void setup()
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
-          // read current PWM and estimated load
-          readPWM(&PWM430, &groupSyncReadPWM430,  packetHandler);
-          readLoad(&Load430, &groupSyncReadLoad430,  packetHandler);
-
+          
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
 
           //Calculate control effort
-          X_t Xke = velocityFeedback(Xdref, Xref, Xm);
+          X_t Xke = velocityFeedback(Xdref, Xref, Xm, Qm430, Qm320, Qr430, Qr320, (millis()-tstart-dt)/1000.0);
           X_t Xdc = velocityControl(Xdref, Xref, Xke);
 
           // Calculate position control for motors 4,5,6 = Qc320, Qc430 is not used in velocity control
@@ -699,38 +705,45 @@ void setup()
           inverse_jacobian(&Qdr430, Xdref, Qr430, Qr320);
 
           //write motors
-          writePWM(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
+          writePWM(&Qdc430, &Qc320, &groupSyncWritePWM430, &groupSyncWrite320,  packetHandler);
+
+          // read current PWM and estimated load
+          readPWM(&PWM430, &groupSyncReadPWM430,  packetHandler);
+          readLoad(&Load430, &groupSyncReadLoad430,  packetHandler);
 
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');
+            Serial.print(PWM430.q1, 5); Serial.print(' ');
+            Serial.print(PWM430.q2, 5); Serial.print(' ');
+            Serial.print(PWM430.q3, 5); Serial.print(' ');
             // reference joint angles, Qr
             Serial.print(Qr430.q1, 5); Serial.print(' ');
             Serial.print(Qr430.q2, 5); Serial.print(' ');
             Serial.print(Qr430.q3, 5); Serial.print(' ');
-            // measured joint angles, Qm
-            Serial.print(Qm430.q1, 5); Serial.print(' ');
-            Serial.print(Qm430.q2, 5); Serial.print(' ');
-            Serial.print(Qm430.q3, 5); Serial.print(' ');
-            // reference joint velocity, Qdr
+//            // measured joint angles, Qm
+//            Serial.print(Qm430.q1, 5); Serial.print(' ');
+//            Serial.print(Qm430.q2, 5); Serial.print(' ');
+//            Serial.print(Qm430.q3, 5); Serial.print(' ');
+//            // reference joint velocity, Qdr
             Serial.print(Qdr430.q1, 5); Serial.print(' ');
             Serial.print(Qdr430.q2, 5); Serial.print(' ');
             Serial.print(Qdr430.q3, 5); Serial.print(' ');
-            // planned joint velocity, Qdc
-            Serial.print(Qdc430.q1, 5); Serial.print(' ');
-            Serial.print(Qdc430.q2, 5); Serial.print(' ');
-            Serial.print(Qdc430.q3, 5); Serial.print(' ');
-            // measured joint velocity, Qdm
-            Serial.print(Qdm430.q1, 5); Serial.print(' ');
-            Serial.print(Qdm430.q2, 5); Serial.print(' ');
-            Serial.print(Qdm430.q3, 5); Serial.print(' ');
-            // reference EE position, xr/yr/zr
-            Serial.print(Xref.x, 5); Serial.print(' ');
-            Serial.print(Xref.y, 5); Serial.print(' ');
-            Serial.print(Xref.z, 5); Serial.print(' ');
-            // measured EE position, xm/ym/zm
-            Serial.print(Xm.x, 5); Serial.print(' ');
-            Serial.print(Xm.y, 5); Serial.print(' ');
-            Serial.print(Xm.z, 5); Serial.print(' ');
+//            // planned joint velocity, Qdc
+//            Serial.print(Qdc430.q1, 5); Serial.print(' ');
+//            Serial.print(Qdc430.q2, 5); Serial.print(' ');
+//            Serial.print(Qdc430.q3, 5); Serial.print(' ');
+//            // measured joint velocity, Qdm
+//            Serial.print(Qdm430.q1, 5); Serial.print(' ');
+//            Serial.print(Qdm430.q2, 5); Serial.print(' ');
+//            Serial.print(Qdm430.q3, 5); Serial.print(' ');
+//            // reference EE position, xr/yr/zr
+//            Serial.print(Xref.x, 5); Serial.print(' ');
+//            Serial.print(Xref.y, 5); Serial.print(' ');
+//            Serial.print(Xref.z, 5); Serial.print(' ');
+//            // measured EE position, xm/ym/zm
+//            Serial.print(Xm.x, 5); Serial.print(' ');
+//            Serial.print(Xm.y, 5); Serial.print(' ');
+//            Serial.print(Xm.z, 5); Serial.print(' ');
             Serial.println();
           }
 

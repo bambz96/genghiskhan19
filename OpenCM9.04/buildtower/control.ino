@@ -34,9 +34,9 @@ X_t pid(X_t Xerr, X_t Xdeltaerr, X_t Xtotalerr, float dt) {
   /*Xref = reference, X = measured*/
   //float Kp = 5, Ki = 1, Kd = 1;
   X_t Xc;
-  Xc.x = 5 * Xerr.x + 0.7 * dt * Xtotalerr.x + (0.375 / dt) * Xdeltaerr.x;
-  Xc.y = 7 * Xerr.y + 0.5 * dt * Xtotalerr.y + (0 / dt) * Xdeltaerr.y;
-  Xc.z = 5 * Xerr.z + 1 * dt * Xtotalerr.z + (1 / dt) * Xdeltaerr.z;
+  Xc.x = 50 * Xerr.x + 100 * dt * Xtotalerr.x + (0 / dt) * Xdeltaerr.x;
+  Xc.y = 50 * Xerr.y + 100 * dt * Xtotalerr.y + (0 / dt) * Xdeltaerr.y;
+  Xc.z = 50 * Xerr.z + 1 * dt * Xtotalerr.z + (0 / dt) * Xdeltaerr.z;
 //  Xc.wx = Kp * Xerr.wx + Ki * dt * Xtotalerr.wx + (Kd / dt) * Xdeltaerr.wx;
 //  Xc.wy = Kp * Xerr.wy + Ki * dt * Xtotalerr.wy + (Kd / dt) * Xdeltaerr.wy;
 //  Xc.wz = Kp * Xerr.wz + Ki * dt * Xtotalerr.wz + (Kd / dt) * Xdeltaerr.wz;
