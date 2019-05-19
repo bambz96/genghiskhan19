@@ -7,7 +7,8 @@ for i = 1:length(ports)
     options(i) = string(i) +':' + ports(i);
 end
 disp(join(options))
-i = input('Select option:');
+% i = input('Select option:');
+i = 1; 
 serialOut = serial(ports(i),'BAUD',57600);
 %% pause to make sure it's opened
 fopen(serialOut);
