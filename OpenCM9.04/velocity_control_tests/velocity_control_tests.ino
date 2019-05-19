@@ -38,10 +38,6 @@
 #define VELOCITY_LIMIT_430                  500 // 0 ~ 1,023 rev per min
 #define ACCELERATION_LIMIT_430              30000 // 0 ~ 32,767 rev per min^2
 
-
-#define VELOCITY_LIMIT_430                  0 //encoder units per second
-#define ACCELERATION_LIMIT_430              0
-
 // Control table 320
 #define ADDRESS_TORQUE_ENABLE_320           24
 #define ADDRESS_OPERATING_MODE_320          11
@@ -67,6 +63,13 @@
 #define PWM_CONVERSION_CONSTANT_430         1 // rads/s -> 0-100% -> pwm units      [0, max omega] -> [0, 100] -> [0, 885]
 #define LOAD_TO_PERCENTAGAGE                0.1 // -1,000 ~ 1,000, 0.1%
 #define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
+
+#define Q1_KVI                              500 //initial value 1000, [0, 16383]
+#define Q1_KVP                              50 //initial value 100, [0, 16383]
+#define Q2_KVI                              250 //initial value 1000, [0, 16383]
+#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q3_KVP                              150 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -122,6 +125,8 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
+int test_n = 1;
+
 boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
 
 int nPolys;		// number of polynomials sent by Matlab and stored for operation
@@ -172,13 +177,9 @@ X_t Xm; //"measured" robot position from FK(measured angles)
 X_t Xprev = {0.2, 0, 0.3, 0, 0, 0, 0}; //previous robot position, initial is home
 X_t Xdref; // reference velocity
 
-X_t Xerr = {0, 0, 0, 0, 0, 0, 0}; //Errors for PID
-X_t Xdeltaerr = {0, 0, 0, 0, 0, 0, 0};
-X_t Xtotalerr = {0, 0, 0, 0, 0, 0, 0};
-X_t Xpreverr = {0,0,0,0,0,0,0};
-
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
+Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
 Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
@@ -223,7 +224,6 @@ void setup()
 
   //Initialize Velocity instance
   dynamixel::GroupSyncWrite groupSyncWriteVelocity430(portHandler, packetHandler, ADDRESS_GOAL_VELOCITY_430 , LENGTH_GOAL_VELOCITY_430);
-
   dynamixel::GroupSyncRead groupSyncReadVelocity430(portHandler, packetHandler, ADDRESS_PRESENT_VELOCITY_430, LENGTH_PRESENT_VELOCITY_430);
 
     // Initialize PWM instance
@@ -336,31 +336,19 @@ void setup()
             delay(100);
             state = PLOTTING; // begin sending path data
           }
-        } else if (command == "PC") {
-          // position control
-          Serial.println("PC");
-          state = POSITION_CONTROL;
-        } else if (command == "VC") {
-          // velocity control
-          Serial.println("VC");
-          state = VELOCITY_CONTROL;
-        } else if (command == "PWMC") {
-          // PWM (voltage) control
-          Serial.println("PWMC");
-          state = PWM_CONTROL;
-        } else if (command == "R") {
-          // passive read, disable torques to enable movement
-          disableTorque430(DXL1_ID, portHandler, packetHandler);
-          disableTorque430(DXL2_ID, portHandler, packetHandler);
-          disableTorque430(DXL3_ID, portHandler, packetHandler);
-          disableTorque320(DXL4_ID, portHandler, packetHandler);
-          disableTorque320(DXL5_ID, portHandler, packetHandler);
-          disableTorque320(DXL6_ID, portHandler, packetHandler);
-          state = PASSIVE_READ;
+        } else if (command == "T1") {
+          test_n = 1;
+          state = TESTING;
+        } else if (command == "T2") {
+          test_n = 2;
+          state = TESTING;
+        } else if (command == "T3") {
+          test_n = 3;
+          state = TESTING;
         } else if (command == "D") {
-        Serial.println("D");
-        debugging = !debugging;
-      }
+          Serial.println("D");
+          debugging = !debugging;
+        }
       }
     } else if (state == RECEIVING_X) {
       readData(xpoly);
@@ -404,77 +392,81 @@ void setup()
       count = 0;
       // clear polys arrays?
       state = WAITING;
-    } else if (state == POSITION_CONTROL) {
-      // Enable Torques
-      enableTorque430(DXL1_ID, portHandler, packetHandler);
-      enableTorque430(DXL2_ID, portHandler, packetHandler);
-      enableTorque430(DXL3_ID, portHandler, packetHandler);
-      enableTorque320(DXL4_ID, portHandler, packetHandler);
-      enableTorque320(DXL5_ID, portHandler, packetHandler);
-      enableTorque320(DXL6_ID, portHandler, packetHandler);
+    } else if (state == TESTING) {
+      unsigned int t0 = millis();
+      unsigned int tf = t0 + 1000*(10); // duration = 10s
 
-      // delay before starting trajectory
-      delay(500);
+      int square_period = 1000; // ms
+      int sine_period = 1000; // ms
+      int square_toggle = 0;
+      int qd3 = 0; // rad/s
+      float qd3_on = 0.1; // rad/s
+      float amp = 0.1; // rad/s
 
-      unsigned int tstart = millis();
+      int p = 0; // periods counted
 
-      count = 0;
-      while (count < nPolys) {
-        // delay before each new segment
-        //delay(500);
-        unsigned int dt = millis() - tstart; // should be very close to 0 on the first poly (count=0)
-        // duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
-        unsigned int t0 = xpoly[count].t0;
-        unsigned int tf = xpoly[count].tf;
+      while (millis() < tf) {
+        if (test_n == 1) {
+          
+          // square
+          periods = (millis()-t0)/square_period;
+          if ( abs(periods-p*square_period) < 50) {
+            if (square_toggle == 0) {
+              qd3 = 0
+              square_toggle = 1;
+            } else if (square_toggle == 1) {
+              qd3 = qd3_on;
+              square_toggle = 0;
+            }
+            p++;
+          }
+          
+        } else if (test_n == 2) {
+          
+          // square chirp
+          // decrease square_period after each p++
+          
+        } else if (test_n == 3) {
+          
+          // sinusoid
+          // int t = millis()-t0;
+          // qd3 = amp*sin(2*pi/sine_period * t)
+          
+        }
 
-        // complete current path
-        while (dt < tf) {
-          // get task space coordinates and assign to X
-          float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
-          float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
-          float z = cubicEvaluate(&zpoly[count], dt / 1000.0);
-          float theta = cubicEvaluate(&thpoly[count], dt / 1000.0);
-          float grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-          Xref.x = x;
-          Xref.y = y;
-          Xref.z = z;
-          Xref.wx = 0;
-          Xref.wy = 0;
-          Xref.wz = theta;
-          Xref.grip = grip;
+        Qdc430 = {0, 0, qd3};
+        Qc320 = {0, 0, 0};
+        // does the order of these affect anything?
+        writeQd(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
+        readQ(&Qm430, &groupSyncReadVelocity430,  packetHandler);
+        readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
 
-          readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-          forward_kinematics(&Xprev, Qm430, Qm320);
-          //Calculate feedback from measured task space, reference task space and previous measured task space
-//          X_t ex = feedback(Xprev, Xref, X);
-
-          // get joint space control, Qc with IK, using feedback
-          inverse_kinematics(&Qc430, &Qc320, &Xref);
-
-          // write joint space Qc to servos
-          writeQ(&Qc430, &Qc320, &groupSyncWrite430, &groupSyncWrite320,  packetHandler);
-
-          if (debugging) {
-            Serial.print(millis()); Serial.print(' ');
-            Serial.print(x, 5); Serial.print(' ');
-            Serial.print(y, 5); Serial.print(' ');
-            Serial.print(z, 5); Serial.print(' ');
-            Serial.print(Xprev.x, 5); Serial.print(' ');
-            Serial.print(Xprev.y, 5); Serial.print(' ');
-            Serial.print(Xprev.z, 5); Serial.print(' ');
+        if (debugging) {
+            Serial.print(millis() - t0); Serial.print(' ');
+            // measured joint angles, Qm
+            Serial.print(Qm430.q1, 5); Serial.print(' ');
+            Serial.print(Qm430.q2, 5); Serial.print(' ');
+            Serial.print(Qm430.q3, 5); Serial.print(' ');
+            // planned joint velocity, Qdc
+            Serial.print(Qdc430.q1, 5); Serial.print(' ');
+            Serial.print(Qdc430.q2, 5); Serial.print(' ');
+            Serial.print(Qdc430.q3, 5); Serial.print(' ');
+            // measured joint velocity, Qdm
+            Serial.print(Qdm430.q1, 5); Serial.print(' ');
+            Serial.print(Qdm430.q2, 5); Serial.print(' ');
+            Serial.print(Qdm430.q3, 5); Serial.print(' ');
             Serial.println();
           }
-
-          dt = millis() - tstart;
-        }
-        // current path finished
-        count++;
       }
-
-      // all paths done, return to WAITING
       Serial.println("DONE");
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
+      disableTorque430(DXL1_ID, portHandler, packetHandler);
+      disableTorque430(DXL2_ID, portHandler, packetHandler);
+      disableTorque430(DXL3_ID, portHandler, packetHandler);
+      disableTorque320(DXL4_ID, portHandler, packetHandler);
+      disableTorque320(DXL5_ID, portHandler, packetHandler);
+      disableTorque320(DXL6_ID, portHandler, packetHandler);
       // Set to velocity mode
       velocityMode430(DXL1_ID, portHandler, packetHandler);
       velocityMode430(DXL2_ID, portHandler, packetHandler);
@@ -503,7 +495,7 @@ void setup()
       enableTorque320(DXL4_ID, portHandler, packetHandler);
       enableTorque320(DXL5_ID, portHandler, packetHandler);
       enableTorque320(DXL6_ID, portHandler, packetHandler);
-      
+
       delay(500);
 
       unsigned int tstart = millis();
@@ -516,7 +508,7 @@ void setup()
         unsigned int tf = xpoly[count].tf;
         // complete current path
         while (dt < tf) {
-          
+
           //Calculate Xref
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
           float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
@@ -555,27 +547,26 @@ void setup()
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
 
-          // for DEBUGGING, find reference joint angles
-          inverse_kinematics(&Qr430, &Qr320, &Xref);
-
           //Calculate control effort
-          X_t Xke = velocityFeedback(Xdref, Xref, Xm, Qm430, Qm320, Qr430, Qr320, (millis()-tstart-dt)/1000.0);
-          X_t Xc = velocityControl(Xdref, Xref, Xke);
+          X_t Xke = velocityFeedback(Xdref, Xref, Xm);
+          X_t Xdc = velocityControl(Xdref, Xref, Xke);
 
           // Calculate position control for motors 4,5,6 = Qc320, Qc430 is not used in velocity control
           inverse_kinematics(&Qc430, &Qc320, &Xm); // or Xref?
-          
+          // for DEBUGGING, find reference joint angles
+          inverse_kinematics(&Qr430, &Qr320, &Xref);
+
           // Calculate velocity control for motors 1,2,3 = Qdc430
-          inverse_jacobian(&Qdc430, Xc, Qm430, Qm320);
-          
+          inverse_jacobian(&Qdc430, Xdc, Qm430, Qm320);
           // for DEBUGGING, find reference joint velocities
           inverse_jacobian(&Qdr430, Xdref, Qr430, Qr320);
 
           //write motors
           writeQd(&Qdc430, &Qc320, &groupSyncWriteVelocity430, &groupSyncWrite320,  packetHandler);
+//          writeQdNo430Sync(&Qdc430, &Qc320, &groupSyncWrite320, portHandler, packetHandler);
 
           if (debugging) {
-            Serial.print(millis()-tstart); Serial.print(' ');
+            Serial.print(millis()); Serial.print(' ');
             // reference joint angles, Qr
             Serial.print(Qr430.q1, 5); Serial.print(' ');
             Serial.print(Qr430.q2, 5); Serial.print(' ');
@@ -761,7 +752,7 @@ void setup()
         Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
         state = WAITING;
         }
-    } 
+    }
     else if (state == PASSIVE_VELOCITY) {
       // is printed in PASSIVE_READ
     }
