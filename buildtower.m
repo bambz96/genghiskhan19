@@ -34,7 +34,7 @@ while running
     elseif user == 3
         plotStoredTrajectories(serial, xsent, ysent, zsent, thsent, gripsent);
     elseif user == 4
-        multipleTrajectories(serial,200,-50,0,'RIGHT');
+        multipleTrajectories(serial,200,-50,0,'RIGHT','Balanced');
     elseif user == 5
         runControl(serial, "PC");
     elseif user == 6

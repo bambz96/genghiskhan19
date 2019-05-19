@@ -1,11 +1,11 @@
-function multipleTrajectories(serial,x,y,theta,loadSide)
+function multipleTrajectories(serial,x,y,theta,loadSide,speed)
     disp('Send multiple trajectories and run position control...')
 
 %     disp('Select a motion plan to send:')
 %     disp('1 - build tower')
 %     select = input('>');
 %     if select == 1
-        [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide);
+        [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide,speed);
 %     endr
 
     start_time = tic;
