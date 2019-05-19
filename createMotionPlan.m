@@ -6,12 +6,24 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     
     %}    
     %% Set up loading Bay, starting Position and Testing paramters
+    STARTBLOCK = 1;
+    NBLOCKS = 12;
+    
+    GRIPTIME = 0.15;
+    UNGRIPTIME = 0.15;
+    MOVETIME = 3;
+    RETURNTIME = 3;
+    
+    
+    
+    
+    
     if strcmp(loadSide,'RIGHT') 
-        RIGHT = 1;
-        LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
+        BuildSide = 1;
+        LoadingBay = [0.0375; -0.1875; -0.005; -pi/2; 0];
     elseif strcmp(loadSide,'LEFT')
-        RIGHT = 0; 
-        LoadingBay = [0.0125; 0.1875; -0.003; pi/2; 0];
+        BuildSide = 0; 
+        LoadingBay = [-0.000; 0.1875; -0.005; pi/2; 0];
     end
     
     if  strcmp(speed,'Accurate')
@@ -22,18 +34,12 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
         % To implement: set to fast mode
     end
 
-    STARTBLOCK = 1;
-    NBLOCKS = 54;
-    
-    GRIPTIME = 0.2;
-    UNGRIPTIME = 0.2;
-    MOVETIME = 2;
-    RETURNTIME = 2;
+
     
 
     
 %     Tower = jTower(0.2, -0.05, 0, RIGHT);
-    Tower = jTower(x/1000, y/1000, theta*pi/180, RIGHT);
+    Tower = jTower(x/1000, y/1000, theta*pi/180, 1);
     
         
     
@@ -77,3 +83,5 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     [~,~,~,nchunks] = size(chunks);
 
 end
+
+function t = runtime 

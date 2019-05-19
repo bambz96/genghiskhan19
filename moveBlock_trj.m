@@ -19,22 +19,20 @@ classdef moveBlock_trj < robot_trj
     Note: change class to output in meters and radians
     
     
-    % Things to improve:
-        - potentially change the approach strategy: using a shorter
-        approach for second and third blocks, (with an appropriately
-        shorter time. 
-        - integrate with the return, grip, drop, and pause commands
-        for a continuous trajectory for an entire pick and place. 
-        - add optimisation for time of major trajectory segmentss
-        - path optimisation, possibly via gradient descent
-        - assess the necessity of via 2 => yes. V Necessary
+
+
     
     %}
     properties(Constant)
 
         LiftHeight =    0.02;   % m height of via above loading bay
-        LiftTime =      0.2;    % time to "pick up" the block (v1 from LB)
-        ApproachTime =  0.3;    % time to "approach" the tower (v3 from v2)
+        
+        % fractional time to "pick up" the block (v1 from LB)
+        LiftTime =      0.1;    
+        % fractional time to "approach" the tower (v3 from v2)
+        ApproachTime =  0.15;  
+        % fractional time to reach the path via
+        PathVTime = 0.5;
         
         MinPathRadius = 0.22;    % minimum Radius for path via
         
@@ -48,10 +46,10 @@ classdef moveBlock_trj < robot_trj
         function obj = moveBlock_trj(loadBay, t0, length, block)
             
             % times at all locations
-            t = moveBlock_trj.simpleTime(t0, length);
+            t = moveBlock_trj.calculateTime(t0, length);
             
             % input all x locations
-            x = moveBlock_trj.simplePosition(loadBay, block);
+            x = moveBlock_trj.calculatePosition(loadBay, block);
             
             obj = obj@robot_trj(x, t);
             obj.block = block;
@@ -61,17 +59,21 @@ classdef moveBlock_trj < robot_trj
     
     methods(Static, Access = private)
         
-        % Simple determination of trajectory times
-        function t = simpleTime(t0, length)
-            t1 = t0 + moveBlock_trj.LiftTime;
-            tf = t0 + length;
-            t3 = tf - moveBlock_trj.ApproachTime;
-            t2 = (t1 + t3)/2;        % midpoint
+        % parameterized calculation of via point times
+        function t = calculateTime(t0, T)
+            tf = t0 + T;
+            
+            % parameter based times
+            t1 = t0 + moveBlock_trj.LiftTime*T;
+            t2 = t0 + moveBlock_trj.PathVTime*T;  % midpoint
+            t3 = tf - moveBlock_trj.ApproachTime*T;
+           
             t = [t0, t1, t2, t3, tf];
         end
         
-        % Simple determination of via locations
-        function x = simplePosition(loadBay, block)
+        
+        % Determination of via locations
+        function x = calculatePosition(loadBay, block)
             v0 = [loadBay(1:4); robot_trj.ClosedGrip];
             
             v1 = loadBay + ...

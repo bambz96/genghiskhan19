@@ -24,11 +24,13 @@ classdef jTower
         InversionRadius = 0.2; 
     end
     
-    properties (Access = private)
+    properties %(Access = private)
         x_loc       % x coordinate of centre of tower
         y_loc       % y coordinate of centre of tower
         theta       % angle of tower in radians
         complete    % Boolean, to check if the tower is complete
+        
+        buildTheta  % Angle of build. Used to define vias. 
         
         towerBlocks % Array to contain all blocks in the tower
     end
@@ -41,6 +43,12 @@ classdef jTower
             obj.x_loc = x;
             obj.y_loc = y;
             obj.theta = theta;
+            
+            if obj.x_loc < obj.InversionRadius
+                obj.buildTheta = pi + theta;
+            else
+                obj.buildTheta = theta;
+            end
             
             obj.towerBlocks = obj.constructTowerBlocks(bay);
             obj.complete = false; %tower not yet built
@@ -84,6 +92,8 @@ classdef jTower
                 x = obj.blockOffset(Pos, obj.x_loc >= obj.InversionRadius);
                 y = 0;
                 bTheta = -obj.CrossAngle; %odd layers are cross-lay
+                % if tower is inverted, invert cross lay blocks
+                bTheta = bTheta + pi*(obj.x_loc < obj.InversionRadius);
             else
                 %datum is in centre of block
                 y = obj.blockOffset(Pos, bay);
@@ -122,9 +132,9 @@ classdef jTower
     
     methods(Static, Access = private)
         %Just a z rotation, nothing to see here folks
-        function R = zRotation(theta)
-            R = [cos(theta) -sin(theta) 0;
-                 sin(theta) cos(theta) 0;
+        function R = zRotation(angle)
+            R = [cos(angle) -sin(angle) 0;
+                 sin(angle) cos(angle) 0;
                  0           0           1];
         end
     

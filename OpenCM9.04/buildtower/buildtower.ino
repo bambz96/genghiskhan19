@@ -170,7 +170,6 @@ Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
 Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
-Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
 
@@ -485,11 +484,11 @@ void setup()
 
             //      //Controller gains
 //      setIntegralVelocity430(DXL1_ID, portHandler, packetHandler);
-      setIntegralVelocity430(DXL2_ID, portHandler, packetHandler);
+      setIntegralVelocity430(DXL2_ID, 1000, portHandler, packetHandler);
 //      setIntegralVelocity430(DXL3_ID, portHandler, packetHandler);
 //
 //      setProportionalVelocity430(DXL1_ID, portHandler, packetHandler);
-      setProportionalVelocity430(DXL2_ID, portHandler, packetHandler);
+      setProportionalVelocity430(DXL2_ID, 100, portHandler, packetHandler);
 //      setProportionalVelocity430(DXL3_ID, portHandler, packetHandler);
 
       // Enable Torques

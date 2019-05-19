@@ -15,7 +15,7 @@ classdef jBlock < handle
         
         approachX = 4; % used in calculating approach (block widths)
         approachZ = 2; % used in calculating approach (block hieghts)
-        dropHeight = 0.010; % height to drop the block from
+        dropHeight = 0.008; % height to drop the block from
     end
     
     properties(Access = private)
