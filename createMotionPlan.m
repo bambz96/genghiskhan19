@@ -14,11 +14,11 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
         LoadingBay = [0.0125; 0.1875; -0.003; pi/2; 0];
     end
     
-    if  speed == 'Accurate'
+    if  strcmp(speed,'Accurate')
         % To implement: set to slow mode
-    elseif speed == 'Balanced'
+    elseif strcmp(speed,'Balanced')
         % To implement: set to balanced mode
-    elseif speed == 'Full Jenghis'
+    elseif strcmp(speed,'Full Jenghis')
         % To implement: set to fast mode
     end
 
