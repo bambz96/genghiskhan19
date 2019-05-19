@@ -141,9 +141,7 @@ typedef struct {
   float x;
   float y;
   float z;
-  float wx;
-  float wy;
-  float wz;
+  float theta;
   float grip;
 } X_t;
 
@@ -163,14 +161,13 @@ typedef struct {
 
 X_t Xref; //reference position
 X_t Xm; //"measured" robot position from FK(measured angles)
-X_t Xprev = {0.2, 0, 0.3, 0, 0, 0, 0}; //previous robot position, initial is home
+X_t Xprev = {0.2, 0, 0.3, 0, 0}; //previous robot position, initial is home
 X_t Xdref; // reference velocity
 
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
 Q430_t Qc430 = {0, 0, 0}; //control signal, target joint angles
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
-Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
 
@@ -427,15 +424,13 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.wx = 0;
-          Xref.wy = 0;
-          Xref.wz = theta;
+          Xref.theta = theta;
           Xref.grip = grip;
 
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           forward_kinematics(&Xprev, Qm430, Qm320);
           //Calculate feedback from measured task space, reference task space and previous measured task space
-//          X_t ex = feedback(Xprev, Xref, X);
+          //          X_t ex = feedback(Xprev, Xref, X);
 
           // get joint space control, Qc with IK, using feedback
           inverse_kinematics(&Qc430, &Qc320, &Xref);
@@ -453,6 +448,27 @@ void setup()
             Serial.print(Xprev.z, 5); Serial.print(' ');
             Serial.println();
           }
+          
+          //velocity calculations test
+//          x = quadEvaluate(&xpoly[count], dt / 1000.0);
+//          y = quadEvaluate(&ypoly[count], dt / 1000.0);
+//          z = quadEvaluate(&zpoly[count], dt / 1000.0);
+//          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
+//          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
+//          Xdref.x = x;
+//          Xdref.y = y;
+//          Xdref.z = z;
+//          Xdref.theta = theta;
+//          Xdref.grip = grip;
+          //calculate Qd430
+//          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+//          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
+          
+//          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
+//          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
+//          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
+//          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
+//          Serial.println();
 
           dt = millis() - tstart;
         }
@@ -483,15 +499,6 @@ void setup()
       accelerationLimit430(DXL2_ID, portHandler, packetHandler);
       accelerationLimit430(DXL3_ID, portHandler, packetHandler);
 
-            //      //Controller gains
-//      setIntegralVelocity430(DXL1_ID, portHandler, packetHandler);
-      setIntegralVelocity430(DXL2_ID, portHandler, packetHandler);
-//      setIntegralVelocity430(DXL3_ID, portHandler, packetHandler);
-//
-//      setProportionalVelocity430(DXL1_ID, portHandler, packetHandler);
-      setProportionalVelocity430(DXL2_ID, portHandler, packetHandler);
-//      setProportionalVelocity430(DXL3_ID, portHandler, packetHandler);
-
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -499,7 +506,7 @@ void setup()
       enableTorque320(DXL4_ID, portHandler, packetHandler);
       enableTorque320(DXL5_ID, portHandler, packetHandler);
       enableTorque320(DXL6_ID, portHandler, packetHandler);
-
+      
       delay(500);
 
       unsigned int tstart = millis();
@@ -512,7 +519,7 @@ void setup()
         unsigned int tf = xpoly[count].tf;
         // complete current path
         while (dt < tf) {
-
+          
           //Calculate Xref
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
           float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
@@ -522,9 +529,7 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.wx = 0;
-          Xref.wy = 0;
-          Xref.wz = theta;
+          Xref.theta = theta;
           Xref.grip = grip;
 
           // Calculate Xdref
@@ -536,15 +541,13 @@ void setup()
           Xdref.x = x;
           Xdref.y = y;
           Xdref.z = z;
-          Xdref.wx = 0;
-          Xdref.wy = 0;
-          Xdref.wz = theta;
+          Xdref.theta = theta;
           Xdref.grip = grip;
 
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
-
+          
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
 
@@ -553,7 +556,7 @@ void setup()
           X_t Xdc = velocityControl(Xdref, Xref, Xke);
 
           // Calculate position control for motors 4,5,6 = Qc320, Qc430 is not used in velocity control
-          inverse_kinematics(&Qc430, &Qc320, &Xm); // or Xref?
+          inverse_kinematics(&Qc430, &Qc320, &Xm);
           // for DEBUGGING, find reference joint angles
           inverse_kinematics(&Qr430, &Qr320, &Xref);
 
@@ -626,9 +629,9 @@ void setup()
         Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
         state = WAITING;
         }
-    }
+    } 
     else if (state == PASSIVE_VELOCITY) {
-
+      
     }
     else if (state == FINISHED) {
     }
