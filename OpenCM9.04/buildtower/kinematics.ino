@@ -47,6 +47,59 @@ void inverse_jacobian(Q430_t *Qd430, X_t Xd, Q430_t Q430, Q320_t Q320) {
 
 }
 
+X_t orientation_error(Q430_t Qm430, Q320_t Qm320, Q430_t Qr430, Q320_t Qr320){
+  X_t Xor;
+  //calculate reference orientations
+  X_t Xm = x0E(Qm430, Qm320);
+  X_t Ym = y0E(Qm430, Qm320);
+  X_t Zm = z0E(Qm430, Qm320);
+  X_t Xr = x0E(Qr430, Qr320);
+  X_t Yr = y0E(Qr430, Qr320);
+  X_t Zr = z0E(Qr430, Qr320);
+
+  X_t Xcross = cross(Xm, Xr);
+  X_t Ycross = cross(Ym, Yr);
+  X_t Zcross = cross(Zm, Zr);
+
+  Xor.wx = 0.5 * (Xcross.wx + Ycross.wx + Zcross.wx);
+  Xor.wy = 0.5 * (Xcross.wy + Ycross.wy + Zcross.wy);
+  Xor.wz = 0.5 * (Xcross.wz + Ycross.wz + Zcross.wz);
+
+  return Xor;
+}
+
+X_t cross(X_t Xm, X_t Xr) {
+  X_t X;
+  X.wx = Xm.wy * Xr.wz - Xm.wz * Xr.wy;
+  X.wy = Xm.wz * Xr.wx - Xm.wx * Xr.wz;
+  X.wz = Xm.wx * Xr.wy - Xm.wy * Xr.wx;
+  return X;
+}
+
+//column vector from R0E 
+X_t x0E(Q430_t Q430, Q320_t Q320){
+  X_t X0E;
+  X0E.wx = cos(Q320.q5)*(cos(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2 + cos(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2) + sin(Q320.q5)*sin(Q430.q1);
+  X0E.wy = cos(Q320.q5)*(sin(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2 - sin(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2) - cos(Q430.q1)*sin(Q320.q5);
+  X0E.wz = cos(Q320.q5)*sin(Q320.q4 + Q430.q2 + Q430.q3);
+  return X0E;
+}
+
+X_t y0E(Q430_t Q430, Q320_t Q320){
+  X_t Y0E;
+  Y0E.wx = cos(Q320.q5)*sin(Q430.q1) - sin(Q320.q5)*(cos(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2 + cos(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2);
+  Y0E.wy = - cos(Q320.q5)*cos(Q430.q1) - sin(Q320.q5)*(sin(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2 - sin(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2);
+  Y0E.wz = -sin(Q320.q5)*sin(Q320.q4 + Q430.q2 + Q430.q3); 
+  return Y0E;
+}
+
+X_t z0E(Q430_t Q430, Q320_t Q320){
+  X_t Z0E;
+  Z0E.wx = sin(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2 + sin(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2;
+  Z0E.wy = cos(Q320.q4 - Q430.q1 + Q430.q2 + Q430.q3)/2 - cos(Q320.q4 + Q430.q1 + Q430.q2 + Q430.q3)/2;
+  Z0E.wz = -cos(Q320.q4 + Q430.q2 + Q430.q3);
+  return Z0E;
+}
 // Helper function to rotate task space velocities to frame {1}.
 X_t rotation(Q430_t Q430, X_t Xd) {
   float R01[3][3] = {
