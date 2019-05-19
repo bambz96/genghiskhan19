@@ -11,12 +11,15 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     
     GRIPTIME = 0.1;
     UNGRIPTIME = 0.2;
-    FASTMOVE = 1.5;
+    FASTMOVE = 1.4;
     FASTRETURN = 1.2;
-    SLOWMOVE = 4;
+    SLOWMODE = 4;
+    T_INCREMENT = 0.02;
+    
     SPEED = 1;    % variable between 0 and 1 (1 is max speed)
-    MOVETIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTMOVE);
-    RETURNTIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTRETURN);
+    
+    MoveTime = SLOWMODE - SPEED*(SLOWMODE - FASTMOVE);
+    ReturnTime = SLOWMODE - SPEED*(SLOWMODE - FASTRETURN);
     
     
     
@@ -65,14 +68,14 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
         Grip = grip_trj(LoadingBay, T, GRIPTIME);
         T = T + GRIPTIME;
         
-        Move = moveBlock_trj(LoadingBay, T, MOVETIME, Block);
-        T = T + MOVETIME;
+        Move = moveBlock_trj(LoadingBay, T, MoveTime, Block);
+        T = T + MoveTime;
         
         Release = release_trj(Block, T, UNGRIPTIME);
         T = T + UNGRIPTIME;
         
-        Return = return_trj(LoadingBay, T, RETURNTIME, Block);
-        T = T + RETURNTIME;
+        Return = return_trj(LoadingBay, T, ReturnTime, Block);
+        T = T + ReturnTime;
         
         % changes the block state, so that a new block can be generated
         Block.placeBlock;
@@ -80,6 +83,11 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
         AllTraj = [Grip, Move, Release, Return];
         DATA = robot_trj.combineDATA(AllTraj, 4);
         chunks(:,:,:,cycle) = DATA;
+        
+%         if mod(cycle, 3) == 0
+%             MoveTime = MoveTime + T_INCREMENT;
+%             ReturnTime = ReturnTime + T_INCREMENT;
+%         end
         
     end
     
