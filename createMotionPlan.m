@@ -6,10 +6,10 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     
     %}    
     %% Set up loading Bay, starting Position and Testing paramters
-    if strcmp(loadSide,'RIGHT') 
+    if strcmp(loadSide,'A') 
         RIGHT = 1;
         LoadingBay = [0.0375; -0.1875; -0.003; -pi/2; 0];
-    elseif strcmp(loadSide,'LEFT')
+    elseif strcmp(loadSide,'B')
         RIGHT = 0; 
         LoadingBay = [0.0125; 0.1875; -0.003; pi/2; 0];
     end
