@@ -22,20 +22,22 @@ classdef return_trj < robot_trj
     
     
     % Things to improve:
-        - potentially change the approach/withdrawal strategies
-        - integrate with the return, grip, drop, and pause commands
-        for a continuous trajectory for an entire pick and place. 
-        - add optimisation for time of major trajectory segmentss
-        - path optimisation, possibly via gradient descent
-        - assess the necessity of via 2 => yes. V Necessary    
+        - iterate on parameterized "fractional time approach" 
+        - add optimisation for time of major trajectory segments?
+        - path optimisation, possibly via gradient descent?
+  
     %}
     properties(Constant)
         LiftHeight =    0.020;  % m height of via above loading bay 
-        LoadTime =  0.3;        % time to "Approach" the new block (vf from v3)
         
-        WithdrawTime = 0.5      % time to "withdraw from" the tower 
-        ClearBTime =  0.2;      % time to clear the block
-        
+        % fractional time to "Load" the new block (vf from v3)
+        LoadTime =  0.1;        
+        % time to clear the block
+        ClearBTime =  0.1;      
+        % time to "withdraw from" the tower
+        WithdrawTime = 0.25  
+        %fractional time to reach Path Via
+        PathVTime = 0.6;
         
         loadY = -0.025;         % offset for loading position in bay frame    
         loadZ = 0.025;          % offset for loading position in bay frame
@@ -51,10 +53,10 @@ classdef return_trj < robot_trj
         function obj = return_trj(loadBay, t0, length, block)
             
             % times at all locations
-            t = return_trj.simpleTime(t0, length);
+            t = return_trj.calculateTime(t0, length);
             
             % input all x locations
-            x = return_trj.simplePosition(loadBay, block);
+            x = return_trj.calculatePosition(loadBay, block);
             
             obj = obj@robot_trj(x, t);
             obj.block = block;
@@ -64,32 +66,38 @@ classdef return_trj < robot_trj
     
     methods(Static, Access = private)
         
-        % Simple determination of trajectory times
-        function t = simpleTime(t0, length)
-            t1 = t0 + return_trj.ClearBTime;
-            t2 = t0 + return_trj.WithdrawTime;
-            tf = t0 + length;
-            t4 = tf - return_trj.LoadTime;
-            t3 = (t2 + t4)/2;        % midpoint
-            t = [t0, t1, t2, t3, t4, tf];
+        % Parameterized determination of via point times
+        function t = calculateTime(t0, T)
+            tf = t0 + T;
+            
+            %parameter based times
+            t1 = t0 + return_trj.ClearBTime*T;
+%             t2 = t0 + return_trj.WithdrawTime*T;
+            
+            t3 = t0 + return_trj.PathVTime*T;
+
+            t4 = tf - return_trj.LoadTime*T;
+            
+                  % midpoint
+            t = [t0, t1, t3, t4, tf];
         end
         
-        % Simple determination of via locations
-        function x = simplePosition(loadingBay, block)
+        % Determination of via locations
+        function x = calculatePosition(loadingBay, block)
             dropLocation = [block.dropLocation; robot_trj.ClearGrip];
             
             v1 = dropLocation + [0; 0; jBlock.Height; 0; 0];
             
-            v2 = return_trj.withdrawPosition(block);
+            % v2 = return_trj.withdrawPosition(block);
             
             v4 = return_trj.loadingPosition(loadingBay);
             
             
                         
             v0 = [loadingBay(1:4); robot_trj.OpenGrip];
-            v3 = return_trj.pathVia(v4, v2);
+            v3 = return_trj.pathVia(v4, v1);
             % place all position vectors into an array 
-            x = [dropLocation, v1, v2, v3, v4, v0];
+            x = [dropLocation, v1, v3, v4, v0];
         end
         
         

@@ -448,7 +448,7 @@ void setup()
             Serial.print(Xprev.z, 5); Serial.print(' ');
             Serial.println();
           }
-          
+
           //velocity calculations test
 //          x = quadEvaluate(&xpoly[count], dt / 1000.0);
 //          y = quadEvaluate(&ypoly[count], dt / 1000.0);
@@ -463,7 +463,7 @@ void setup()
           //calculate Qd430
 //          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
 //          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
-          
+
 //          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
 //          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
 //          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
@@ -499,6 +499,15 @@ void setup()
       accelerationLimit430(DXL2_ID, portHandler, packetHandler);
       accelerationLimit430(DXL3_ID, portHandler, packetHandler);
 
+            //      //Controller gains
+//      setIntegralVelocity430(DXL1_ID, portHandler, packetHandler);
+      setIntegralVelocity430(DXL2_ID, 1000, portHandler, packetHandler);
+//      setIntegralVelocity430(DXL3_ID, portHandler, packetHandler);
+//
+//      setProportionalVelocity430(DXL1_ID, portHandler, packetHandler);
+      setProportionalVelocity430(DXL2_ID, 100, portHandler, packetHandler);
+//      setProportionalVelocity430(DXL3_ID, portHandler, packetHandler);
+
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -506,7 +515,7 @@ void setup()
       enableTorque320(DXL4_ID, portHandler, packetHandler);
       enableTorque320(DXL5_ID, portHandler, packetHandler);
       enableTorque320(DXL6_ID, portHandler, packetHandler);
-      
+
       delay(500);
 
       unsigned int tstart = millis();
@@ -519,7 +528,7 @@ void setup()
         unsigned int tf = xpoly[count].tf;
         // complete current path
         while (dt < tf) {
-          
+
           //Calculate Xref
           float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
           float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
@@ -547,7 +556,7 @@ void setup()
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
-          
+
           // find task space from measured joint space.
           forward_kinematics(&Xm, Qm430, Qm320);
 
@@ -629,9 +638,9 @@ void setup()
         Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
         state = WAITING;
         }
-    } 
+    }
     else if (state == PASSIVE_VELOCITY) {
-      
+
     }
     else if (state == FINISHED) {
     }
