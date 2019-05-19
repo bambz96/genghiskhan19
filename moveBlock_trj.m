@@ -30,9 +30,9 @@ classdef moveBlock_trj < robot_trj
         % fractional time to "pick up" the block (v1 from LB)
         LiftTime =      0.1;    
         % fractional time to "approach" the tower (v3 from v2)
-        ApproachTime =  0.15;  
+        ApproachTime =  0.25;  
         % fractional time to reach the path via
-        PathVTime = 0.5;
+        PathVTime = 0.4;
         
         MinPathRadius = 0.22;    % minimum Radius for path via
         

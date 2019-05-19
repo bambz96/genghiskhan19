@@ -4,8 +4,8 @@ function [Pieces, DATA] = pickAndPlace()
     
     GRIPTIME = 0.2;
     UNGRIPTIME = 0.2;
-    MOVETIME = 2;
-    RETURNTIME = 2;
+    MOVETIME = 4;
+    RETURNTIME = 4;
     
     
     

@@ -12,13 +12,14 @@ classdef release_trj < robot_trj
 
     %}
     properties(Constant)
-        ReleaseTime = 1;  % time to open gripper NO LONGER USED
-        % this is now supplied as a constructor argument
+        PauseTime = 0.5;  % fractional time to pause 
     end
     
     methods 
         function obj = release_trj(block, t, T)
-            tRelease = [t, t + T];
+            tPause = t + release_trj.PauseTime*T;
+            
+            tRelease = [t, tPause, t + T];
             
             dropLocation = block.dropLocation;
             
@@ -26,7 +27,7 @@ classdef release_trj < robot_trj
             
             xDropped = [dropLocation; robot_trj.ClearGrip];
             
-            xRelease = [xGripped, xDropped];
+            xRelease = [xGripped, xGripped, xDropped];
             
             obj = obj@robot_trj(xRelease, tRelease);
             

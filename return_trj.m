@@ -37,7 +37,7 @@ classdef return_trj < robot_trj
         % time to "withdraw from" the tower
         WithdrawTime = 0.25  
         %fractional time to reach Path Via
-        PathVTime = 0.55;
+        PathVTime = 0.6;
         
         loadY = -0.025;         % offset for loading position in bay frame    
         loadZ = 0.025;          % offset for loading position in bay frame
@@ -72,14 +72,14 @@ classdef return_trj < robot_trj
             
             %parameter based times
             t1 = t0 + return_trj.ClearBTime*T;
-            t2 = t0 + return_trj.WithdrawTime*T;
+%             t2 = t0 + return_trj.WithdrawTime*T;
             
             t3 = t0 + return_trj.PathVTime*T;
 
             t4 = tf - return_trj.LoadTime*T;
             
                   % midpoint
-            t = [t0, t1, t2, t3, t4, tf];
+            t = [t0, t1, t3, t4, tf];
         end
         
         % Determination of via locations
@@ -88,16 +88,16 @@ classdef return_trj < robot_trj
             
             v1 = dropLocation + [0; 0; jBlock.Height; 0; 0];
             
-            v2 = return_trj.withdrawPosition(block);
+            % v2 = return_trj.withdrawPosition(block);
             
             v4 = return_trj.loadingPosition(loadingBay);
             
             
                         
             v0 = [loadingBay(1:4); robot_trj.OpenGrip];
-            v3 = return_trj.pathVia(v4, v2);
+            v3 = return_trj.pathVia(v4, v1);
             % place all position vectors into an array 
-            x = [dropLocation, v1, v2, v3, v4, v0];
+            x = [dropLocation, v1, v3, v4, v0];
         end
         
         

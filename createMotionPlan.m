@@ -7,20 +7,23 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     %}    
     %% Set up loading Bay, starting Position and Testing paramters
     STARTBLOCK = 1;
-    NBLOCKS = 12;
+    NBLOCKS = 54; % Max 54
     
-    GRIPTIME = 0.15;
-    UNGRIPTIME = 0.15;
-    MOVETIME = 3;
-    RETURNTIME = 3;
-    
+    GRIPTIME = 0.1;
+    UNGRIPTIME = 0.2;
+    FASTMOVE = 1.5;
+    FASTRETURN = 1.2;
+    SLOWMOVE = 4;
+    SPEED = 1;    % variable between 0 and 1 (1 is max speed)
+    MOVETIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTMOVE);
+    RETURNTIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTRETURN);
     
     
     
     
     if strcmp(loadSide,'RIGHT') 
         BuildSide = 1;
-        LoadingBay = [0.0375; -0.1875; -0.005; -pi/2; 0];
+        LoadingBay = [0.040; -0.1875; -0.005; -pi/2; 0];
     elseif strcmp(loadSide,'LEFT')
         BuildSide = 0; 
         LoadingBay = [-0.000; 0.1875; -0.005; pi/2; 0];
@@ -83,5 +86,3 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     [~,~,~,nchunks] = size(chunks);
 
 end
-
-function t = runtime 
