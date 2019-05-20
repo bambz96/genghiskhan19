@@ -1,0 +1,23 @@
+Data sweep 1:
+Right hand side of board 3 measurments per point.
+25 mm between each measurment
+much data 
+X: [0 -250] (not all positions)
+Y: [0 -175] 
+Z: -4.7 -All data points
+Theta: 0 -All data points
+
+Data sweep 2:
+Continuation of sweep 1
+Right hand side of board 3 measurments per point.
+25 mm between each measurment
+much data 
+X: [0 - something]
+Y: [-175 -225]
+Z: -4.7
+Theta: 0
+
+Data Sweep 3
+Sweep around loading bay with theta -pi/2
+Measurments 12.5 mm appart,
+3 measurements per point
