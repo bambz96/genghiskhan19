@@ -14,7 +14,14 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
     FASTMOVE = 1.5;
     FASTRETURN = 1.2;
     SLOWMOVE = 4;
-    SPEED = 0.8;    % variable between 0 and 1 (1 is max speed)
+%     SPEED = 0.8;    % variable between 0 and 1 (1 is max speed)
+    if  strcmp(speed,'Accurate')
+        SPEED = 0.4; 
+    elseif strcmp(speed,'Balanced')
+        SPEED = 0.6; 
+    elseif strcmp(speed,'Full Jenghis')
+        SPEED = 0.8;
+    end
     MOVETIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTMOVE);
     RETURNTIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTRETURN);
 
@@ -28,19 +35,7 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
         BuildSide = 0;
         LoadingBay = [-0.000; 0.1875; -0.005; pi/2; 0];
     end
-
-    if  strcmp(speed,'Accurate')
-        % To implement: set to slow mode
-    elseif strcmp(speed,'Balanced')
-        % To implement: set to balanced mode
-    elseif strcmp(speed,'Full Jenghis')
-        % To implement: set to fast mode
-    end
-
-
-
-
-
+    
 %     Tower = jTower(0.2, -0.05, 0, RIGHT);
     Tower = jTower(x/1000, y/1000, theta*pi/180, 1);
 
