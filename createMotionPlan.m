@@ -1,4 +1,4 @@
-function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
+function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks)
     %{
         Assignment Gropup 20
         Create a full tower build sequence and output in an appropriate
@@ -7,14 +7,14 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     %}
     %% Set up loading Bay, starting Position and Testing paramters
     STARTBLOCK = 1;
-    NBLOCKS = 54; % Max 54
+    NBLOCKS = nBlocks; % Max 54
 
     GRIPTIME = 0.1;
     UNGRIPTIME = 0.2;
     FASTMOVE = 1.5;
     FASTRETURN = 1.2;
     SLOWMOVE = 4;
-    SPEED = 1;    % variable between 0 and 1 (1 is max speed)
+    SPEED = 0.8;    % variable between 0 and 1 (1 is max speed)
     MOVETIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTMOVE);
     RETURNTIME = SLOWMOVE - SPEED*(SLOWMOVE - FASTRETURN);
 
