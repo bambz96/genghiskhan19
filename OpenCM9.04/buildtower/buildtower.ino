@@ -788,6 +788,14 @@ void setup()
     else if (state == CALIBRATE) {
       // calibrate
       int doCalibrate = 1;
+      int window = 5;
+
+      Q430_t Qsum430 = {0, 0, 0};
+      Q320_t Qsum320 = {0, 0, 0};
+
+      Q430_t Qsma430 = {0, 0, 0};
+      Q320_t Qsma320 = {0, 0, 0};
+
       while (doCalibrate) {
           if(Serial.available()>0) {
               float x = Serial.parseFloat();
@@ -799,9 +807,27 @@ void setup()
               Xref.y = y/1000.0;
               Xref.z = z/1000.0;
 
+              Qsum430 = {0, 0, 0};
+              Qsum320 = {0, 0, 0};
+              Qsma430 = {0, 0, 0};
+              Qsma320 = {0, 0, 0};
+              for (idx=0; idx<window; idx++) {
+                readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+                Qsum430.q1 += Qm430.q1;
+                Qsum430.q2 += Qm430.q2;
+                Qsum430.q3 += Qm430.q3;
+                Qsum320.q4 += Qm320.q4;
+                Qsum320.q5 += Qm320.q5;
+                delay(20);
+              }
+              Qsma430.q1 = Qsum430.q1/window;
+              Qsma430.q2 = Qsum430.q2/window;
+              Qsma430.q3 = Qsum430.q3/window;
+              Qsma320.q4 = Qsum320.q4/window;
+              Qsma320.q5 = Qsum320.q5/window;
+
               // measured angles
-              readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-              forward_kinematics(&Xm, Qm430, Qm320);
+              forward_kinematics(&Xm, Qsma430, Qsma320);
 
               // required angles given Xref
               inverse_kinematics(&Qr430, &Qr320, &Xref);
@@ -809,24 +835,30 @@ void setup()
               Serial.print(Xref.x, 5); Serial.print(", ");
               Serial.print(Xref.y, 5); Serial.print(", ");
               Serial.print(Xref.z, 5); Serial.print(", ");
+
               Serial.print(Xm.x, 5); Serial.print(", ");
               Serial.print(Xm.y, 5); Serial.print(", ");
               Serial.print(Xm.z, 5); Serial.print(", ");
-              Serial.print(Qm430.q1, 5); Serial.print(", ");
+
+              Serial.print(Qsma430.q1, 5); Serial.print(", ");
               Serial.print(Qr430.q1, 5); Serial.print(", ");
-              Serial.print(Qm430.q1 - Qr430.q1, 5); Serial.print(", ");
-              Serial.print(Qm430.q2, 5); Serial.print(", ");
+              Serial.print(Qsma430.q1 - Qr430.q1, 5); Serial.print(", ");
+
+              Serial.print(Qsma430.q2, 5); Serial.print(", ");
               Serial.print(Qr430.q2, 5); Serial.print(", ");
-              Serial.print(Qm430.q2 - Qr430.q2, 5); Serial.print(", ");
-              Serial.print(Qm430.q3, 5); Serial.print(", ");
+              Serial.print(Qsma430.q2 - Qr430.q2, 5); Serial.print(", ");
+
+              Serial.print(Qsma430.q3, 5); Serial.print(", ");
               Serial.print(Qr430.q3, 5); Serial.print(", ");
-              Serial.print(Qm430.q3 - Qr430.q3, 5); Serial.print(", ");
-              Serial.print(Qm320.q4, 5); Serial.print(", ");
+              Serial.print(Qsma430.q3 - Qr430.q3, 5); Serial.print(", ");
+
+              Serial.print(Qsma320.q4, 5); Serial.print(", ");
               Serial.print(Qr320.q4, 5); Serial.print(", ");
-              Serial.print(Qm430.q4 - Qr430.q4, 5); Serial.print(", ");
-              Serial.print(Qm320.q5, 5); Serial.print(", ");
+              Serial.print(Qsma320.q4 - Qr320.q4, 5); Serial.print(", ");
+
+              Serial.print(Qsma320.q5, 5); Serial.print(", ");
               Serial.print(Qr320.q5, 5); Serial.print(", ");
-              Serial.print(Qm430.q5 - Qr430.q5, 5); Serial.print(", ");
+              Serial.print(Qsma320.q5 - Qr320.q5, 5); Serial.print(", ");
               Serial.println();
           }
 
