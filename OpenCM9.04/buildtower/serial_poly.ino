@@ -9,7 +9,7 @@ void readData(struct Cubic *poly) {
     float a0 = Serial.parseFloat();
     float t0 = Serial.parseFloat();
     float tf = Serial.parseFloat();
-    Serial.read(); // clear rest of input buffer (i.e. trailing \n
+    Serial.read(); // clear rest of input buffer (i.e. trailing \n)
     // reply with read values
     Serial.print(a3, 5); Serial.print(' ');
     Serial.print(a2, 5); Serial.print(' ');
