@@ -811,7 +811,7 @@ void setup()
               Qsum320 = {0, 0, 0};
               Qsma430 = {0, 0, 0};
               Qsma320 = {0, 0, 0};
-              for (idx=0; idx<window; idx++) {
+              for (int idx=0; idx<window; idx++) {
                 readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
                 Qsum430.q1 += Qm430.q1;
                 Qsum430.q2 += Qm430.q2;
