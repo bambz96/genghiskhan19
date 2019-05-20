@@ -37,7 +37,7 @@ classdef return_trj < robot_trj
         % time to "withdraw from" the tower
         WithdrawTime = 0.25  
         %fractional time to reach Path Via
-        PathVTime = 0.45;
+        PathVTime = 0.4;
         
         loadY = -0.025;         % offset for loading position in bay frame    
         loadZ = 0.025;          % offset for loading position in bay frame

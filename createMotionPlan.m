@@ -11,12 +11,12 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
     
     GRIPTIME = 0.1;
     UNGRIPTIME = 0.2;
-    FASTMOVE = 1.2;
-    FASTRETURN = 1.0;
-    SLOWMODE = 4;
-    T_INCREMENT = 0.02;
+    FASTMOVE = 1.5;
+    FASTRETURN = 1.2;
+    SLOWMODE = 3;
+    T_INCREMENT = 0.05;
     
-    SPEED = 1;    % variable between 0 and 1 (1 is max speed)
+    SPEED = 1.0;    % variable between 0 and 1 (1 is max speed)
     
     MoveTime = SLOWMODE - SPEED*(SLOWMODE - FASTMOVE);
     ReturnTime = SLOWMODE - SPEED*(SLOWMODE - FASTRETURN);
@@ -84,10 +84,10 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed)
         DATA = robot_trj.combineDATA(AllTraj, 4);
         chunks(:,:,:,cycle) = DATA;
         
-        if mod(cycle, 3) == 0
-            MoveTime = MoveTime + T_INCREMENT;
-            ReturnTime = ReturnTime + T_INCREMENT;
-        end
+%         if mod(cycle, 3) == 0
+%             MoveTime = MoveTime + T_INCREMENT;
+%             ReturnTime = ReturnTime + T_INCREMENT;
+%         end
         
     end
     
