@@ -82,12 +82,26 @@
 #define Q5_SCALE                            1.0
 #define Q6_SCALE                            1.0
 
+//#define Q1_SCALE                            1.0157
+//#define Q2_SCALE                            1.0334
+//#define Q3_SCALE                            0.9831
+//#define Q4_SCALE                            1.0095
+//#define Q5_SCALE                            1.0
+//#define Q6_SCALE                            1.0
+
 #define Q1_OFFSET                           2.65
 #define Q2_OFFSET                           -3.8236666//-3.870333333
 #define Q3_OFFSET                           -0.77973//-0.9364
 #define Q4_OFFSET                           -4.583636364
 #define Q5_OFFSET                           -1.39625
 #define Q6_OFFSET                           0
+
+//#define Q1_OFFSET                           0.1201//0.0243//2.65
+//#define Q2_OFFSET                           -0.035//0.1029//-3.8236666//-3.870333333
+//#define Q3_OFFSET                           -0.0157//0.0111//-0.77973//-0.9364
+//#define Q4_OFFSET                           -0.0942//0.0673//-4.583636364
+//#define Q5_OFFSET                           -0.024369159680971//-1.39625
+//#define Q6_OFFSET                           0
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
