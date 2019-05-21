@@ -18,7 +18,13 @@
 #include <SPI.h>
 #include <SD.h>
 
+#define CHIP_SELECT 53
+
 File myFile;
+
+Sd2Card card;
+SdVolume volume;
+SdFile root;
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -27,25 +33,84 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  Serial.println((char)13);
+//  Serial.print("\nInitializing SD card...");
+//
+//  // we'll use the initialization code from the utility libraries
+//  // since we're just testing if the card is working!
+//  if (!card.init(SPI_HALF_SPEED, CHIP_SELECT)) {
+//    Serial.println("initialization failed. Things to check:");
+//    Serial.println("* is a card inserted?");
+//    Serial.println("* is your wiring correct?");
+//    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+//    return;
+//  } else {
+//    Serial.println("Wiring is correct and a card is present.");
+//  }
+//
+//  // print the type of card
+//  Serial.print("\nCard type: ");
+//  switch (card.type()) {
+//    case SD_CARD_TYPE_SD1:
+//      Serial.println("SD1");
+//      break;
+//    case SD_CARD_TYPE_SD2:
+//      Serial.println("SD2");
+//      break;
+//    case SD_CARD_TYPE_SDHC:
+//      Serial.println("SDHC");
+//      break;
+//    default:
+//      Serial.println("Unknown");
+//  }
+//
+//  // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
+//  if (!volume.init(card)) {
+//    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+//    return;
+//  }
+//
+//  // print the type and size of the first FAT-type volume
+//  uint32_t volumesize;
+//  Serial.print("\nVolume type is FAT");
+//  Serial.println(volume.fatType(), DEC);
+//  Serial.println();
+//
+//  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
+//  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
+//  volumesize *= 512;                            // SD card blocks are always 512 bytes
+//  Serial.print("Volume size (bytes): ");
+//  Serial.println(volumesize);
+//  Serial.print("Volume size (Kbytes): ");
+//  volumesize /= 1024;
+//  Serial.println(volumesize);
+//  Serial.print("Volume size (Mbytes): ");
+//  volumesize /= 1024;
+//  Serial.println(volumesize);
+//
+//  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+//  root.openRoot(volume);
+//
+//  // list all files in the card with date and size
+//  root.ls(LS_R | LS_DATE | LS_SIZE);
 
   Serial.print("Initializing SD card...");
 
-  while (!SD.begin(53)) {
+  while (!SD.begin(CHIP_SELECT)) {
     Serial.println("initialization failed!");
     delay(100);
   }
   Serial.println("initialization done.");
 
-
-  while (SD.exists("test.txt")) {
-    delay(100);
-     if (SD.remove("test.txt")) {
+  while (SD.exists("test2.txt")) {
+     if (SD.remove("test2.txt")) {
       Serial.println("Deleted test.txt");
      } else {
       Serial.println("Couldn't delete test.txt");
      }
+     delay(100);
   }
+  
+  Serial.println("test2.txt doesn't exist");
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -115,14 +180,24 @@ void setup() {
   }
 
   // re-open the file for reading:
-  myFile = SD.open("test2.txt");
-  Serial.println("Reading test2.txt:");
+  String fileName = "x.txt";
+  myFile = SD.open(fileName);
+  Serial.println("Reading "+fileName);
+  int lines = 1;
   if (myFile) {    
     // read from the file until there's nothing else in it:
     while (myFile.available()) {
-//      Serial.println(myFile.parseFloat());
-      Serial.println(readFloat(&myFile), 6);
-      Serial.print("Available: "); Serial.println(myFile.available());
+      Serial.print("Line "); Serial.println(lines);
+      Serial.println(myFile.parseFloat(),6);
+      Serial.println(myFile.parseFloat(),6);
+      Serial.println(myFile.parseFloat(),6);
+      Serial.println(myFile.parseFloat(),6);
+      Serial.println(myFile.parseFloat(),6);
+      Serial.println(myFile.parseFloat(),6);
+//      Serial.println(readFloat(&myFile), 6);
+//      Serial.print("Available: "); Serial.println(myFile.available());
+      myFile.read(); // read and discard newline
+      lines++;
     }
     // close the file:
     myFile.close();
@@ -137,9 +212,12 @@ void loop() {
 }
 
 float readFloat(File *file) {
+  // reads a character at a time, adding them to a string to be converted to a float
+  // will stop at a \n, \r, space
+  // note: if it immediately encounters one of these, it will exit with a value of 0.00
   String str = "";
   int ch = file->read();
-  Serial.print(ch); Serial.print(" "); Serial.println((char)ch);
+//  Serial.print(ch); Serial.print(" "); Serial.println((char)ch);
   while (ch != '\n' && ch != '\r' && ch != ' ' && ch != -1 && ch < 255) {
     str += (char)ch;
     ch = file->read();

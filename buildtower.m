@@ -54,6 +54,8 @@ global vc_q2i; vc_q2i = [];
 global vc_q3i; vc_q3i = [];
 
 global debugging; debugging = 1; % debugging mode on by default
+
+FAST_BAUD = 1000000; % unused
 %% select serial port
 disp('Available COM ports:')
 ports = seriallist();
@@ -118,7 +120,8 @@ function [xdata, ydata, zdata, thdata, gripdata] = chooseAndSendTrajectory(seria
     disp('Select a trajectory to send:')
     disp('1 - long test trajectory')
     disp('2 - short test trajectory')
-    disp('3 - pick and place 1st block')
+%     disp('3 - pick and place 1st block')
+    disp('4 - build whole tower')
     select = input('>');
     if select == 1
         [length, xdata, ydata, zdata, thdata, gripdata] = create_test_trajectory(1);
@@ -131,6 +134,15 @@ function [xdata, ydata, zdata, thdata, gripdata] = chooseAndSendTrajectory(seria
         zdata = data(:,:,3);
         thdata = data(:,:,4);
         gripdata = data(:,:,5);
+    elseif select == 4
+        [nchunks, chunks] = createMotionPlan(0.2, 0.2, 0, 1);
+        data = chunks(:,:,:,1);
+        xdata = data(:,:,1);
+        ydata = data(:,:,2);
+        zdata = data(:,:,3);
+        thdata = data(:,:,4);
+        gripdata = data(:,:,5);
+        [length,~,~] = size(data);
     end
     sendTrajectory(serial, length, xdata, ydata, zdata, thdata, gripdata);
 end
@@ -139,6 +151,7 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectory(serial, length
     %% send command N, indicating about to send N polys
     fprintf(serial, 'N');
     reply = strtrim(fscanf(serial));
+%     set(serial,'BaudRate',57600);
     if ~strcmp(join(string(reply)), 'N')
         disp("Device did not reply correctly, expected 'N', got: "+join(string(reply)));
         fclose(serial);
@@ -161,16 +174,17 @@ function [xdata, ydata, zdata, thdata, gripdata] = sendTrajectory(serial, length
     %% send rows
     tic
     errors = 0;
-    disp('Send x')
+    disp('Sending x...')
     errors = errors + sendRow(serial, xdata);
-    disp('Send y')
+    disp('Sending y...')
     errors = errors + sendRow(serial, ydata);
-    disp('Send z')
+    disp('Sending z...')
     errors = errors + sendRow(serial, zdata);
-    disp('Send theta')
+    disp('Sending theta...')
     errors = errors + sendRow(serial, thdata);
-    disp('Send grip')
+    disp('Sending grip...')
     errors = errors + sendRow(serial, gripdata);
+    disp(fscanf(serial)); % STORED
     toc
     if errors > 0
         disp('*********************************************************')
@@ -281,7 +295,7 @@ function multipleTrajectories(serial)
     disp('1 - build tower')
     select = input('>');
     if select == 1
-        [nchunks, chunks] = createMotionPlan();
+        [nchunks, chunks] = createMotionPlan(0.2, 0.2, 0, 1);
     end
 
     start_time = tic;
@@ -365,24 +379,35 @@ function readJoints(serial)
 end
 
 function errors = sendRow(serial, data)
+    global debugging
     [length,~] = size(data);
     errors = 0;
     for i = 1:length
+        sumSent = sum(data(i, :));
         send = join(string(data(i, :)));
-        disp("send: " + send);
+        if debugging
+            disp("send: " + send);
+        end
         fprintf(serial, send);
-        reply = strtrim(fscanf(serial));
-        disp("recv: " + reply);
+        
+        if debugging
+            reply = strtrim(fscanf(serial));
+            disp("recv: " + reply);
 
-        values = sscanf(reply, '%f');
-        for j = 1:6
-            a = values(j);
-            b = data(i,j);
-            e = abs(a-b);
-            if e > 1e-3
-                errors = errors + 1;
-                disp('ERROR of '+string(e)+': '+string(a)+' '+string(b))
+            values = sscanf(reply, '%f');
+            for j = 1:6
+                a = values(j);
+                b = data(i,j);
+                e = abs(a-b);
+                if e > 1e-3
+                    errors = errors + 1;
+                    disp('ERROR of '+string(e)+': '+string(a)+' '+string(b))
+                end
             end
+        else
+%             reply = str2num(strtrim(fscanf(serial)));
+            reply = str2num(fscanf(serial));
+            % compare sumSent with reply
         end
     end
 end
@@ -393,10 +418,15 @@ function [t, d] = readRow(serial, length, path_res)
     t = zeros(1, path_res*length);
     d = zeros(1, path_res*length);
     while i <= path_res*length
-        data = strtrim(fscanf(serial));
-        res = regexp(data, '[+-]?\d+\.?\d*','match');
-        t(i) = str2double(res{1});
-        d(i) = str2double(res{2});
+        data = fscanf(serial, '%f');
+%         data = fscanf(serial);
+%         disp(data);
+%         data = sscanf(data, '%f');
+%         res = regexp(data, '[+-]?\d+\.?\d*','match');
+%         t(i) = str2double(res{1});
+%         d(i) = str2double(res{2});
+        t(i) = data(1);
+        d(i) = data(2);
         i = i + 1;
     end
 end
@@ -661,8 +691,8 @@ function toggleDebugging(serial)
     received = strtrim(fscanf(serial));
     if strcmp(received, "D")
         debugging = ~debugging;
-        disp('Toggled debugging, current state: '+debugging)
+        disp('Toggled debugging, current state: '+string(debugging))
     else
-        disp('Device did not respond correctly: '+received)
+        disp('Device did not respond correctly: '+string(received))
     end
 end

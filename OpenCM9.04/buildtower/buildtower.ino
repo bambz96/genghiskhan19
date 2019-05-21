@@ -125,6 +125,24 @@ bool dxl_addparam_result;                // addParam result
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+#include <SPI.h>
+#include <SD.h>
+
+#define CHIP_SELECT 53
+#define X_FILE "x.txt"
+#define Y_FILE "y.txt"
+#define Z_FILE "z.txt"
+#define THETA_FILE "theta.txt"
+#define GRIP_FILE "grip.txt"
+
+int read_x_idx = 0;
+int read_y_idx = 0;
+int read_z_idx = 0;
+int read_th_idx = 0;
+int read_grip_idx = 0;
+
+int NO_SD_CARD = 0;
+
 int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
@@ -210,6 +228,22 @@ void setup()
   pinMode(led_pin, OUTPUT);
   Serial.begin(57600);
   while (!Serial) {} // wait for serial port to connect. Needed for native USB
+  
+  int attempts = 0;
+  while (!SD.begin(CHIP_SELECT)) {
+    delay(100);
+    attempts++;
+    if (attempts > 3) {
+      Serial.println("SD card initialisation failed.");
+      Serial.println("Send anything over serial to continue without a SD card.");
+      while (Serial.available()==0) {
+        // wait
+      }
+      Serial.read(); // read everything in, doesn't matter what was sent
+      NO_SD_CARD = 1;
+    }
+  }
+  
   // Initialize PortHandler instance
   // Set the port path
   // Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -325,8 +359,13 @@ void setup()
           while (Serial.available() == 0) {} // wait for reply
           nPolys = Serial.parseInt();
           Serial.read(); // clear rest of input buffer (i.e. trailing \n)
+          if (nPolys > MAX_CUBICS && NO_SD_CARD) {
+          Serial.println("No SD card, and the trajectory is too large to store in SRAM.");
+        } else {
           Serial.println(nPolys); // confirm N polys before Matlab will send
+          deleteAllPolysOnSD();
           state = RECEIVING_X;
+        }
         } else if (command == "P") {
           // instruction to plot current stored trajectory
           delay(100); // delay 100ms to make sure Matlab is ready to receive
@@ -369,45 +408,62 @@ void setup()
       }
       }
     } else if (state == RECEIVING_X) {
-      readData(xpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_Y;
-      }
-    } else if (state == RECEIVING_Y) {
-      readData(ypoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_Z;
-      }
-    } else if (state == RECEIVING_Z) {
-      readData(zpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_TH;
-      }
-    } else if (state == RECEIVING_TH) {
-      readData(thpoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = RECEIVING_GRIP;
-      }
-    } else if (state == RECEIVING_GRIP) {
-      readData(grippoly);
-      if (count >= nPolys) {
-        count = 0;
-        state = WAITING;
-      }
+    File file = openFileOnSD(X_FILE, FILE_WRITE);
+    while (count < nPolys) {
+      readData(xpoly, &file);
+    }
+    file.close();
+    state = RECEIVING_Y;
+    count = 0;
+  } else if (state == RECEIVING_Y) {
+    File file = openFileOnSD(Y_FILE, FILE_WRITE);
+    while (count < nPolys) {
+      readData(ypoly, &file);
+    }
+    file.close();
+    state = RECEIVING_Z;
+    count = 0;
+  } else if (state == RECEIVING_Z) {
+    File file = openFileOnSD(Z_FILE, FILE_WRITE);
+    while (count < nPolys) {
+      readData(zpoly, &file);
+    }
+    file.close();
+    state = RECEIVING_TH;
+    count = 0;
+  } else if (state == RECEIVING_TH) {
+    File file = openFileOnSD(THETA_FILE, FILE_WRITE);
+    while (count < nPolys) {
+      readData(thpoly, &file);
+    }
+    file.close();
+    state = RECEIVING_GRIP;
+    count = 0;
+  } else if (state == RECEIVING_GRIP) {
+    File file = openFileOnSD(GRIP_FILE, FILE_WRITE);
+    while (count < nPolys) {
+      readData(grippoly, &file);
+    }
+    file.close();
+    Serial.println("STORED");
+    state = WAITING;
+    count = 0;
     } else if (state == PLOTTING) {
       // evaluate and send paths back so matlab can plot in 3D the trajectory for validation
       int verify = nPolys; // number of paths to verify
-      sendNPoly(verify, xpoly);
-      sendNPoly(verify, ypoly);
-      sendNPoly(verify, zpoly);
-      sendNPoly(verify, thpoly);
-      sendNPoly(verify, grippoly);
-      // reset count of most recent read in rows
-      count = 0;
+      if (NO_SD_CARD) {
+        sendNPoly(verify, xpoly);
+        sendNPoly(verify, ypoly);
+        sendNPoly(verify, zpoly);
+        sendNPoly(verify, thpoly);
+        sendNPoly(verify, grippoly);
+      } else {
+        sendFileForPlotting(X_FILE);
+        sendFileForPlotting(Y_FILE);
+        sendFileForPlotting(Z_FILE);
+        sendFileForPlotting(THETA_FILE);
+        sendFileForPlotting(GRIP_FILE);
+      }
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
       // Disable Torques
@@ -437,23 +493,37 @@ void setup()
 
       unsigned int tstart = millis();
 
-      count = 0;
+      count = 0; // progress out of nPolys
+      int idx = MAX_CUBICS+1; // progress out of polys in SRAM, start as non-zero just to force reading of polys from file
+	  
       while (count < nPolys) {
+	  
+		if (idx > MAX_CUBICS) {
+          // read new cubics in
+          // read x, then y...
+          readFromFileNPolyAt(X_FILE, xpoly, MAX_CUBICS, &read_x_idx);
+          readFromFileNPolyAt(Y_FILE, ypoly, MAX_CUBICS, &read_y_idx);
+          readFromFileNPolyAt(Z_FILE, zpoly, MAX_CUBICS, &read_z_idx);
+          readFromFileNPolyAt(TH_FILE, thpoly, MAX_CUBICS, &read_th_idx);
+          readFromFileNPolyAt(GRIP_FILE, grippoly, MAX_CUBICS, &read_grip_idx);
+          idx = 0;
+        }
+	  
         // delay before each new segment
         //delay(500);
         unsigned int dt = millis() - tstart; // should be very close to 0 on the first poly (count=0)
         // duration of current polynomial, note xpoly/ypoly/zpoly/thpoly should all agree on tf value
-        unsigned int t0 = xpoly[count].t0;
-        unsigned int tf = xpoly[count].tf;
+        unsigned int t0 = xpoly[idx].t0;
+        unsigned int tf = xpoly[idx].tf;
 
         // complete current path
         while (dt < tf) {
           // get task space coordinates and assign to X
-          float x = cubicEvaluate(&xpoly[count], dt / 1000.0);
-          float y = cubicEvaluate(&ypoly[count], dt / 1000.0);
-          float z = cubicEvaluate(&zpoly[count], dt / 1000.0);
-          float theta = cubicEvaluate(&thpoly[count], dt / 1000.0);
-          float grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
+          float x = cubicEvaluate(&xpoly[idx], dt / 1000.0);
+          float y = cubicEvaluate(&ypoly[idx], dt / 1000.0);
+          float z = cubicEvaluate(&zpoly[idx], dt / 1000.0);
+          float theta = cubicEvaluate(&thpoly[idx], dt / 1000.0);
+          float grip = cubicEvaluate(&grippoly[idx], dt / 1000.0);
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
@@ -487,7 +557,8 @@ void setup()
           dt = millis() - tstart;
         }
         // current path finished
-        count++;
+        count++; // number of polys completed
+        idx++; // current idx of polys array who's size is typically << nPolys
       }
 
       // all paths done, return to WAITING
@@ -789,6 +860,7 @@ void setup()
       // calibrate
       int doCalibrate = 1;
       int window = 5;
+      int idx;
 
       Q430_t Qsum430 = {0, 0, 0};
       Q320_t Qsum320 = {0, 0, 0};

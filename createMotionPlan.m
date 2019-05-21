@@ -9,7 +9,7 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
     RIGHT = 1;
 
     STARTBLOCK = 1;
-    NBLOCKS = 54;
+    NBLOCKS = 12;
     
     GRIPTIME = 0.2;
     UNGRIPTIME = 0.2;
@@ -35,6 +35,8 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
     % Each chunk will be sent to device separately
     chunks = [];
     
+    AllTraj = [];
+    
     for cycle = STARTBLOCK:NBLOCKS
         T = 0; % initialise time for every chunk
         
@@ -55,11 +57,13 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide)
         % changes the block state, so that a new block can be generated
         Block.placeBlock;
         
-        AllTraj = [Grip, Move, Release, Return];
-        DATA = robot_trj.combineDATA(AllTraj, 4);
-        chunks(:,:,:,cycle) = DATA;
+        AllTraj = [AllTraj, Grip, Move, Release, Return];
+        
         
     end
+    
+    DATA = robot_trj.combineDATA(AllTraj, 4*NBLOCKS);
+    chunks(:,:,:,1) = DATA;
     
     [~,~,~,nchunks] = size(chunks);
 
