@@ -82,13 +82,13 @@
 // POSITION GAINS
 #define Q1_KPP                              640 //initial value 640, [0, 16383]
 #define Q1_KPI                              0 //initial value 0, [0, 16383]
-#define Q1_KPD                              4000 //initial value 4000, [0, 16383]
+#define Q1_KPD                              9000 //initial value 4000, [0, 16383]
 #define Q2_KPP                              640 //initial value 640, [0, 16383]
 #define Q2_KPI                              0 //initial value 0, [0, 16383]
-#define Q2_KPD                              4000 //initial value 4000, [0, 16383]
+#define Q2_KPD                              9000 //initial value 4000, [0, 16383]
 #define Q3_KPP                              640 //initial value 640, [0, 16383]
 #define Q3_KPI                              0 //initial value 0, [0, 16383]
-#define Q3_KPD                              4000 //initial value 4000, [0, 16383]
+#define Q3_KPD                              9000 //initial value 4000, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -507,9 +507,9 @@ void setup()
             Serial.print(Xprev.y, 5); Serial.print(' ');
             Serial.print(Xprev.z, 5); Serial.print(' ');
             // reference joint angles, Qr
-            Serial.print(Qr430.q1, 5); Serial.print(' ');
-            Serial.print(Qr430.q2, 5); Serial.print(' ');
-            Serial.print(Qr430.q3, 5); Serial.print(' ');
+            Serial.print(Qc430.q1, 5); Serial.print(' ');
+            Serial.print(Qc430.q2, 5); Serial.print(' ');
+            Serial.print(Qc430.q3, 5); Serial.print(' ');
             // measured joint angles, Qm
             Serial.print(Qm430.q1, 5); Serial.print(' ');
             Serial.print(Qm430.q2, 5); Serial.print(' ');
