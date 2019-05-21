@@ -13,7 +13,7 @@ serial = selectSerial();
 %% main loop
 running = 1;
 while running
-    disp('1 - send trajectory to position from current')
+    disp('1 - read current EE position')
     disp('2 - select a trajectory to send')
     disp('3 - plot all trajectories stored on device')
     disp('4 - send multiple trajectories and run position control')
@@ -27,8 +27,7 @@ while running
     user = input('>');
 
     if user == 1
-        disp('Send trajectory to position from current...')
-        disp('Not implemented!')
+        disp(readCurrentPosition(serial));
     elseif user == 2
         [xsent, ysent, zsent, thsent, gripsent] = chooseAndSendTrajectory(serial);
     elseif user == 3

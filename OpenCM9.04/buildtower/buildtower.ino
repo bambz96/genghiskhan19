@@ -1,5 +1,5 @@
 #define MAX_CUBICS 25
-#define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
+#define PLOTTED_PATH_RES 15 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
 #define WAITING 0            // listen for communication from Matlab over serial, which send N, the number of path segments coming
 #define RECEIVING_X 1       // receive polynomial coefficients for all N cubic path segments x(t)
@@ -15,6 +15,7 @@
 #define PASSIVE_READ 11     // turn torques off and read Q -> FK -> print x/y/z/theta
 #define CALIBRATE 12        // print x,y,z,qa,qm,qe when given a x y z input
 #define FINISHED 13         // do nothing
+#define SEND_CURRENT_X 14   // send current end effector position
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -378,6 +379,10 @@ void setup()
           disableTorque320(DXL5_ID, portHandler, packetHandler);
           disableTorque320(DXL6_ID, portHandler, packetHandler);
           state = PASSIVE_READ;
+        } else if (command == "REE") {
+          // read end-effector position
+          Serial.println("REE");
+          state = SEND_CURRENT_X;
         } else if (command == "C") {
           // calibrate
           Serial.println("C");
@@ -827,8 +832,39 @@ void setup()
         Serial.read(); // doesn't matter what's sent, just end PASSIVE_READ
         state = WAITING;
         }
-    }
-    else if (state == CALIBRATE) {
+    } else if (state == SEND_CURRENT_X) {
+      int window = 5;
+      Q430_t Qsum430 = {0, 0, 0};
+      Q320_t Qsum320 = {0, 0, 0};
+      Q430_t Qsma430 = {0, 0, 0};
+      Q320_t Qsma320 = {0, 0, 0};
+      for (int idx=0; idx<window; idx++) {
+        readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
+        Qsum430.q1 += Qm430.q1;
+        Qsum430.q2 += Qm430.q2;
+        Qsum430.q3 += Qm430.q3;
+        Qsum320.q4 += Qm320.q4;
+        Qsum320.q5 += Qm320.q5;
+        delay(20);
+      }
+      Qsma430.q1 = Qsum430.q1/window;
+      Qsma430.q2 = Qsum430.q2/window;
+      Qsma430.q3 = Qsum430.q3/window;
+      Qsma320.q4 = Qsum320.q4/window;
+      Qsma320.q5 = Qsum320.q5/window;
+
+      // measured angles
+      forward_kinematics(&Xm, Qsma430, Qsma320);
+      Serial.print(Xm.x, 5); Serial.print(' ');
+      Serial.print(Xm.y, 5); Serial.print(' ');
+      Serial.print(Xm.z, 5); Serial.print(' ');
+      Serial.print(Xm.wx, 5); Serial.print(' ');
+      Serial.print(Xm.wy, 5); Serial.print(' ');
+      Serial.print(Xm.wz, 5); Serial.print(' ');
+      Serial.print(Xm.grip, 5); Serial.print(' ');
+      Serial.println();
+      state = WAITING;
+    } else if (state == CALIBRATE) {
       // calibrate
       int doCalibrate = 1;
       int window = 5;
