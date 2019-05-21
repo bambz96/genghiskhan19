@@ -25,7 +25,7 @@ function [Pieces, DATA] = pickAndPlace()
     % Array storinng all trajectories
     AllTraj = [];
     
-    Tower = jTower(0.2, -0.05, 0, RIGHT);
+    Tower = jTower(0.2, -0.05, 0);
     
     T = 0; % initialise time 
     

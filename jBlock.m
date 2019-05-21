@@ -29,7 +29,7 @@ classdef jBlock < handle
         
         layerPos        % order in which the block is placed in the layer
         approachPos     % via to approach tower
-        dropLocation    % dropLocation
+        dropLoc    % dropLocation
     end
     
     
@@ -44,7 +44,7 @@ classdef jBlock < handle
             obj.theta = theta;
             obj.layerPos = layerPos;
             obj.approachPos = obj.calculateApproach;
-            obj.dropLocation = obj.calculateDrop;
+            obj.dropLoc = obj.calculateDrop;
         end
         
         %% Accessors
@@ -64,7 +64,7 @@ classdef jBlock < handle
         end
         
         function D = dropLocation(obj)
-            D = obj.dropLocation;
+            D = obj.dropLoc;
         end
             
         
@@ -93,7 +93,7 @@ classdef jBlock < handle
             D = obj.getPosition + [0; 0; obj.dropHeight; 0];
             % scale for z position
             OffsetZ = (obj.z/obj.Height)*obj.dropIncrement;
-            D = D + [0; 0; OffsetZ; 0; 0];
+            D = D + [0; 0; OffsetZ; 0];
         end
         
     end
