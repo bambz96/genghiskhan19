@@ -30,9 +30,12 @@ function plotDebugData()
         figure
         subplot(121)
         hold on
-        plot(pc_time, pc_xr)
-        plot(pc_time, pc_yr)
-        plot(pc_time, pc_zr)
+        plot(pc_time, pc_xr, ':')
+        plot(pc_time, pc_yr, ':')
+        plot(pc_time, pc_zr, ':')
+        plot(pc_time, pc_xm)
+        plot(pc_time, pc_ym)
+        plot(pc_time, pc_zm)
         title('Position Control, f='+string(pc_f)+'Hz')
         legend('x', 'y', 'z')
         xlabel('Time (s)')
@@ -49,6 +52,17 @@ function plotDebugData()
         xlabel('x')
         ylabel('y')
         zlabel('z')
+        
+        figure;
+        hold on
+        plot(vc_time, vc_q1r, '--')
+        plot(vc_time, vc_q2r, '--')
+        plot(vc_time, vc_q3r, '--')
+        plot(vc_time, vc_q1m)
+        plot(vc_time, vc_q2m)
+        plot(vc_time, vc_q3m)
+        title('Joint Angles, f='+string(vc_f)+'Hz')
+        legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
     end
     if ~isempty(vc_time)
         % velocity control plots

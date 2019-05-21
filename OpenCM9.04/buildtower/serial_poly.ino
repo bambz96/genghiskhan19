@@ -32,15 +32,15 @@ void readData(struct Cubic *poly) {
 }
 
 String truncateFloat(float x) {
-  if (x < 1) {
+  if (abs(x) < 1) {
     return String(x, 6);
-  } else if (x < 10) {
+  } else if (abs(x) < 10) {
     return String(x, 5);
-  } else if (x < 100) {
+  } else if (abs(x) < 100) {
     return String(x, 4);
-  } else if (x < 1000) {
+  } else if (abs(x) < 1000) {
     return String(x, 3);
-  } else if (x < 10000) {
+  } else if (abs(x) < 10000) {
     return String(x, 2);
   } else {
     return String(x, 1);

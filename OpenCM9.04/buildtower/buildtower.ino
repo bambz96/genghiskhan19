@@ -32,9 +32,13 @@
 #define ADDRESS_PRESENT_POSITION_430        132
 #define ADDRESS_PROFILE_VELOCITY_430        112
 #define ADDRESS_PROFILE_ACCELERATION_430    108
-//Integral control addresses
+// Velocity control
 #define ADDRESS_INTEGRAL_VELOCITY_430       76
 #define ADDRESS_PROPORTIONAL_VELOCITY_430   78
+// Position control
+#define ADDRESS_PROPORTIONAL_POSITION_430   84
+#define ADDRESS_INTEGRAL_POSITION_430       82
+#define ADDRESS_DERIVATIVE_POSITION_430     80
 
 #define VELOCITY_LIMIT_430                  0 // 0 ~ 1,023 rev per min
 #define ACCELERATION_LIMIT_430              0 // 0 ~ 32,767 rev per min^2
@@ -68,12 +72,23 @@
 #define LOAD_TO_PERCENTAGE                  0.1 // -1,000 ~ 1,000, 0.1%
 #define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
 
-#define Q1_KVI                              1000 //initial value 1000, [0, 16383]
+// VELOCITY GAINS
 #define Q1_KVP                              100 //initial value 100, [0, 16383]
-#define Q2_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q1_KVI                              1000 //initial value 1000, [0, 16383]
 #define Q2_KVP                              100 //initial value 100, [0, 16383]
-#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q2_KVI                              1000 //initial value 1000, [0, 16383]
 #define Q3_KVP                              100 //initial value 100, [0, 16383]
+#define Q3_KVI                              1000 //initial value 1000, [0, 16383]
+// POSITION GAINS
+#define Q1_KPP                              640 //initial value 640, [0, 16383]
+#define Q1_KPI                              0 //initial value 0, [0, 16383]
+#define Q1_KPD                              4000 //initial value 4000, [0, 16383]
+#define Q2_KPP                              640 //initial value 640, [0, 16383]
+#define Q2_KPI                              0 //initial value 0, [0, 16383]
+#define Q2_KPD                              4000 //initial value 4000, [0, 16383]
+#define Q3_KPP                              640 //initial value 640, [0, 16383]
+#define Q3_KPI                              0 //initial value 0, [0, 16383]
+#define Q3_KPD                              4000 //initial value 4000, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -424,6 +439,16 @@ void setup()
       positionMode320(DXL4_ID, portHandler, packetHandler);
       positionMode320(DXL5_ID, portHandler, packetHandler);
       positionMode320(DXL6_ID, portHandler, packetHandler);
+      // Controller gains KPP KPI KPD
+      setProportionalPosition430(DXL1_ID, Q1_KPP, portHandler, packetHandler);
+      setProportionalPosition430(DXL2_ID, Q2_KPP, portHandler, packetHandler);
+      setProportionalPosition430(DXL3_ID, Q3_KPP, portHandler, packetHandler);
+      setIntegralPosition430(DXL1_ID, Q1_KPI, portHandler, packetHandler);
+      setIntegralPosition430(DXL2_ID, Q2_KPI, portHandler, packetHandler);
+      setIntegralPosition430(DXL3_ID, Q3_KPI, portHandler, packetHandler);
+      setDerivativePosition430(DXL1_ID, Q1_KPD, portHandler, packetHandler);
+      setDerivativePosition430(DXL2_ID, Q2_KPD, portHandler, packetHandler);
+      setDerivativePosition430(DXL3_ID, Q3_KPD, portHandler, packetHandler);
       // Enable Torques
       enableTorque430(DXL1_ID, portHandler, packetHandler);
       enableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -475,12 +500,20 @@ void setup()
 
           if (debugging) {
             Serial.print(millis()); Serial.print(' ');
-            Serial.print(x, 5); Serial.print(' ');
-            Serial.print(y, 5); Serial.print(' ');
-            Serial.print(z, 5); Serial.print(' ');
+            Serial.print(Xref.x, 5); Serial.print(' ');
+            Serial.print(Xref.y, 5); Serial.print(' ');
+            Serial.print(Xref.z, 5); Serial.print(' ');
             Serial.print(Xprev.x, 5); Serial.print(' ');
             Serial.print(Xprev.y, 5); Serial.print(' ');
             Serial.print(Xprev.z, 5); Serial.print(' ');
+            // reference joint angles, Qr
+            Serial.print(Qr430.q1, 5); Serial.print(' ');
+            Serial.print(Qr430.q2, 5); Serial.print(' ');
+            Serial.print(Qr430.q3, 5); Serial.print(' ');
+            // measured joint angles, Qm
+            Serial.print(Qm430.q1, 5); Serial.print(' ');
+            Serial.print(Qm430.q2, 5); Serial.print(' ');
+            Serial.print(Qm430.q3, 5); Serial.print(' ');
             Serial.println();
           }
 
