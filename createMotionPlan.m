@@ -15,6 +15,8 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
     FASTRETURN = 1.3;
     SLOWMOVE = 3; 
     
+    TIME_INCREMENT = 0.00;
+    
     % Initialise Loading bay
     if strcmp(loadSide,'A')
         LoadingBay = [0.040; -0.190; -0.005; -pi/2; 0];
@@ -31,8 +33,8 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
     elseif strcmp(speed,'Full Jenghis')
         Speed = 1.0;
     end
-    MOVETIME = SLOWMOVE - Speed*(SLOWMOVE - FASTMOVE);
-    RETURNTIME = SLOWMOVE - Speed*(SLOWMOVE - FASTRETURN);
+    MoveTime = SLOWMOVE - Speed*(SLOWMOVE - FASTMOVE);
+    ReturnTime = SLOWMOVE - Speed*(SLOWMOVE - FASTRETURN);
 
     % Iitialise tower
     Tower = jTower(x/1000, y/1000, theta*pi/180);
@@ -58,14 +60,14 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
         Grip = grip_trj(LoadingBay, T, GRIPTIME);
         T = T + GRIPTIME;
 
-        Move = moveBlock_trj(LoadingBay, T, MOVETIME, Block);
-        T = T + MOVETIME;
+        Move = moveBlock_trj(LoadingBay, T, MoveTime, Block);
+        T = T + MoveTime;
 
         Release = release_trj(Block, T, UNGRIPTIME);
         T = T + UNGRIPTIME;
 
-        Return = return_trj(LoadingBay, T, RETURNTIME, Block);
-        T = T + RETURNTIME;
+        Return = return_trj(LoadingBay, T, ReturnTime, Block);
+        T = T + ReturnTime;
 
         % changes the block state, so that a new block can be generated
         Block.placeBlock;
@@ -75,10 +77,10 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
         chunks(:,:,:,cycle) = DATA;
 
         
-%         if mod(cycle, 3) == 0
-%             MoveTime = MoveTime + T_INCREMENT;
-%             ReturnTime = ReturnTime + T_INCREMENT;
-%         end
+        if (TIME_INCREMENT && mod(cycle, 3) == 0)
+            MoveTime = MoveTime + T_INCREMENT;
+            ReturnTime = ReturnTime + T_INCREMENT;
+        end
         
 
 

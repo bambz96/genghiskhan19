@@ -16,6 +16,7 @@ classdef jBlock < handle
         approachX = 4; % used in calculating approach (block widths)
         approachZ = 2; % used in calculating approach (block hieghts)
         dropHeight = 0.012; % height to drop the block from
+        dropIncrement = 0.0002 % scale drop height with z position
     end
     
     properties(Access = private)
@@ -27,6 +28,7 @@ classdef jBlock < handle
         
         layerPos        % order in which the block is placed in the layer
         approachPos     % via to approach tower
+        dropLocation    % dropLocation
     end
     
     
@@ -41,6 +43,7 @@ classdef jBlock < handle
             obj.theta = theta;
             obj.layerPos = layerPos;
             obj.approachPos = obj.calculateApproach;
+            obj.dropLocation = obj.calculateDrop;
         end
         
         %% Accessors
@@ -60,7 +63,7 @@ classdef jBlock < handle
         end
         
         function D = dropLocation(obj)
-            D = obj.getPosition + [0; 0; obj.dropHeight; 0];
+            D = obj.dropLocation;
         end
             
         
@@ -84,8 +87,17 @@ classdef jBlock < handle
             r_pa = [0; -XClearance; ZClearance];
             A = Pos + [obj.zRotation(obj.theta)*r_pa; 0];
         end
+    
+        function D = calculateDrop(obj)
+            D = obj.getPosition + [0; 0; obj.dropHeight; 0];
+            % scale for z position
+            OffsetZ = (obj.z/obj.Height)*obj.dropIncrement;
+            D = D + [0; 0; OffsetZ; 0; 0];
+        end
         
     end
+    
+    
     
     methods (Static, Access=private)
         % Just a z rotation, nothing to see here folks
