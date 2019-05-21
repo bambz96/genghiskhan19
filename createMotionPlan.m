@@ -11,15 +11,15 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
 
     GRIPTIME = 0.1;
     UNGRIPTIME = 0.2;
-    FASTMOVE = 1.4;
-    FASTRETURN = 1.3;
+    FASTMOVE = 1.0;
+    FASTRETURN = 1.0;
     SLOWMOVE = 3; 
     
-    TIME_INCREMENT = 0.00;
+    T_INCREMENT = 0.02;
     
     % Initialise Loading bay
     if strcmp(loadSide,'A')
-        LoadingBay = [0.040; -0.1875; -0.005; -pi/2; 0];
+        LoadingBay = [0.040; -0.190; -0.005; -pi/2; 0];
     elseif strcmp(loadSide,'B')
         LoadingBay = [0; 0.1875; -0.005; pi/2; 0];
     end
@@ -77,7 +77,7 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
         chunks(:,:,:,cycle) = DATA;
 
         
-        if (TIME_INCREMENT && mod(cycle, 3) == 0)
+        if (T_INCREMENT && mod(cycle, 3) == 0)
             MoveTime = MoveTime + T_INCREMENT;
             ReturnTime = ReturnTime + T_INCREMENT;
         end
