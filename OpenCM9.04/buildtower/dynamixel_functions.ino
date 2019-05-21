@@ -57,6 +57,18 @@ int setProportionalVelocity430(int DXL_ID, int KVP, dynamixel::PortHandler *port
  return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_PROPORTIONAL_VELOCITY_430, KVP, &dxl_error);
 }
 
+int setProportionalPosition430(int DXL_ID, int KPP, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_PROPORTIONAL_POSITION_430, KPP, &dxl_error);
+}
+
+int setIntegralPosition430(int DXL_ID, int KPI, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_INTEGRAL_POSITION_430, KPI, &dxl_error);
+}
+
+int setDerivativePosition430(int DXL_ID, int KPD, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
+ return packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDRESS_DERIVATIVE_POSITION_430, KPD, &dxl_error);
+}
+
 int setGoalVelocity430(int DXL_ID, int goalVelocity, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler){
  return packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDRESS_GOAL_VELOCITY_430, goalVelocity, &dxl_error);
 }
