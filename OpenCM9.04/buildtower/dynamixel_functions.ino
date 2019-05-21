@@ -33,6 +33,10 @@ int disableTorque320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel:
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_TORQUE_ENABLE_320, TORQUE_DISABLE, &dxl_error);
 }
 
+int LED320(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler, int LED_COLOUR) {
+  return packetHandler->write1ByteTxRx(portHandler, DXL_ID, 25, LED_COLOUR, &dxl_error);
+}
+
 int positionMode430(int DXL_ID, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
   return packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDRESS_OPERATING_MODE_430, POSITION_MODE_430, &dxl_error);
 }

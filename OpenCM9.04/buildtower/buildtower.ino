@@ -328,6 +328,10 @@ void setup()
 
   while (1) {
     if (state == WAITING) {
+      // Turn LEDs Green
+      LED320(DXL4_ID, portHandler, packetHandler,5);
+      LED320(DXL5_ID, portHandler, packetHandler,5);
+      LED320(DXL6_ID, portHandler, packetHandler,5);
       if (Serial.available() > 0) {
         String command = Serial.readStringUntil('\n');
         if (command == "N") {
@@ -425,6 +429,10 @@ void setup()
       count = 0;
       state = WAITING;
     } else if (state == POSITION_CONTROL) {
+      // Turn LEDs Blue
+      LED320(DXL4_ID, portHandler, packetHandler,4);
+      LED320(DXL5_ID, portHandler, packetHandler,4);
+      LED320(DXL6_ID, portHandler, packetHandler,4);
       // Disable Torques
       disableTorque430(DXL1_ID, portHandler, packetHandler);
       disableTorque430(DXL2_ID, portHandler, packetHandler);
@@ -464,6 +472,7 @@ void setup()
 
       count = 0;
       while (count < nPolys) {
+          
         // delay before each new segment
         //delay(500);
         unsigned int dt = millis() - tstart; // should be very close to 0 on the first poly (count=0)
