@@ -5,7 +5,7 @@ function multipleTrajectories(serial,x,y,theta,loadSide,speed)
 %     disp('1 - build tower')
 %     select = input('>');
 %     if select == 1
-        [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide,speed);
+        [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide,speed, 54);
 %     endr
 
     start_time = tic;

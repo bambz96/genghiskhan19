@@ -28,7 +28,7 @@ classdef robot_trj < taskTrajectory
         OpenGrip = 0.422257077;     % Radians
         ClosedGrip = 1.015976119;   % Radians
         
-        TruncationK = 1e-5           % Threshold for truncation of data
+        TruncationK = 1e-6           % Threshold for truncation of data
         
         % Note: Probably a couple more that should be added    
     end

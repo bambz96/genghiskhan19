@@ -1,20 +1,20 @@
 #define MAX_CUBICS 25
 #define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
-#define WAITING 0			      // listen for communication from Matlab over serial, which send N, the number of path segments coming
-#define RECEIVING_X 1		    // receive polynomial coefficients for all N cubic path segments x(t)
-#define RECEIVING_Y 2		    //     ... for y(t)
-#define RECEIVING_Z 3		    //     ... for z(t)
-#define RECEIVING_TH 4		  //     ... for theta(t)
+#define WAITING 0            // listen for communication from Matlab over serial, which send N, the number of path segments coming
+#define RECEIVING_X 1       // receive polynomial coefficients for all N cubic path segments x(t)
+#define RECEIVING_Y 2       //     ... for y(t)
+#define RECEIVING_Z 3       //     ... for z(t)
+#define RECEIVING_TH 4      //     ... for theta(t)
 #define RECEIVING_GRIP 5    //     ... for theta(t)
-#define PLOTTING 6			    // send all paths (t, x, y, z) back to Matlab
-#define SIMULATION 7		    // simulate measurement/control
-#define POSITION_CONTROL 8	// position control
+#define PLOTTING 6          // send all paths (t, x, y, z) back to Matlab
+#define SIMULATION 7        // simulate measurement/control
+#define POSITION_CONTROL 8  // position control
 #define VELOCITY_CONTROL 9  // velocity control
 #define PWM_CONTROL 10      // PWM (voltage) control
 #define PASSIVE_READ 11     // turn torques off and read Q -> FK -> print x/y/z/theta
 #define CALIBRATE 12        // print x,y,z,qa,qm,qe when given a x y z input
-#define FINISHED 13			    // do nothing
+#define FINISHED 13         // do nothing
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,12 +68,12 @@
 #define LOAD_TO_PERCENTAGE                  0.1 // -1,000 ~ 1,000, 0.1%
 #define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
 
-#define Q1_KVI                              500 //initial value 1000, [0, 16383]
-#define Q1_KVP                              50 //initial value 100, [0, 16383]
-#define Q2_KVI                              250 //initial value 1000, [0, 16383]
-#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q1_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q1_KVP                              100 //initial value 100, [0, 16383]
+#define Q2_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q2_KVP                              100 //initial value 100, [0, 16383]
 #define Q3_KVI                              1000 //initial value 1000, [0, 16383]
-#define Q3_KVP                              150 //initial value 100, [0, 16383]
+#define Q3_KVP                              100 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -131,8 +131,8 @@ int state = WAITING;
 
 boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
 
-int nPolys;		// number of polynomials sent by Matlab and stored for operation
-int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
+int nPolys;   // number of polynomials sent by Matlab and stored for operation
+int count = 0;  // used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
@@ -433,7 +433,7 @@ void setup()
       enableTorque320(DXL6_ID, portHandler, packetHandler);
 
       // delay before starting trajectory
-      delay(500);
+//      delay(500);
 
       unsigned int tstart = millis();
 
@@ -492,6 +492,7 @@ void setup()
 
       // all paths done, return to WAITING
       Serial.println("DONE");
+      count = 0;
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
       // Set to velocity mode

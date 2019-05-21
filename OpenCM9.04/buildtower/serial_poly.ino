@@ -11,12 +11,12 @@ void readData(struct Cubic *poly) {
     float tf = Serial.parseFloat();
     Serial.read(); // clear rest of input buffer (i.e. trailing \n)
     // reply with read values
-    Serial.print(a3, 5); Serial.print(' ');
-    Serial.print(a2, 5); Serial.print(' ');
-    Serial.print(a1, 5); Serial.print(' ');
-    Serial.print(a0, 5); Serial.print(' ');
-    Serial.print(t0, 5); Serial.print(' ');
-    Serial.print(tf, 5); Serial.print(' ');
+    Serial.print(truncateFloat(a3)); Serial.print(' ');
+    Serial.print(truncateFloat(a2)); Serial.print(' ');
+    Serial.print(truncateFloat(a1)); Serial.print(' ');
+    Serial.print(truncateFloat(a0)); Serial.print(' ');
+    Serial.print(truncateFloat(t0)); Serial.print(' ');
+    Serial.print(truncateFloat(tf)); Serial.print(' ');
     Serial.println();
     // create Cubic struct and save to given array of polynomials
     struct Cubic cubic;
@@ -28,6 +28,22 @@ void readData(struct Cubic *poly) {
     cubic.tf = tf * 1000; // convert s to ms
     poly[count] = cubic;
     count++;
+  }
+}
+
+String truncateFloat(float x) {
+  if (x < 1) {
+    return String(x, 6);
+  } else if (x < 10) {
+    return String(x, 5);
+  } else if (x < 100) {
+    return String(x, 4);
+  } else if (x < 1000) {
+    return String(x, 3);
+  } else if (x < 10000) {
+    return String(x, 2);
+  } else {
+    return String(x, 1);
   }
 }
 

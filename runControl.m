@@ -37,7 +37,7 @@ function success = runControl(serial, type, chunk_i)
                 disp('Chunk '+string(chunk_i)+' completed.')
             end
         else
-            disp('Device did not respond correctly: ' + received)
+            disp('Device did not respond correctly: ' + join(string(received)))
             disp('Stopping operation.')
         end
     end
