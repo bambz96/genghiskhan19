@@ -20,8 +20,9 @@ classdef jTower
         Height    = 0.270;  % m
         CrossAngle = pi/2   % radians
         
-        % if build radius < inversion radius, build from in to out
-        InversionRadius = 0.2; 
+        % if build radius < inversion limit, build from in to out
+        InversionX = 0.2; 
+        InversionY = -0.15;
     end
     
     properties %(Access = private)
@@ -30,7 +31,6 @@ classdef jTower
         theta       % angle of tower in radians
         complete    % Boolean, to check if the tower is complete
         
-        buildTheta  % Angle of build. Used to define vias. 
         
         towerBlocks % Array to contain all blocks in the tower
     end
@@ -43,12 +43,6 @@ classdef jTower
             obj.x_loc = x;
             obj.y_loc = y;
             obj.theta = theta;
-            
-            if obj.x_loc < obj.InversionRadius
-                obj.buildTheta = pi + theta;
-            else
-                obj.buildTheta = theta;
-            end
             
             obj.towerBlocks = obj.constructTowerBlocks;
             obj.complete = false; %tower not yet built
@@ -89,11 +83,11 @@ classdef jTower
         function P = blockPosition(obj, layer, Pos)
             if mod(layer, 2) % odd layer
                 % datum is in centre of brick
-                x = obj.blockOffset(Pos, obj.x_loc >= obj.InversionRadius);
+                x = obj.blockOffset(Pos, ~obj.isInverse);
                 y = 0;
                 bTheta = -obj.CrossAngle; %odd layers are cross-lay
                 % if tower is inverted, invert cross lay blocks
-                bTheta = bTheta + pi*(obj.x_loc < obj.InversionRadius);
+                bTheta = bTheta + pi*(obj.isInverse);
             else
                 % datum is in centre of block
                 % Vertical layers allways build from right due to end
@@ -125,6 +119,18 @@ classdef jTower
             else 
                 bOffset = -(obj.BPerLayer/2 - layerPos + 0.5)*jBlock.Width;
             end
+        end
+        
+        function I = isInverse(obj)
+            if (obj.y_loc > 0)
+                I = 1;
+            elseif (obj.x_loc < obj.InversionX && ...
+                    obj.y_loc > obj.InversionY)
+                I = 1;
+            else 
+                I = 0;
+            end 
+            
         end
         
         
