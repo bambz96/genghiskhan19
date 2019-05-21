@@ -4,8 +4,8 @@ function toggleDebugging(serial)
     received = strtrim(fscanf(serial));
     if strcmp(received, "D")
         debugging = ~debugging;
-        disp('Toggled debugging, current state: '+debugging)
+        disp('Toggled debugging, current state: '+string(debugging))
     else
-        disp('Device did not respond correctly: '+received)
+        disp('Device did not respond correctly: '+string(received))
     end
 end

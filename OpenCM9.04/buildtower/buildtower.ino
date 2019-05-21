@@ -1,20 +1,20 @@
 #define MAX_CUBICS 25
 #define PLOTTED_PATH_RES 50 // nbr of samples in paths generated for plotting in Matlab, does not affect real operation
 // states
-#define WAITING 0			      // listen for communication from Matlab over serial, which send N, the number of path segments coming
-#define RECEIVING_X 1		    // receive polynomial coefficients for all N cubic path segments x(t)
-#define RECEIVING_Y 2		    //     ... for y(t)
-#define RECEIVING_Z 3		    //     ... for z(t)
-#define RECEIVING_TH 4		  //     ... for theta(t)
+#define WAITING 0            // listen for communication from Matlab over serial, which send N, the number of path segments coming
+#define RECEIVING_X 1       // receive polynomial coefficients for all N cubic path segments x(t)
+#define RECEIVING_Y 2       //     ... for y(t)
+#define RECEIVING_Z 3       //     ... for z(t)
+#define RECEIVING_TH 4      //     ... for theta(t)
 #define RECEIVING_GRIP 5    //     ... for theta(t)
-#define PLOTTING 6			    // send all paths (t, x, y, z) back to Matlab
-#define SIMULATION 7		    // simulate measurement/control
-#define POSITION_CONTROL 8	// position control
+#define PLOTTING 6          // send all paths (t, x, y, z) back to Matlab
+#define SIMULATION 7        // simulate measurement/control
+#define POSITION_CONTROL 8  // position control
 #define VELOCITY_CONTROL 9  // velocity control
 #define PWM_CONTROL 10      // PWM (voltage) control
 #define PASSIVE_READ 11     // turn torques off and read Q -> FK -> print x/y/z/theta
 #define CALIBRATE 12        // print x,y,z,qa,qm,qe when given a x y z input
-#define FINISHED 13			    // do nothing
+#define FINISHED 13         // do nothing
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,12 +68,12 @@
 #define LOAD_TO_PERCENTAGE                  0.1 // -1,000 ~ 1,000, 0.1%
 #define PWM_TO_PERCENTAGE                   0.11299435 // % per PWM unit
 
-#define Q1_KVI                              500 //initial value 1000, [0, 16383]
-#define Q1_KVP                              50 //initial value 100, [0, 16383]
-#define Q2_KVI                              250 //initial value 1000, [0, 16383]
-#define Q2_KVP                              50 //initial value 100, [0, 16383]
+#define Q1_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q1_KVP                              100 //initial value 100, [0, 16383]
+#define Q2_KVI                              1000 //initial value 1000, [0, 16383]
+#define Q2_KVP                              100 //initial value 100, [0, 16383]
 #define Q3_KVI                              1000 //initial value 1000, [0, 16383]
-#define Q3_KVP                              150 //initial value 100, [0, 16383]
+#define Q3_KVP                              100 //initial value 100, [0, 16383]
 
 #define Q1_SCALE                            1.020078546
 #define Q2_SCALE                            1.0
@@ -82,26 +82,12 @@
 #define Q5_SCALE                            1.0
 #define Q6_SCALE                            1.0
 
-//#define Q1_SCALE                            1.0157
-//#define Q2_SCALE                            1.0334
-//#define Q3_SCALE                            0.9831
-//#define Q4_SCALE                            1.0095
-//#define Q5_SCALE                            1.0
-//#define Q6_SCALE                            1.0
-
 #define Q1_OFFSET                           2.65
 #define Q2_OFFSET                           -3.8236666//-3.870333333
 #define Q3_OFFSET                           -0.77973//-0.9364
 #define Q4_OFFSET                           -4.583636364
 #define Q5_OFFSET                           -1.39625
 #define Q6_OFFSET                           0
-
-//#define Q1_OFFSET                           0.1201//0.0243//2.65
-//#define Q2_OFFSET                           -0.035//0.1029//-3.8236666//-3.870333333
-//#define Q3_OFFSET                           -0.0157//0.0111//-0.77973//-0.9364
-//#define Q4_OFFSET                           -0.0942//0.0673//-4.583636364
-//#define Q5_OFFSET                           -0.024369159680971//-1.39625
-//#define Q6_OFFSET                           0
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
@@ -145,8 +131,8 @@ int state = WAITING;
 
 boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
 
-int nPolys;		// number of polynomials sent by Matlab and stored for operation
-int count = 0;	// used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
+int nPolys;   // number of polynomials sent by Matlab and stored for operation
+int count = 0;  // used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
 
 // stores cubic polynomial coefficients and duration tf
 // int instead of float to halve needed bytes (4 -> 2)
@@ -168,7 +154,9 @@ typedef struct {
   float x;
   float y;
   float z;
-  float theta;
+  float wx;
+  float wy;
+  float wz;
   float grip;
 } X_t;
 
@@ -188,7 +176,7 @@ typedef struct {
 
 X_t Xref; //reference position
 X_t Xm; //"measured" robot position from FK(measured angles)
-X_t Xprev = {0.2, 0, 0.3, 0, 0}; //previous robot position, initial is home
+X_t Xprev = {0.2, 0, 0.3, 0, 0, 0, 0}; //previous robot position, initial is home
 X_t Xdref; // reference velocity
 
 X_t Xerr = {0, 0, 0, 0, 0, 0, 0}; //Errors for PID
@@ -199,6 +187,7 @@ X_t Xpreverr = {0,0,0,0,0,0,0};
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
+Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
 
@@ -444,7 +433,7 @@ void setup()
       enableTorque320(DXL6_ID, portHandler, packetHandler);
 
       // delay before starting trajectory
-      delay(500);
+//      delay(500);
 
       unsigned int tstart = millis();
 
@@ -468,13 +457,15 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.theta = theta;
+          Xref.wx = 0;
+          Xref.wy = 0;
+          Xref.wz = theta;
           Xref.grip = grip;
 
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           forward_kinematics(&Xprev, Qm430, Qm320);
           //Calculate feedback from measured task space, reference task space and previous measured task space
-          //          X_t ex = feedback(Xprev, Xref, X);
+//          X_t ex = feedback(Xprev, Xref, X);
 
           // get joint space control, Qc with IK, using feedback
           inverse_kinematics(&Qc430, &Qc320, &Xref);
@@ -493,27 +484,6 @@ void setup()
             Serial.println();
           }
 
-          //velocity calculations test
-//          x = quadEvaluate(&xpoly[count], dt / 1000.0);
-//          y = quadEvaluate(&ypoly[count], dt / 1000.0);
-//          z = quadEvaluate(&zpoly[count], dt / 1000.0);
-//          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
-//          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-//          Xdref.x = x;
-//          Xdref.y = y;
-//          Xdref.z = z;
-//          Xdref.theta = theta;
-//          Xdref.grip = grip;
-          //calculate Qd430
-//          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-//          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
-
-//          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
-//          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
-//          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
-//          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
-//          Serial.println();
-
           dt = millis() - tstart;
         }
         // current path finished
@@ -522,6 +492,7 @@ void setup()
 
       // all paths done, return to WAITING
       Serial.println("DONE");
+      count = 0;
       state = WAITING;
     } else if (state == VELOCITY_CONTROL) {
       // Set to velocity mode
@@ -575,7 +546,9 @@ void setup()
           Xref.x = x;
           Xref.y = y;
           Xref.z = z;
-          Xref.theta = theta;
+          Xref.wx = 0;
+          Xref.wy = 0;
+          Xref.wz = theta;
           Xref.grip = grip;
 
           // Calculate Xdref
@@ -587,7 +560,9 @@ void setup()
           Xdref.x = x;
           Xdref.y = y;
           Xdref.z = z;
-          Xdref.theta = theta;
+          Xdref.wx = 0;
+          Xdref.wy = 0;
+          Xdref.wz = theta;
           Xdref.grip = grip;
 
           // read current joint angles and velocities
