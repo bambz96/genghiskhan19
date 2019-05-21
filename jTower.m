@@ -39,7 +39,7 @@ classdef jTower
     %% Public Methods  
     methods
         % Constructor
-        function obj = jTower(x, y, theta, bay)
+        function obj = jTower(x, y, theta)
             obj.x_loc = x;
             obj.y_loc = y;
             obj.theta = theta;
@@ -50,7 +50,7 @@ classdef jTower
                 obj.buildTheta = theta;
             end
             
-            obj.towerBlocks = obj.constructTowerBlocks(bay);
+            obj.towerBlocks = obj.constructTowerBlocks;
             obj.complete = false; %tower not yet built
         end
         
@@ -73,11 +73,11 @@ classdef jTower
     methods(Access = private)
         
         % Adds all blocks to the tower
-        function tower = constructTowerBlocks(obj, bay)
+        function tower = constructTowerBlocks(obj)
             tower = [];
             for layer = 1:obj.Layers
                 for pos = 1:obj.BPerLayer
-                    P = obj.blockPosition(layer, pos, bay); 
+                    P = obj.blockPosition(layer, pos); 
                     tower = [tower, jBlock(P(1), P(2), P(3), P(4), pos)]; 
                 end
             end
@@ -86,7 +86,7 @@ classdef jTower
         
         % calculates coordiantes of a block from it's place in the tower
         % output matches jBlock constructor
-        function P = blockPosition(obj, layer, Pos, bay)
+        function P = blockPosition(obj, layer, Pos)
             if mod(layer, 2) % odd layer
                 % datum is in centre of brick
                 x = obj.blockOffset(Pos, obj.x_loc >= obj.InversionRadius);
@@ -95,8 +95,10 @@ classdef jTower
                 % if tower is inverted, invert cross lay blocks
                 bTheta = bTheta + pi*(obj.x_loc < obj.InversionRadius);
             else
-                %datum is in centre of block
-                y = obj.blockOffset(Pos, bay);
+                % datum is in centre of block
+                % Vertical layers allways build from right due to end
+                % effector constraints
+                y = obj.blockOffset(Pos, 1);
                 x = 0;
                 bTheta = 0; 
             end
