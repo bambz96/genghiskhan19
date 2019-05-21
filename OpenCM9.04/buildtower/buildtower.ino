@@ -82,26 +82,12 @@
 #define Q5_SCALE                            1.0
 #define Q6_SCALE                            1.0
 
-//#define Q1_SCALE                            1.0157
-//#define Q2_SCALE                            1.0334
-//#define Q3_SCALE                            0.9831
-//#define Q4_SCALE                            1.0095
-//#define Q5_SCALE                            1.0
-//#define Q6_SCALE                            1.0
-
 #define Q1_OFFSET                           2.65
 #define Q2_OFFSET                           -3.8236666//-3.870333333
 #define Q3_OFFSET                           -0.77973//-0.9364
 #define Q4_OFFSET                           -4.583636364
 #define Q5_OFFSET                           -1.39625
 #define Q6_OFFSET                           0
-
-//#define Q1_OFFSET                           0.1201//0.0243//2.65
-//#define Q2_OFFSET                           -0.035//0.1029//-3.8236666//-3.870333333
-//#define Q3_OFFSET                           -0.0157//0.0111//-0.77973//-0.9364
-//#define Q4_OFFSET                           -0.0942//0.0673//-4.583636364
-//#define Q5_OFFSET                           -0.024369159680971//-1.39625
-//#define Q6_OFFSET                           0
 
 // Protocol version
 #define PROTOCOL_VERSION                2.0                 // See which protocol version is used in the Dynamixel
@@ -201,6 +187,7 @@ X_t Xpreverr = {0,0,0,0,0,0,0};
 Q430_t Qr430 = {0, 0, 0}; // reference joint angles
 Q430_t Qdr430 = {0, 0, 0}; // reference joint velocities
 Q430_t Qm430 = {0, 0, 0}; // measured joint angles
+Q430_t Qc430 = {0, 0, 0};
 Q430_t Qdm430 = {0, 0, 0}; // measured joint velocities
 Q430_t Qdc430 = {0, 0, 0}; // control signal, target joint velocities
 
@@ -496,30 +483,6 @@ void setup()
             Serial.print(Xprev.z, 5); Serial.print(' ');
             Serial.println();
           }
-<<<<<<< HEAD
-=======
-
-          //velocity calculations test
-//          x = quadEvaluate(&xpoly[count], dt / 1000.0);
-//          y = quadEvaluate(&ypoly[count], dt / 1000.0);
-//          z = quadEvaluate(&zpoly[count], dt / 1000.0);
-//          theta = quadEvaluate(&thpoly[count], dt / 1000.0);
-//          grip = cubicEvaluate(&grippoly[count], dt / 1000.0);
-//          Xdref.x = x;
-//          Xdref.y = y;
-//          Xdref.z = z;
-//          Xdref.theta = theta;
-//          Xdref.grip = grip;
-          //calculate Qd430
-//          readQ(&Q430, &Q320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
-//          inverse_jacobian(&Qd430, Xdref, Q430, Q320);
-
-//          Serial.print("Q1_d: "); Serial.print(Qd430.q1); Serial.print(", ");
-//          Serial.print("Q2_d: "); Serial.print(Qd430.q2); Serial.print(", ");
-//          Serial.print("Q3_d: "); Serial.print(Qd430.q3); Serial.print(", ");
-//          Serial.print("Time: "); Serial.print((millis()- tstart - dt)/1000.0, 6); Serial.print(", ");
-//          Serial.println();
->>>>>>> Ambars-Branch
 
           dt = millis() - tstart;
         }
@@ -604,7 +567,6 @@ void setup()
           // read current joint angles and velocities
           readQ(&Qm430, &Qm320, &groupSyncRead430, &groupSyncRead320,  packetHandler);
           readQd(&Qdm430, &groupSyncReadVelocity430,  packetHandler);
-
           // read current PWM and estimated load
           readPWM(&PWM430, &groupSyncReadPWM430,  packetHandler);
           readLoad(&Load430, &groupSyncReadLoad430,  packetHandler);
