@@ -55,13 +55,13 @@ function plotDebugData()
         
         figure;
         hold on
-        plot(vc_time, vc_q1r, '--')
-        plot(vc_time, vc_q2r, '--')
-        plot(vc_time, vc_q3r, '--')
-        plot(vc_time, vc_q1m)
-        plot(vc_time, vc_q2m)
-        plot(vc_time, vc_q3m)
-        title('Joint Angles, f='+string(vc_f)+'Hz')
+        plot(pc_time, vc_q1r, '--')
+        plot(pc_time, vc_q2r, '--')
+        plot(pc_time, vc_q3r, '--')
+        plot(pc_time, vc_q1m)
+        plot(pc_time, vc_q2m)
+        plot(pc_time, vc_q3m)
+        title('Joint Angles, f='+string(pc_f)+'Hz')
         legend('q1r', 'q2r', 'q3r', 'q1m', 'q2m', 'q3m')
     end
     if ~isempty(vc_time)

@@ -17,7 +17,7 @@ function [nchunks, chunks] = createMotionPlan(x,y,theta,loadSide, speed, nBlocks
     
     % Initialise Loading bay
     if strcmp(loadSide,'A')
-        LoadingBay = [0.040; -0.190; -0.005; -pi/2; 0];
+        LoadingBay = [0.040; -0.1875; -0.005; -pi/2; 0];
     elseif strcmp(loadSide,'B')
         LoadingBay = [0; 0.1875; -0.005; pi/2; 0];
     end

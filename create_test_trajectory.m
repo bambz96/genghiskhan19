@@ -6,7 +6,7 @@ ungrip = 0.422257077;
 
 % metres, degrees, degrees, ?, seconds
 % x y z theta grip ts
-s = 1; % speed up
+s = 0.5; % speed up
 p1 = [
     0.2 0 0.3 0 ungrip 0*s;
     0.15 -0.2 0.05 0 ungrip 2*s;
@@ -17,10 +17,10 @@ p1 = [
     0.125 0.25 0.05 0 ungrip 19*s;
     0.2 0 0.05 0 ungrip 20*s;
     0.2 0 0.05 0 ungrip 25*s;
-    0.15 -0.2 0.05 0 ungrip 30*s;
-    0.15 -0.2 0.05 0 ungrip 35*s;
-    0.2 0 0.05 0 ungrip 36*s;
-    0.2 0 0.05 0 ungrip 41*s
+    0.15 -0.2 0.05 0 ungrip 27*s;
+    0.15 -0.2 0.05 0 ungrip 32*s;
+    0.2 0 0.05 0 ungrip 34*s;
+    0.2 0 0.05 0 ungrip 39*s
 %     0.2 0 0.3 0 ungrip 43*s
 ];
 p2 = [
