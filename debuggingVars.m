@@ -47,5 +47,5 @@ global vc_q1i; vc_q1i = [];
 global vc_q2i; vc_q2i = [];
 global vc_q3i; vc_q3i = [];
 
-global debugging; debugging = 1; % debugging mode on by default
+global debugging; debugging = 0; % debugging mode false by default
 end

@@ -145,7 +145,7 @@ int led_pin = LED_BUILTIN; // 13 for Uno/Mega2560, 14 for OpenCM
 
 int state = WAITING;
 
-boolean debugging = true; // will print additional info during operation, set off by Matlab if desired
+boolean debugging = false; // will print additional info during operation, set off by Matlab if desired
 
 int nPolys;   // number of polynomials sent by Matlab and stored for operation
 int count = 0;  // used to count up to nPolys whilst receiving coefficients from Matlab, and to hold current cubic path segment while operating
@@ -262,7 +262,7 @@ void setup()
   // Open port
   if (portHandler->openPort())
   {
-    Serial.print("Succeeded to open the port!\n");
+//    Serial.print("Succeeded to open the port!\n");
   }
   else
   {
@@ -274,7 +274,7 @@ void setup()
   // Set port baudrate
   if (portHandler->setBaudRate(BAUDRATE))
   {
-    Serial.print("Succeeded to change the baudrate!\n");
+//    Serial.print("Succeeded to change the baudrate!\n");
   }
   else
   {
