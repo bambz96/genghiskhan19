@@ -12,7 +12,7 @@ classdef release_trj < robot_trj
 
     %}
     properties(Constant)
-        PauseTime = 0.5;  % fractional time to pause 
+        PauseTime = 0.7;  % fractional time to pause 
     end
     
     methods 
