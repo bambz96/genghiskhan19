@@ -9,7 +9,8 @@ function [x,y,z,thx,thy,thz,grip] = readCurrentPosition(serial)
         [x, y, z, thx, thy, thz] = zeros(1,7);
         return
     end
-    data = strtrim(fscanf(serial));
+    data = fscanf(serial, '%f');
+    disp(data);
     x = data(1);
     y = data(2);
     z = data(3);
